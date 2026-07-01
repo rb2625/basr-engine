@@ -1,0 +1,6 @@
+httpx
+playwright
+openai
+supabase
+fpdf2
+python-dotenv
