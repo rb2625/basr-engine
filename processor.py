@@ -28,7 +28,9 @@ CLASSIFICATION RULES:
   - neutral = general chatter with no economic signal
 
 - sector must be exactly one of: "F&B", "Real Estate", "Tech", "Retail", "Logistics", "Finance", "General"
-
+- If the text mentions banking, loans, or financial services → Finance (not General)
+- If the text mentions jobs, hiring, or career → use the industry of the job (Tech, F&B, etc.)
+- Only use "General" if the text truly has no sector connection
 - confidence_score: float between 0.0 and 1.0 (how confident you are in your classification)
 
 - intensity_score: integer 1 to 5
