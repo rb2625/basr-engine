@@ -3,34 +3,44 @@ import httpx
 import xml.etree.ElementTree as ET
 import re
 
-# Reddit public RSS feeds - no login or API key needed
 REDDIT_FEEDS = [
-    ("reddit", "r/dubai",  "https://www.reddit.com/r/dubai/new/.rss"),
-    ("reddit", "r/uae",    "https://www.reddit.com/r/uae/new/.rss"),
+    ("reddit", "r/dubai",           "https://www.reddit.com/r/dubai/new/.rss"),
+    ("reddit", "r/uae",             "https://www.reddit.com/r/uae/new/.rss"),
+    ("reddit", "r/DubaiJobs",       "https://www.reddit.com/r/DubaiJobs/new/.rss"),
+    ("reddit", "r/dubaiexpats",     "https://www.reddit.com/r/dubaiexpats/new/.rss"),
 ]
 
-# UAE business news RSS feeds - guaranteed to work, great economic signals
 NEWS_FEEDS = [
-    ("news", "Arabian Business",   "https://www.arabianbusiness.com/rss"),
-    ("news", "Zawya Business",     "https://www.zawya.com/rss/uae-business.xml"),
-    ("news", "Gulf Business",      "https://gulfbusiness.com/feed/"),
-    ("news", "Wam UAE News",       "https://wam.ae/rss.xml"),
+    ("news", "Gulf Business",       "https://gulfbusiness.com/feed/"),
+    ("news", "Arabian Business",    "https://www.arabianbusiness.com/rss"),
+    ("news", "Wam UAE",             "https://wam.ae/rss.xml"),
+    ("news", "Zawya",               "https://www.zawya.com/rss/uae-business.xml"),
+    ("news", "Khaleej Times",       "https://www.khaleejtimes.com/feed"),
+    ("news", "The National",        "https://www.thenationalnews.com/feed"),
+    ("news", "Bloomberg Arabia",    "https://feeds.bloomberg.com/bview/news.rss"),
 ]
 
 
 def clean_html(text):
-    """Strip HTML tags from text."""
     if not text:
         return ""
-    return re.sub(r'<[^>]+>', '', text).strip()
+    text = re.sub(r'<[^>]+>', '', text)
+    text = re.sub(r'&amp;', '&', text)
+    text = re.sub(r'&lt;', '<', text)
+    text = re.sub(r'&gt;', '>', text)
+    text = re.sub(r'&nbsp;', ' ', text)
+    text = re.sub(r'\s+', ' ', text)
+    return text.strip()
 
 
 async def fetch_one_feed(client, source_type, name, url):
-    """Fetch and parse a single RSS or Atom feed."""
     signals = []
     try:
         response = await client.get(url)
 
+        if response.status_code == 429:
+            print(f"[-] {name}: rate limited (429) — will retry next run")
+            return signals
         if response.status_code != 200:
             print(f"[-] {name}: status {response.status_code}")
             return signals
@@ -54,15 +64,14 @@ async def fetch_one_feed(client, source_type, name, url):
                 link_url     = link.get('href', '')    if link    is not None else ""
 
                 combined = f"{title_text}\n{content_text}".strip()[:2000]
-                if combined:
+                if combined and combined not in ["[removed]", "[deleted]"]:
                     signals.append({
                         "source_platform": source_type,
-                        "source_url":      link_url or url,
+                        "source_url":      link_url or f"{url}#{len(signals)}",
                         "raw_text":        combined,
                     })
-
         else:
-            # Try RSS 2.0 format (news sites use this)
+            # RSS 2.0 format
             items = root.findall('.//item')
             for item in items[:30]:
                 title = item.find('title')
@@ -77,12 +86,14 @@ async def fetch_one_feed(client, source_type, name, url):
                 if combined:
                     signals.append({
                         "source_platform": source_type,
-                        "source_url":      link_url or url,
+                        "source_url":      link_url or f"{url}#{len(signals)}",
                         "raw_text":        combined,
                     })
 
-        print(f"[+] {name}: {len(signals)} signals collected")
+        print(f"[+] {name}: {len(signals)} signals")
 
+    except ET.ParseError:
+        print(f"[-] {name}: XML parse error — site may be blocking bots")
     except Exception as e:
         print(f"[-] {name}: {str(e)[:80]}")
 
@@ -90,34 +101,30 @@ async def fetch_one_feed(client, source_type, name, url):
 
 
 async def fetch_reddit_signals():
-    """
-    Fetches signals from Reddit RSS + UAE news RSS feeds.
-    No API key required. Function name kept the same so orchestrator works unchanged.
-    """
     all_signals = []
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept":     "*/*",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
     }
 
     all_feeds = REDDIT_FEEDS + NEWS_FEEDS
 
-    async with httpx.AsyncClient(headers=headers, timeout=30.0, follow_redirects=True) as client:
-        tasks   = [fetch_one_feed(client, s_type, name, url) for s_type, name, url in all_feeds]
+    async with httpx.AsyncClient(
+        headers=headers,
+        timeout=30.0,
+        follow_redirects=True
+    ) as client:
+        tasks   = [fetch_one_feed(client, s, n, u) for s, n, u in all_feeds]
         results = await asyncio.gather(*tasks)
-
-        for result in results:
-            all_signals.extend(result)
+        for r in results:
+            all_signals.extend(r)
 
     print(f"\n[+] Grand total: {len(all_signals)} signals from all sources")
     return all_signals
 
 
-# Test alone: python scraper_reddit.py
 if __name__ == "__main__":
     signals = asyncio.run(fetch_reddit_signals())
     if signals:
-        print(f"\nSample signal:\n{signals[0]['raw_text'][:300]}")
-    else:
-        print("No signals — check your internet connection")
+        print(f"\nSample:\n{signals[0]['raw_text'][:300]}")
