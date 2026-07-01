@@ -2,8 +2,8 @@ name: BASR Intelligence Engine - Auto Run
 
 on:
   schedule:
-    - cron: "0 */12 * * *" # Runs every 12 hours automatically
-  workflow_dispatch: # Also adds a manual "Run" button on GitHub
+    - cron: "0 */12 * * *"
+  workflow_dispatch:
 
 jobs:
   run-basr-pipeline:
@@ -20,7 +20,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install httpx playwright groq supabase fpdf2 python-dotenv praw
 
       - name: Install Playwright browser
         run: python -m playwright install chromium --with-deps
