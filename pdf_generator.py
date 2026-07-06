@@ -279,8 +279,8 @@ def create_pdf_report(current_signals: list, client_name: str = "Valued Client")
     s for s in all_signals
     if safe_str(s.get("sector"), "General") == sector
     and safe_str(s.get("signal_type"), "neutral") != "neutral"
-    and safe_int(s.get("intensity_score"), 0) >= 3      # raised from 2 to 3
-    and float(s.get("confidence_score") or 0) >= 0.70  # raised from 0.65 to 0.70
+    and safe_int(s.get("intensity_score"), 0) >= 3
+    and float(s.get("confidence_score") or 0) >= 0.70
 ]
         if not sector_signals:
             continue

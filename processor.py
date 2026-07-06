@@ -16,6 +16,9 @@ English, and Arabizi (3ashan, wallah, khara, yalla, 7aram, inshallah).
 
 STRICT FILTERING RULES — classify as "neutral" and intensity 1 if the text is:
 - International company news with no direct UAE market connection → neutral
+- Personal complaints about individual situations unless they reveal 
+  a systemic pattern affecting a named company or sector → neutral
+- International company news with no direct UAE market connection → neutral
 - Any signal where the UAE is not the primary affected market → neutral
 - Personal complaints about government services or individual situations → neutral
   unless they reveal a systemic pattern affecting a named company or sector
