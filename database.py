@@ -15,10 +15,6 @@ def get_supabase_client() -> Client:
 
 
 def insert_signals_to_db(processed_signals: list) -> bool:
-    """
-    Takes a list of processed signal dicts and inserts them into Supabase.
-    Skips duplicates based on source_url.
-    """
     if not processed_signals:
         print("[-] No signals to insert into database.")
         return False
@@ -29,7 +25,6 @@ def insert_signals_to_db(processed_signals: list) -> bool:
 
     for signal in processed_signals:
         try:
-            # Build the exact record matching your Supabase table columns
             record = {
                 "source_platform": signal.get("source_platform", "unknown"),
                 "source_url": signal.get("source_url", f"unknown_{inserted_count}"),
@@ -42,13 +37,12 @@ def insert_signals_to_db(processed_signals: list) -> bool:
                 "summary_en": signal.get("summary_en", "No summary available."),
                 "intensity_score": int(signal.get("intensity_score", 1)),
             }
-
             supabase.table("economic_signals").insert(record).execute()
             inserted_count += 1
 
         except Exception as e:
             if "duplicate key" in str(e).lower() or "unique" in str(e).lower():
-                skipped_count += 1  # Already in database, skip silently
+                skipped_count += 1
             else:
                 print(f"[-] Insert error for signal: {str(e)[:100]}")
 

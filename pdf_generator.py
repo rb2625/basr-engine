@@ -176,7 +176,23 @@ def create_pdf_report(current_signals: list, client_name: str = "Valued Client")
 
     db_signals = get_signals_from_db()
     all_signals: list = db_signals if len(db_signals) > len(current_signals) else current_signals
+
+    # Remove duplicate summaries — keep only first occurrence
+    seen_summaries: set = set()
+    deduped_signals: list = []
+    for s in all_signals:
+        summary = safe_str(s.get("summary_en"), "")[:80]
+        if summary not in seen_summaries:
+            seen_summaries.add(summary)
+            deduped_signals.append(s)
+    all_signals = deduped_signals
+    print(f"[*] After deduplication: {len(all_signals)} unique signals")
+
     print(f"[*] PDF: using {len(all_signals)} signals ({len(current_signals)} from this run)")
+
+    # Stats
+    total       = len(all_signals)
+    # ... rest of the function continues exactly as before
 
     # Stats
     total       = len(all_signals)

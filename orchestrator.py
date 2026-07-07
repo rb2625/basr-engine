@@ -84,5 +84,5 @@ if __name__ == "__main__":
     asyncio.run(run_pipeline(
     max_to_process=35,
         generate_pdf=True,
-        client_name="Sample DIFC Client"
+        client_name="clients name here"
     ))
