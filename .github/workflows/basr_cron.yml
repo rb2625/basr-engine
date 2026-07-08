@@ -2,7 +2,7 @@ name: BASR Intelligence Engine - Auto Run
 
 on:
   schedule:
-    - cron: "0 */12 * * *"
+    - cron: "0 3,15 * * *" # 3am and 3pm UTC (7am and 7pm Dubai time)
   workflow_dispatch:
 
 jobs:

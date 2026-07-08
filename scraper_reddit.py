@@ -6,30 +6,21 @@ import re
 
 # ── Reddit RSS feeds ──────────────────────────────────────────────
 REDDIT_FEEDS = [
-    ("reddit", "r/dubai",        "https://www.reddit.com/r/dubai/new/.rss"),
-    ("reddit", "r/uae",          "https://www.reddit.com/r/uae/new/.rss"),
-    ("reddit", "r/DubaiJobs",    "https://www.reddit.com/r/DubaiJobs/new/.rss"),
-    ("reddit", "r/dubaiexpats",  "https://www.reddit.com/r/dubaiexpats/new/.rss"),
-    ("reddit", "r/abudhabi",     "https://www.reddit.com/r/abudhabi/new/.rss"),
-    ("reddit", "r/saudiarabia",  "https://www.reddit.com/r/saudiarabia/new/.rss"),
+    ("reddit", "r/dubai",       "https://old.reddit.com/r/dubai/new/.rss"),
+    ("reddit", "r/uae",         "https://old.reddit.com/r/uae/new/.rss"),
+    ("reddit", "r/DubaiJobs",   "https://old.reddit.com/r/DubaiJobs/new/.rss"),
+    ("reddit", "r/dubaiexpats", "https://old.reddit.com/r/dubaiexpats/new/.rss"),
+    ("reddit", "r/abudhabi",    "https://old.reddit.com/r/abudhabi/new/.rss"),
 ]
 
-# ── Business & finance news RSS ───────────────────────────────────
 NEWS_FEEDS = [
-    ("news", "Bloomberg Arabia",      "https://feeds.bloomberg.com/bview/news.rss"),
-    ("news", "Gulf Business",         "https://gulfbusiness.com/feed/"),
-    ("news", "Arabian Business",      "https://www.arabianbusiness.com/rss"),
-    ("news", "Emirates247 Business",  "https://www.emirates247.com/rss/business"),
-    ("news", "Trade Arabia",          "https://www.tradearabia.com/rss/ALL.xml"),
-    ("news", "AME Info",              "https://www.ameinfo.com/feed"),
-    ("news", "Wam UAE",               "https://wam.ae/rss.xml"),
-    ("news", "Zawya",                 "https://www.zawya.com/rss/uae-business.xml"),
-    ("news", "Construction Week",     "https://www.constructionweekonline.com/rss.xml"),
-    ("news", "Retail ME",             "https://www.retailme.net/rss"),
-    ("news", "Google News UAE Biz",   "https://news.google.com/rss/search?q=UAE+business+economy&hl=en-AE&gl=AE&ceid=AE:en"),
-    ("news", "Google News Dubai",     "https://news.google.com/rss/search?q=Dubai+real+estate+economy&hl=en-AE&gl=AE&ceid=AE:en"),
-    ("news", "Google News UAE Jobs",  "https://news.google.com/rss/search?q=UAE+layoffs+hiring+jobs&hl=en-AE&gl=AE&ceid=AE:en"),
-    ("news", "Google News UAE Retail","https://news.google.com/rss/search?q=Dubai+retail+restaurant+closure&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Bloomberg Arabia",       "https://feeds.bloomberg.com/bview/news.rss"),
+    ("news", "Google News UAE Biz",    "https://news.google.com/rss/search?q=UAE+business+economy&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Google News Dubai",      "https://news.google.com/rss/search?q=Dubai+real+estate+economy&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Google News UAE Jobs",   "https://news.google.com/rss/search?q=UAE+layoffs+hiring+jobs&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Google News UAE Retail", "https://news.google.com/rss/search?q=Dubai+retail+restaurant+closure&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Google News UAE Banks",  "https://news.google.com/rss/search?q=UAE+bank+finance+ADCB+Emirates+NBD&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("news", "Google News UAE PropTech","https://news.google.com/rss/search?q=Dubai+property+rent+landlord&hl=en-AE&gl=AE&ceid=AE:en"),
 ]
 
 
@@ -120,27 +111,35 @@ async def fetch_one_feed(
 
 
 async def fetch_reddit_signals() -> list:
-    """
-    Fetches from Reddit RSS + UAE news + Google News.
-    No API key needed. Returns list of signal dicts.
-    """
     all_signals: list = []
 
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        "Accept":     "application/rss+xml, application/xml, text/xml, */*",
+        "Accept": "application/rss+xml, application/xml, text/xml, */*",
     }
-
-    all_feeds = REDDIT_FEEDS + NEWS_FEEDS
 
     async with httpx.AsyncClient(
         headers=headers,
         timeout=30.0,
         follow_redirects=True
     ) as client:
-        tasks   = [fetch_one_feed(client, s, n, u) for s, n, u in all_feeds]
-        results = await asyncio.gather(*tasks)
-        for r in results:
+
+        # Fetch Reddit feeds one at a time with delay — avoids rate limiting
+        print("[*] Fetching Reddit feeds (with delays to avoid rate limits)...")
+        for source_type, name, url in REDDIT_FEEDS:
+            result = await fetch_one_feed(client, source_type, name, url)
+            all_signals.extend(result)
+            if result:  # Only delay if we got data — if blocked, no point waiting
+                await asyncio.sleep(3)  # 3 second gap between Reddit requests
+
+        # Fetch news feeds all at once — they don't rate limit
+        print("[*] Fetching news feeds simultaneously...")
+        news_tasks = [
+            fetch_one_feed(client, s, n, u)
+            for s, n, u in NEWS_FEEDS
+        ]
+        news_results = await asyncio.gather(*news_tasks)
+        for r in news_results:
             all_signals.extend(r)
 
     print(f"\n[+] Grand total: {len(all_signals)} signals from all sources")

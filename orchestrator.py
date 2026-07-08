@@ -58,6 +58,14 @@ async def run_pipeline(max_to_process: int = 10, generate_pdf: bool = True, clie
             print("→ [SKIPPED] AI returned no result")
 
     print(f"\n[+] AI Processing complete: {len(processed_signals)} signals classified")
+    reddit_count = sum(1 for s in raw_payload if s.get("source_platform") == "reddit")
+    news_count = sum(1 for s in raw_payload if s.get("source_platform") == "news")
+    
+    print(f"[*] Sources: {reddit_count} Reddit signals, {news_count} news signals")
+    
+    if reddit_count == 0:
+        print("[!] WARNING: No Reddit data collected today.")
+        print("[!] Report will be news-only — consider waiting for Reddit recovery before sending to clients.")
 
     # STEP 3: Save to Supabase
     print(f"\n[3/4] Saving to Supabase database...")
@@ -86,3 +94,4 @@ if __name__ == "__main__":
         generate_pdf=True,
         client_name="clients name here"
     ))
+
