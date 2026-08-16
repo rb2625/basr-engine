@@ -89,7 +89,7 @@ DELIVERY
 | 3 | News RSS (11 feeds incl. Khaleej, Gulf News, The National, WAM) | `news_rss` (refactor of v1) | ✅ built, live-tested (30 items/feed) |
 | 4 | YouTube comments (UAE news channels) | `youtube_comments` (Data API free quota) | ⬜ Phase 1 |
 | 5 | Google reviews (unis, malls, gov services) | `google_reviews` (Places API free tier) | ⬜ Phase 1 |
-| 6 | Live global feed filtered to UAE | `bluesky_firehose` (Jetstream, free) | ⬜ Phase 1 |
+| 6 | Live global feed filtered to UAE | `bluesky_firehose` (Jetstream v2, free) | ✅ built, live-tested (513 frames/15s; word-boundary UAE filter) |
 | — | LinkedIn | **excluded** (locked) | — |
 
 **Adapter contract:** `RawDoc{source, external_id, url, title, text, author_hash,
@@ -151,7 +151,8 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 **Phase 1 — Full ingestion** *(in progress — see §13)*
 - ✅ `news_rss` refactored onto the contract (live-tested: Google News UAE 30 items/feed)
 - ~~`reddit_rss`~~ removed by **Amendment A1** (Reddit blocks keyless RSS — 302→login, 403)
-- ⬜ Build `youtube_comments`, `google_reviews`, `bluesky_firehose` adapters
+- ✅ `bluesky_firehose` built + live-tested (Jetstream v2 spec, word-boundary UAE keywords; false-positive bug 'choradeira'→'deira' found & fixed)
+- ⬜ Build `youtube_comments`, `google_reviews` adapters (need API keys)
 - ⬜ Build `basr/store/` (persistence: dedupe upserts, batches) + `basr/orchestrator.py`
 - ⬜ Update GitHub Actions cron (2×/day, staggered sources)
 - **DoD:** full end-to-end run: all sources → deduped rows in Supabase, zero crashes, retries verified, cron produces a run log
@@ -204,10 +205,7 @@ scraping" 429) → replaced with Arctic Shift, verified working from the user's 
 
 **Phase 0 COMPLETE (2026-08-16):** schema executed in Supabase; all 15 tables verified
 live via the PostgREST API from the user's machine (doc_topics/doc_entities use
-composite keys — no `id` column, verified via their real columns).
-
-**Next:** Phase 1 — full ingestion (RSS/news refactor → youtube → google reviews →
-bluesky → store → orchestrator → cron).
+composite keys — no `id` column, verified via their real columns).**Next:** Phase 1 — youtube_comments + google_reviews adapters (need user API keys) → store layer → orchestrator → cron.
 
 ## 14. Working rules
 

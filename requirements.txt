@@ -5,3 +5,4 @@ supabase
 fpdf2
 python-dotenv
 praw
+websockets
