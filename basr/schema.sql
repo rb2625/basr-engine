@@ -38,6 +38,21 @@ CREATE INDEX IF NOT EXISTS idx_raw_docs_source ON raw_docs (source);
 CREATE INDEX IF NOT EXISTS idx_raw_docs_author ON raw_docs (author_hash);
 CREATE INDEX IF NOT EXISTS idx_raw_docs_lang ON raw_docs (lang);
 
+-- Enrichment marker (Amendment A8): set once a doc's topics/entities pass has
+-- run, so docs with zero topics are not refetched every backfill. Idempotent.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'raw_docs' AND column_name = 'enriched_at'
+    ) THEN
+        ALTER TABLE raw_docs ADD COLUMN enriched_at TIMESTAMPTZ;
+    END IF;
+END
+$$;
+
+CREATE INDEX IF NOT EXISTS idx_raw_docs_enriched ON raw_docs (enriched_at) WHERE enriched_at IS NULL;
+
 -- ============================================================================
 -- 2. NLP OUTPUTS
 -- ============================================================================

@@ -183,7 +183,8 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
     if nlp and not store_error:
         from .nlp.__main__ import run_nlp  # lazy: needs GROQ_API_KEY
         try:
-            await run_nlp(limit=nlp_limit or _NLP_DEFAULT_LIMIT, dry_run=dry_run)
+            await run_nlp(limit=nlp_limit or _NLP_DEFAULT_LIMIT, dry_run=dry_run,
+                          enrich=True)
         except Exception as exc:
             print(f"[-] NLP stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
 

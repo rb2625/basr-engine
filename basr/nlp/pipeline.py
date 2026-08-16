@@ -20,9 +20,11 @@ from concurrent.futures import ThreadPoolExecutor
 from typing import Any
 
 from .classifier import ClassifyResult, GroqClassifier
+from .entities import EntityExtractor
 from .langid import detect_language, get_langid
 from .lexicon import LexiconClassifier, ROUTE_CONFIDENCE
 from .normalizer import arabizi_to_arabic, clean_text
+from .topics import TopicAssigner
 
 
 def classify_with_fallback(
@@ -71,13 +73,16 @@ def process_doc(
     title: str | None,
     lexicon: LexiconClassifier,
     classifier: GroqClassifier,
-) -> tuple[dict[str, Any], dict[str, Any] | None, str, str]:
-    """Normalize + detect language + classify one raw doc.
+    topics: TopicAssigner | None = None,
+    entities: EntityExtractor | None = None,
+) -> tuple[dict[str, Any], dict[str, Any] | None, str, str,
+           list[dict[str, Any]], list[dict[str, Any]]]:
+    """Normalize + detect language + classify + enrich one raw doc.
 
-    Returns (normalized_row, classification_row | None, lang, path) where path
-    is 'lexicon' or 'llm'. A hard model failure (confidence 0, error raw)
-    returns ``None`` for the classification row - the doc stays unclassified
-    so the next run retries it. Never raises.
+    Returns (normalized_row, classification_row | None, lang, path, topics,
+    entities). A hard model failure (confidence 0, error raw) returns ``None``
+    for the classification row - the doc stays unclassified so the next run
+    retries it. Topics + entities are zero-token and never fail. Never raises.
     """
     clean = clean_text(text)
     # fasttext (if present on Linux) else the heuristic.
@@ -106,7 +111,15 @@ def process_doc(
     }
     hard_failure = result.confidence == 0.0 and "error" in result.raw
     classification_row = None if hard_failure else result.to_row(doc_id)
-    return normalized_row, classification_row, lang, path
+
+    if topics is None:
+        topics = TopicAssigner()
+    if entities is None:
+        entities = EntityExtractor()
+    topic_list = topics.assign(clean)
+    entity_list = entities.extract(clean)
+    return (normalized_row, classification_row, lang, path,
+            topic_list, entity_list)
 
 
 def _dialect_from(lang: str) -> str | None:
@@ -125,11 +138,13 @@ async def classify_docs(
     # Serialized: the free tier's token-per-minute window is the binding
     # constraint, not request rate - 2 workers just bursts into 429s.
     workers: int = 1,
-) -> list[tuple[dict[str, Any], dict[str, Any] | None, str, str]]:
-    """Classify a list of raw-doc dicts ({id, text, title}) concurrently.
+) -> list[tuple[dict[str, Any], dict[str, Any] | None, str, str,
+               list[dict[str, Any]], list[dict[str, Any]]]]:
+    """Classify + enrich a list of raw-doc dicts ({id, text, title}).
 
-    Each result is (normalized_row, classification_row | None, lang, path).
-    The lexicon fast path is used when provided (Amendment A7).
+    Each result is (normalized_row, classification_row | None, lang, path,
+    topics, entities). The lexicon fast path is used when provided (A7) and
+    topic/entity enrichment is always zero-token (A8).
     """
     if not docs:
         return []
@@ -149,4 +164,26 @@ async def classify_docs(
             )
             for d in docs
         ]
+        return await asyncio.gather(*futures)
+
+
+async def enrich_docs(
+    docs: list[dict[str, Any]],
+    *,
+    workers: int = 4,
+) -> list[tuple[int, list[dict[str, Any]], list[dict[str, Any]]]]:
+    """Zero-token enrichment pass over docs that already have classification
+    (or never will): returns (doc_id, topics, entities) per doc."""
+    if not docs:
+        return []
+    assigner = TopicAssigner()
+    extractor = EntityExtractor()
+    loop = asyncio.get_running_loop()
+
+    def _one(d: dict) -> tuple[int, list[dict[str, Any]], list[dict[str, Any]]]:
+        clean = clean_text(d.get("text") or "")
+        return d["id"], assigner.assign(clean), extractor.extract(clean)
+
+    with ThreadPoolExecutor(max_workers=workers) as pool:
+        futures = [loop.run_in_executor(pool, _one, d) for d in docs]
         return await asyncio.gather(*futures)

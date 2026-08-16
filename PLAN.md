@@ -238,12 +238,16 @@ UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
 Second build of the session: the **zero-cost lexicon fast path** (**A7**) - a
 keyword classifier (en/ar/arz) that catches the clear-cut majority with ZERO
 LLM tokens; anything ambiguous (sarcasm, conflicting signals, weak evidence)
-scores low and falls back to the LLM. Measured on the eval set (77 items):
-signal accuracy 0.883 with 1.0 precision on every non-neutral class (zero
-false alarms); sentiment 0.831 with the neutral/trap cases deliberately
-deferred. Live-verified on real docs: 4/12 routed to the lexicon with zero
-tokens, the rest correctly deferred (the LLM's daily budget was exhausted and
-it stopped honestly - docs stayed unclassified for retry).
+scores low and falls back to the LLM. Live-verified on real docs: 4/12 routed
+to the lexicon with zero tokens, the rest correctly deferred (the LLM's daily
+budget was exhausted and it stopped honestly - docs stayed unclassified for
+retry). Third build: **topics + entity geocoding** (**A8**) - 14-topic keyword
+taxonomy and a UAE gazetteer (locations with lat/lng, companies, authorities,
+universities) that enrich every doc with zero tokens. The eval set grew
+77 -> 187 items (ar 74 / en 74 / arz 39) and the lexicon was re-measured on
+it: signal acc 0.888 / F1 0.881 with zero false signal routes (every remaining
+miss is a deliberate deferral the LLM catches); sentiment acc 0.834. Scores
+persisted to eval_runs (lexicon-v1). All 310 raw docs enriched in Supabase.
 
 ## 14. Working rules
 
@@ -321,14 +325,30 @@ conservative by design - sarcasm, conflicting strong signals, weak evidence,
 and questions all collapse confidence so the pipeline (or the hybrid eval
 path) falls back to the LLM. Stamps `model_version=lexicon-v1`. Routing
 threshold ROUTE_CONFIDENCE=0.55 in pipeline.py. Measured on the eval set
-(lexicon-only forced answers): signal acc 0.883 / macro-F1 0.861 with
+(lexicon-only forced answers): signal acc 0.888 / macro-F1 0.881 with
 precision 1.0 on stress/closure/opportunity (zero false alarms); sentiment acc
-0.831 - every neutral-label and sarcasm trap defers to the LLM in production.
+0.834 - every neutral-label and sarcasm trap defers to the LLM in production.
 Eval CLI gained `--path llm|lexicon|hybrid`. The store now degrades to a plain
 insert when the A6 UNIQUE constraint is missing (42P10) instead of failing -
 safe for the single-process cron; re-running schema.sql is still the permanent
 fix and adds the constraint.
 
+**A8 (2026-08-16): topics + entity geocoding, zero tokens.** `basr/nlp/topics.py`
+assigns up to 3 of 14 topics per doc (rent-housing, jobs-labor, prices-inflation,
+business-closures, transport, government-services, education, healthcare,
+tech-digital, retail-consumer, finance-banking, tourism-hospitality,
+utilities-infra, food-delivery) with weighted keyword rules into `doc_topics`.
+`basr/nlp/entities.py` is a curated UAE gazetteer - locations with lat/lng,
+companies, authorities, universities - extracted into `entities`/`doc_entities`
+(role location_of/mentioned), feeding the Phase 3 map. Both run on the clean
+text regardless of classifier, so they backfill every doc with zero tokens
+(`python -m basr.nlp --enrich-only`). `raw_docs.enriched_at` (idempotent schema
+addition) marks the pass so zero-topic docs are not refetched; the store falls
+back to a doc_topics query when the column is missing. Word matching uses a
+shared word-boundary helper (`textmatch.py`) so short tokens like ai/du/rta do
+not fire inside dubai/daily/apart. Live: all 310 docs enriched (215 topic
+links, 120 entity links, zero tokens).
+
 ---
 
-*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval harness + lexicon fast path live-verified); Amendments A1-A7 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path).*
+*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 187 + lexicon fast path + topics + entity geocoding all live-verified); Amendments A1-A8 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding).*

@@ -57,10 +57,11 @@ NEG_EN = {
     "failed": 2, "out of control": 2, "ridiculous": 2, "outrageous": 2,
     "unaffordable": 2, "overpriced": 2, "not paid": 2, "not paying": 2,
     "eating my budget": 2, "so expensive": 2, "no service": 2, "broken": 2,
-    "bad": 1, "worse": 1, "poor": 1, "slow": 1, "stuck": 1, "problem": 1,
-    "problems": 1, "complaint": 1, "complaints": 1, "delay": 1, "delays": 1,
-    "cancelled": 1, "canceled": 1, "expensive": 2, "overcharged": 1,
-    "mess": 1, "frustrate": 2, "frustrates": 2, "frustrating": 2,
+    "unbearable": 2, "bad": 1, "worse": 1, "poor": 1, "slow": 1,
+    "stuck": 1, "problem": 1, "problems": 1, "complaint": 1,
+    "complaints": 1, "delay": 1, "delays": 1, "cancelled": 1,
+    "canceled": 1, "expensive": 2, "overcharged": 1, "mess": 1,
+    "frustrate": 2, "frustrates": 2, "frustrating": 2,
 }
 
 # --- Arabic sentiment -------------------------------------------------------
@@ -82,39 +83,49 @@ POS_ARZ = {
     "nadeef": 1, "sarre3": 1,
 }
 NEG_ARZ = {
-    "ghali": 2, "ghaly": 2, "7araam": 2, "khara": 2, "zed": 2,
-    "mesh 3adil": 2, "mesh muhimmah": 1, "za3lan": 1, "mushkilah": 1,
-    "3ala el al": 2, "ma fi flous": 2, "z3alan": 1,
+    "ghali": 2, "ghaly": 2, "ghalyan": 2, "7araam": 2, "khara": 2,
+    "zed": 2, "mesh 3adil": 2, "mesh muhimmah": 1, "za3lan": 1,
+    "mushkilah": 1, "aswa": 2, "mesh mertah": 1, "3ala el al": 2,
+    "ma fi flous": 2, "z3alan": 1,
 }
 
 # --- Signal: stress ---------------------------------------------------------
 STRESS_EN = {
     "layoffs": 2, "layoff": 2, "fired": 2, "let go": 2, "cut jobs": 2,
     "rent increase": 2, "rent increases": 2, "fees going up": 2,
-    "prices going up": 2, "going up": 2, "out of control": 2,
-    "ridiculous": 2, "expensive": 2, "unaffordable": 2, "crisis": 2,
-    "struggling": 1, "struggle": 1, "losses": 2, "debt": 2, "default": 2,
-    "delays": 2, "delayed": 2, "shortage": 2, "inflation": 2,
-    "recession": 2, "overpriced": 2, "salary cut": 2, "fare increase": 2,
-    "price hike": 2, "cost of living": 2, "not paid": 2, "eating my budget": 2,
+    "prices going up": 2, "out of control": 2, "ridiculous": 2,
+    "expensive": 2, "unaffordable": 2, "crisis": 2, "struggling": 1,
+    "struggle": 1, "losses": 2, "debt": 2, "default": 2, "delays": 2,
+    "delayed": 2, "shortage": 2, "recession": 2, "overpriced": 2,
+    "salary cut": 2, "fare increase": 2, "price hike": 2,
+    "cost of living": 2, "not paid": 2, "eating my budget": 2,
+    "inflation is eating": 2, "fees are going up": 2, "prices are going up": 2,
+    "out of hand": 2, "higher than": 2, "unbearable": 2, "getting worse": 2,
     "rents": 1, "rent": 1, "fees": 1, "prices": 1, "costs": 1,
-    "increase": 1, "increases": 1, "rising": 1, "fare": 1, "tolls": 1,
-    "taxes": 2, "problems": 1, "complaints": 1, "wait times": 1,
-    "frustrate": 2, "frustrating": 2, "traffic": 1,
+    "fare": 1, "tolls": 1, "taxes": 2, "problems": 1, "complaints": 1,
+    "wait times": 1, "frustrate": 2, "frustrating": 2, "traffic": 1,
+    "salik": 2, "charges": 1, "evictions": 2, "eviction": 2, "bounced": 2,
+    "slower payments": 2, "rejection rate": 2, "lower pay": 2,
+    "utility bills": 2, "processing times": 2,
 }
 STRESS_AR = {
-    "جنوني": 2, "ارتفاع": 2, "ارتفعت": 2, "أرتفعت": 2, "غلاء": 2,
-    "أزمة": 2, "ركود": 2, "تسريح": 2, "خسائر": 2, "ديون": 2, "تأخر": 2,
-    "تأخير": 2, "انقطاع": 2, "نقص": 2, "تضخم": 2, "ضغوط": 2, "يضغط": 2,
-    "تتفاقم": 2, "تدهور": 2, "رفع": 2, "رفعت": 2, "زيادة": 2, "زادت": 2,
-    "مهددة": 2, "سوء الخدمة": 2, "مخاوف": 2, "تراجع": 2, "الضرائب": 2,
-    "ضرائب": 2, "شكاوى": 2, "شكوى": 2, "إيجارات": 1, "إيجار": 1,
-    "أسعار": 1, "رسوم": 1, "رواتب": 1, "وقود": 1, "كهرباء": 1,
-    "مواقف": 1, "ازدحام": 1,
+    "جنوني": 2, "غلاء": 2, "أزمة": 2, "ركود": 2, "تسريح": 2,
+    "خسائر": 2, "ديون": 2, "تأخر": 2, "تأخير": 2, "انقطاع": 2,
+    "نقص": 2, "تضخم": 2, "ضغوط": 2, "يضغط": 2, "تتفاقم": 2, "تدهور": 2,
+    "مهددة": 2, "سوء الخدمة": 2, "مخاوف": 2, "تراجع": 2, "تراجعا": 2,
+    "الضرائب": 2, "ضرائب": 2, "شكاوى": 2, "شكوى": 2, "ازدحام": 2,
+    "ازدحاما": 2, "أعلى مستوى": 2, "انخفض": 2, "فواتير": 2,
+    "ارتفاع الأسعار": 2, "ارتفاع رسوم": 2, "ارتفاع فواتير": 2,
+    "أسعار التأمين": 2, "أسعار الطعام": 2, "رفع فوائد": 2,
+    "رفع الفائدة": 2, "إيجارات": 1, "إيجار": 1, "أسعار": 1,
+    "رسوم": 1, "رواتب": 1, "وقود": 1, "كهرباء": 1, "مواقف": 1,
 }
 STRESS_ARZ = {
-    "zed": 2, "ghali": 2, "ghaly": 2, "3ala el al": 2, "ma fi flous": 2,
-    "saf2at": 2, "mowazafin": 1, "ijar": 1, "mushkilah": 1, "mesh 3adil": 2,
+    "zed": 2, "ghali": 2, "ghaly": 2, "ghalyan": 2, "3ala el al": 2,
+    "ma fi flous": 2, "ma fi shughl": 2, "ma fi zyada": 2, "saf2at": 2,
+    "rafa3": 2, "zaw3ameh": 2, "taradet": 2, "bat3at": 2,
+    "wala 7ada yeradd": 2, "mowazafin": 1, "ijar": 1, "mushkilah": 1,
+    "mesh 3adil": 2,
 }
 
 # --- Signal: closure --------------------------------------------------------
@@ -141,24 +152,31 @@ OPP_EN = {
     "record profit": 2, "grants": 2, "scholarships": 2, "visa reforms": 2,
     "incentive": 2, "free training": 2, "booming": 2, "new branch": 2,
     "new store": 2, "new mall": 2, "new campus": 2, "new line": 2,
-    "direct flights": 2, "doubled": 2, "double-digit": 2, "new": 1,
-    "growth": 1, "grow": 1, "grows": 1, "growing": 1, "investment": 1,
-    "invest": 1, "boost": 1, "opportunity": 1, "opportunities": 1,
-    "affordable": 1, "discount": 1, "improved": 1, "profit": 1,
-    "profits": 1, "surge": 1, "surged": 1, "announces": 1,
-    "announced": 1, "welcomes": 1,
+    "direct flights": 2, "direct flight": 2, "partnership": 2,
+    "funding": 2, "all-time high": 2, "reductions": 2, "extends": 2,
+    "logistics hub": 2, "scholarship": 2, "doubled": 2, "free": 1,
+    "new": 1, "growth": 1, "grow": 1, "grows": 1, "growing": 1,
+    "investment": 1, "invest": 1, "boost": 1, "opportunity": 1,
+    "opportunities": 1, "affordable": 1, "discount": 1, "improved": 1,
+    "profit": 1, "profits": 1, "surge": 1, "surged": 1, "announces": 1,
+    "announced": 1, "announce": 1, "welcomes": 1, "signs": 1, "deal": 1,
+    "talent": 1,
 }
 OPP_AR = {
     "افتتاح": 2, "افتتح": 2, "افتتحت": 2, "أطلقت": 2, "إطلاق": 2,
     "توظيف": 2, "تعيين": 2, "منح": 2, "قياسيا": 2, "قياسي": 2,
-    "مبادرة": 2, "مجانا": 2, "فرص": 2, "استثمار": 2, "إقبالا": 2,
-    "إقبال": 2, "ينمو": 2, "نموا": 2, "نمو": 2, "تزايد": 2, "يتزايد": 2,
-    "ازدهار": 2, "تزدهر": 2, "تفتح": 2, "تخفيضات": 2, "خفض": 2,
-    "جديدة": 1, "جديد": 1, "تعلن": 1, "أعلنت": 1, "رقمية": 1, "منصة": 1,
+    "مبادرة": 2, "مجانا": 2, "فرص": 2, "استثمار": 2, "استثمارا": 2,
+    "إقبالا": 2, "إقبال": 2, "ينمو": 2, "نموا": 2, "نمو": 2,
+    "تزايد": 2, "يتزايد": 2, "ازدهار": 2, "تزدهر": 2, "تفتح": 2,
+    "تخفيضات": 2, "خفض": 2, "أرباحا": 2, "أرباح": 2, "تمويل": 2,
+    "تستضيف": 2, "يجذب": 2, "يستقبل": 2, "تطلق": 2, "أرخص": 2,
+    "دعم": 2, "سيستقبل": 2, "جديدة": 1, "جديد": 1, "تعلن": 1,
+    "أعلنت": 1, "رقمية": 1, "منصة": 1, "يزيد": 1, "رحلات": 1,
 }
 OPP_ARZ = {
-    "tashji3": 2, "tawzif": 2, "nazele": 2, "rakhis": 2, "ashal": 2,
-    "jdid": 1, "jadidah": 1, "yftah": 2, "yaftah": 2,
+    "tashji3": 2, "tawzif": 2, "nazele": 2, "rakhis": 2, "arkhas": 2,
+    "takhfidat": 2, "mubadara": 2, "istithmar": 2, "fat7at": 2,
+    "fata7o": 2, "jdid": 1, "jadidah": 1, "yftah": 2, "yaftah": 2,
 }
 
 # --- Emotions ---------------------------------------------------------------

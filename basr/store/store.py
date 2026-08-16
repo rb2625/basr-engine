@@ -252,6 +252,167 @@ class SupabaseStore:
             )
         return n_written, c_written
 
+    async def fetch_docs_missing_enrichment(self, limit: int = 100) -> list[dict]:
+        """Return raw_docs whose enrichment pass has not run (id, text, title).
+
+        Uses the ``enriched_at`` marker (Amendment A8) so docs with zero
+        topics are not refetched every backfill. Falls back to the doc_topics
+        query when the column is missing (schema.sql not re-run yet)."""
+        if self._client is None:
+            return []
+        query = self._client.table("raw_docs").select("id,text,title")
+        try:
+            resp = await self._with_retry(
+                lambda: query.is_("enriched_at", "null")
+                .order("published_at", desc=True)
+                .limit(limit)
+                .execute()
+            )
+            return resp.data or []
+        except PostgrestAPIError as exc:
+            if getattr(exc, "code", "") not in ("42703", "PGRST204"):
+                raise
+        # Fallback: no enriched_at column yet - use doc_topics membership.
+        enriched = await self._with_retry(
+            lambda: self._client.table("doc_topics")
+            .select("doc_id")
+            .limit(100000)
+            .execute()
+        )
+        done = {r["doc_id"] for r in (enriched.data or [])}
+        query = self._client.table("raw_docs").select("id,text,title")
+        if done:
+            query = query.not_.in_("id", sorted(done))
+        resp = await self._with_retry(
+            lambda: query.order("published_at", desc=True).limit(limit).execute()
+        )
+        return resp.data or []
+
+    async def upsert_enrichment(
+        self,
+        topics_by_doc: dict[int, list[dict]],
+        entities_by_doc: dict[int, list[dict]],
+        processed_ids: list[int] | None = None,
+    ) -> tuple[int, int]:
+        """Write topics + entities (both reference tables and the per-doc links).
+
+        Idempotent: topics upsert on key, entities on (type, normalized), and
+        doc_topics/doc_entities upsert on their composite PKs. ``processed_ids``
+        (all docs the pass ran on, even with zero hits) get ``enriched_at``
+        stamped so backfills are one-shot - skipped gracefully when the column
+        is missing (schema.sql not re-run yet). Returns
+        (doc_topics_written, doc_entities_written). Never raises on missing
+        tables - enrichment degrades gracefully (working rule 3).
+        """
+        if self._client is None:
+            return 0, 0
+        t_written = e_written = 0
+
+        # ---- topics -----------------------------------------------------
+        all_topics: dict[str, dict] = {}
+        for doc_id, topics in topics_by_doc.items():
+            for tp in topics:
+                all_topics[tp["key"]] = tp
+        if all_topics:
+            rows = [{"key": k, "label_en": v["label_en"],
+                     "label_ar": v.get("label_ar")} for k, v in all_topics.items()]
+            try:
+                await self._with_retry(
+                    lambda: self._client.table("topics")
+                    .upsert(rows, ignore_duplicates=True, on_conflict="key")
+                    .execute()
+                )
+                fetched = await self._with_retry(
+                    lambda: self._client.table("topics")
+                    .select("id,key")
+                    .in_("key", list(all_topics))
+                    .execute()
+                )
+                topic_ids = {r["key"]: r["id"] for r in (fetched.data or [])}
+                links = [
+                    {"doc_id": doc_id, "topic_id": topic_ids[tp["key"]],
+                     "score": round(tp["score"] / 6.0, 4)}
+                    for doc_id, topics in topics_by_doc.items()
+                    for tp in topics if tp["key"] in topic_ids
+                ]
+                if links:
+                    resp = await self._with_retry(
+                        lambda: self._client.table("doc_topics")
+                        .upsert(links, ignore_duplicates=True,
+                                on_conflict="doc_id,topic_id")
+                        .execute()
+                    )
+                    t_written = len(resp.data or [])
+            except Exception as exc:
+                print(f"    [-] topics write failed (table missing?): "
+                      f"{str(exc)[:120]}")
+
+        # ---- entities ---------------------------------------------------
+        all_entities: dict[tuple[str, str], dict] = {}
+        for doc_id, entities in entities_by_doc.items():
+            for ent in entities:
+                all_entities[(ent["type"], ent["normalized"])] = ent
+        if all_entities:
+            rows = [{"name": v["name"], "type": v["type"],
+                     "normalized": v["normalized"], "lat": v.get("lat"),
+                     "lng": v.get("lng"),
+                     "metadata": {"gazetteer": True}}
+                    for v in all_entities.values()]
+            try:
+                await self._with_retry(
+                    lambda: self._client.table("entities")
+                    .upsert(rows, ignore_duplicates=True,
+                            on_conflict="type,normalized")
+                    .execute()
+                )
+                types = list({t for (t, _) in all_entities})
+                names = list({n for (_, n) in all_entities})
+                fetched = await self._with_retry(
+                    lambda: self._client.table("entities")
+                    .select("id,type,normalized")
+                    .in_("type", types)
+                    .in_("normalized", names)
+                    .execute()
+                )
+                entity_ids = {(r["type"], r["normalized"]): r["id"]
+                              for r in (fetched.data or [])}
+                links = [
+                    {"doc_id": doc_id,
+                     "entity_id": entity_ids[(ent["type"], ent["normalized"])],
+                     "role": "location_of" if ent["type"] == "location"
+                             else "mentioned"}
+                    for doc_id, entities in entities_by_doc.items()
+                    for ent in entities
+                    if (ent["type"], ent["normalized"]) in entity_ids
+                ]
+                if links:
+                    resp = await self._with_retry(
+                        lambda: self._client.table("doc_entities")
+                        .upsert(links, ignore_duplicates=True,
+                                on_conflict="doc_id,entity_id")
+                        .execute()
+                    )
+                    e_written = len(resp.data or [])
+            except Exception as exc:
+                print(f"    [-] entities write failed (table missing?): "
+                      f"{str(exc)[:120]}")
+
+        # Mark the pass as done for every doc we processed, even those with
+        # zero topics/entities - otherwise they get refetched every backfill.
+        if processed_ids:
+            try:
+                await self._with_retry(
+                    lambda: self._client.table("raw_docs")
+                    .update({"enriched_at": datetime.now(timezone.utc).isoformat()})
+                    .in_("id", sorted(set(processed_ids)))
+                    .execute()
+                )
+            except PostgrestAPIError as exc:
+                if getattr(exc, "code", "") not in ("42703", "PGRST204"):
+                    raise
+
+        return t_written, e_written
+
     # ------------------------------------------------------------------
     # Run log
     # ------------------------------------------------------------------
