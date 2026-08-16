@@ -64,6 +64,18 @@ DEFAULT_SINCE_HOURS: int = 48           # lookback when no cursor is supplied
 # budget — this is the main cost control.
 MAX_LLM_PROCESS: int = 60
 
+# YouTube — UAE news channels as (channel_id, display name).
+# Channel ids are stable; resolved and pinned from the API's channel search.
+# Keep this list small: each channel costs 1 quota unit per video per run.
+YOUTUBE_CHANNELS: list[tuple[str, str]] = [
+    # (channel_id, display name) — resolved live via the API channel search (2026-08-16)
+    ("UCXTuTQZarVcFR_fgQXvsLpw", "Gulf News"),
+    ("UCaeG9NIqdx-xcZGt7ETfkpA", "Khaleej Times"),
+    ("UCGYf0VFdlSTzcJghW9z1DAA", "The National News"),
+    ("UCJ-AxG2x-5kgN_MMfBYa2Cg", "Dubai Media Office"),
+    ("UCByZP-y-7yWrnN7P9ADeyqg", "ARN News Live"),
+]
+
 # ---------------------------------------------------------------------------
 # Settings
 # ---------------------------------------------------------------------------
@@ -76,6 +88,7 @@ class Settings:
     groq_api_key: str | None = field(default=None)
     supabase_url: str | None = field(default=None)
     supabase_service_role_key: str | None = field(default=None)
+    youtube_api_key: str | None = field(default=None)
 
     user_agent: str = field(
         default="BASR-Intelligence/2.0 (UAE public sentiment intelligence platform; contact: owner@basr.ae)"
@@ -87,4 +100,6 @@ def get_settings() -> Settings:
         groq_api_key=os.environ.get("GROQ_API_KEY"),
         supabase_url=os.environ.get("SUPABASE_URL"),
         supabase_service_role_key=os.environ.get("SUPABASE_SERVICE_ROLE_KEY"),
+        youtube_api_key=os.environ.get("YOUTUBE_API_KEY")
+        or os.environ.get("GOOGLE_YOUTUBE_API_KEY"),
     )

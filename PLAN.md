@@ -87,7 +87,7 @@ DELIVERY
 | 1 | Reddit posts+comments (freshness + depth) | `reddit_arctic` (keyless archive) | ✅ built, live-tested (13 docs) |
 | 2 | ~~Reddit RSS~~ **removed — see Amendment A1** (Reddit blocks keyless RSS) | — | — |
 | 3 | News RSS (11 feeds incl. Khaleej, Gulf News, The National, WAM) | `news_rss` (refactor of v1) | ✅ built, live-tested (30 items/feed) |
-| 4 | YouTube comments (UAE news channels) | `youtube_comments` (Data API free quota, no card required) | ⬜ Phase 1 — needs `YOUTUBE_API_KEY` |
+| 4 | YouTube comments (UAE news channels) | `youtube_comments` (keyless RSS discovery + Data API, no card) | ✅ built, live-tested (5 channels pinned; commentsDisabled handled) |
 | 5 | ~~Google reviews~~ **replaced — Amendment A2** · Apple App Store reviews (UAE gov + delivery apps) | `apple_reviews` (official iTunes RSS, keyless, no card) | ✅ built, live-tested (10 reviews, Arabic + EN) |
 | 6 | Live global feed filtered to UAE | `bluesky_firehose` (Jetstream v2, free) | ✅ built, live-tested (513 frames/15s; word-boundary UAE filter) |
 | — | LinkedIn | **excluded** (locked) | — |
@@ -153,7 +153,7 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - ~~`reddit_rss`~~ removed by **Amendment A1** (Reddit blocks keyless RSS — 302→login, 403)
 - ✅ `bluesky_firehose` built + live-tested (Jetstream v2 spec, word-boundary UAE keywords; false-positive bug 'choradeira'→'deira' found & fixed)
 - ✅ `apple_reviews` built + live-tested (keyless iTunes RSS; replaces Google Places by **Amendment A2**; Arabic + English review sentiment)
-- ⬜ Build `youtube_comments` adapter (Data API — free, NO card; needs `YOUTUBE_API_KEY`)
+- ✅ `youtube_comments` built + live-tested (keyless RSS video discovery + Data API comments; 5 UAE news channels pinned in config; commentsDisabled handled without false quota errors)
 - ⬜ Build `basr/store/` (persistence: dedupe upserts, batches) + `basr/orchestrator.py`
 - ⬜ Update GitHub Actions cron (2×/day, staggered sources)
 - **DoD:** full end-to-end run: all sources → deduped rows in Supabase, zero crashes, retries verified, cron produces a run log
@@ -206,7 +206,7 @@ scraping" 429) → replaced with Arctic Shift, verified working from the user's 
 
 **Phase 0 COMPLETE (2026-08-16):** schema executed in Supabase; all 15 tables verified
 live via the PostgREST API from the user's machine (doc_topics/doc_entities use
-composite keys — no `id` column, verified via their real columns).**Next:** Phase 1 — youtube_comments adapter (free key, no card) → store layer → orchestrator → cron.
+composite keys — no `id` column, verified via their real columns).**Next:** Phase 1 — store layer (`basr/store/`: dedupe upserts, batches) → orchestrator → cron → end-to-end run.
 
 ## 14. Working rules
 
