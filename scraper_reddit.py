@@ -4,7 +4,7 @@ import xml.etree.ElementTree as ET
 import re
 
 
-# ── Reddit RSS feeds ──────────────────────────────────────────────
+# -- Reddit RSS feeds ----------------------------------------------
 REDDIT_FEEDS = [
     ("reddit", "r/dubai",       "https://old.reddit.com/r/dubai/new/.rss"),
     ("reddit", "r/uae",         "https://old.reddit.com/r/uae/new/.rss"),
@@ -48,7 +48,7 @@ async def fetch_one_feed(
         response = await client.get(url)
 
         if response.status_code == 429:
-            print(f"[-] {name}: rate limited — will retry next run")
+            print(f"[-] {name}: rate limited - will retry next run")
             return signals
         if response.status_code not in (200, 301, 302):
             print(f"[-] {name}: status {response.status_code}")
@@ -103,7 +103,7 @@ async def fetch_one_feed(
         print(f"[+] {name}: {len(signals)} signals")
 
     except ET.ParseError:
-        print(f"[-] {name}: XML parse error — blocked or invalid feed")
+        print(f"[-] {name}: XML parse error - blocked or invalid feed")
     except Exception as e:
         print(f"[-] {name}: {str(e)[:80]}")
 
@@ -124,15 +124,15 @@ async def fetch_reddit_signals() -> list:
         follow_redirects=True
     ) as client:
 
-        # Fetch Reddit feeds one at a time with delay — avoids rate limiting
+        # Fetch Reddit feeds one at a time with delay - avoids rate limiting
         print("[*] Fetching Reddit feeds (with delays to avoid rate limits)...")
         for source_type, name, url in REDDIT_FEEDS:
             result = await fetch_one_feed(client, source_type, name, url)
             all_signals.extend(result)
-            if result:  # Only delay if we got data — if blocked, no point waiting
+            if result:  # Only delay if we got data - if blocked, no point waiting
                 await asyncio.sleep(3)  # 3 second gap between Reddit requests
 
-        # Fetch news feeds all at once — they don't rate limit
+        # Fetch news feeds all at once - they don't rate limit
         print("[*] Fetching news feeds simultaneously...")
         news_tasks = [
             fetch_one_feed(client, s, n, u)
@@ -151,4 +151,4 @@ if __name__ == "__main__":
     if signals:
         print(f"\nSample:\n{signals[0]['raw_text'][:300]}")
     else:
-        print("No signals — check internet connection")
+        print("No signals - check internet connection")

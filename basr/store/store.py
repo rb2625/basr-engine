@@ -8,7 +8,7 @@ Design (matches schema.sql):
   payload limits, with retry/backoff on transient network / 5xx / 429 errors.
 - ``pipeline_runs`` logs every run (status, per-source counts, inserted/skipped,
   failures). If that table is missing (schema not re-run yet), logging degrades
-  gracefully — the pipeline never dies because the run log is unavailable.
+  gracefully - the pipeline never dies because the run log is unavailable.
 """
 
 from __future__ import annotations
@@ -270,7 +270,7 @@ class SupabaseStore:
         """Record a pipeline run in ``pipeline_runs``.
 
         Returns True on success, False when the table is missing or the log
-        write fails — callers must never treat run logging as fatal.
+        write fails - callers must never treat run logging as fatal.
         """
         if self._client is None:
             return False
@@ -400,7 +400,7 @@ async def _smoke_test() -> None:
             author_hash=hash_author("someone"),
             published_at=datetime.now(timezone.utc),
         ),
-        RawDoc(source="smoke_test", external_id="1", text="duplicate — must be skipped"),
+        RawDoc(source="smoke_test", external_id="1", text="duplicate - must be skipped"),
     ]
     async with SupabaseStore() as store:
         counts = await store.upsert_raw_docs(docs)

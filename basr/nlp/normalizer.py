@@ -1,15 +1,15 @@
 """Text normalization for the BASR NLP pipeline (pure Python, no deps).
 
-Pipeline order (matches PLAN.md §6.1):
+Pipeline order (matches PLAN.md sec 6.1):
 
-1. ``clean_text`` — HTML unescape + tag strip, URL/email removal, emoji and
+1. ``clean_text`` - HTML unescape + tag strip, URL/email removal, emoji and
    non-word symbol removal, whitespace collapse. This is the canonical
    ``clean_text`` stored in ``normalized_docs``.
-2. ``arabizi_to_arabic`` — best-effort transliteration of Arabizi (Arabic
+2. ``arabizi_to_arabic`` - best-effort transliteration of Arabizi (Arabic
    written in Latin letters, e.g. ``3ashan``, ``wallah``) into Arabic script.
    High-frequency Gulf words are in a dictionary; anything else with Arabizi
    marker characters goes through a conservative character map. The output is
-   a *hint* for the classifier, never a replacement — the cleaned original is
+   a *hint* for the classifier, never a replacement - the cleaned original is
    always kept (the v1 LLM understands Arabizi natively).
 """
 
@@ -60,7 +60,7 @@ def clean_text(text: str | None) -> str:
 
 
 # ---------------------------------------------------------------------------
-# Arabizi → Arabic
+# Arabizi -> Arabic
 # ---------------------------------------------------------------------------
 
 # High-frequency Gulf Arabizi words (the ones that carry real meaning in a
@@ -122,10 +122,10 @@ ARABIZI_MAP: dict[str, str] = {
     "3asr": "عصر", "3asab": "عصب",
 }
 
-# Character-level fallback: Arabizi marker digits → Arabic letters, applied
+# Character-level fallback: Arabizi marker digits -> Arabic letters, applied
 # only to words that contain markers (so English words are never touched).
 _CHAR_MAP = {
-    "2": "أ",  # also used for ء/إ — 'أ' is the safest common form
+    "2": "أ",  # also used for ء/إ - 'أ' is the safest common form
     "3": "ع",
     "5": "خ",
     "6": "ط",
@@ -153,7 +153,7 @@ def _transliterate_word(word: str) -> str:
         return ARABIZI_MAP[word]
 
     # Only attempt character rewriting when the word actually carries Arabizi
-    # markers (digit-letters or apostrophes) — protects English words like
+    # markers (digit-letters or apostrophes) - protects English words like
     # "parking", "metro", "app".
     if not _MARKER_RE.search(word):
         return word
@@ -206,5 +206,5 @@ def arabizi_to_arabic(text: str) -> str:
 
 
 def normalize(text: str | None) -> str:
-    """Full normalization pass → the canonical clean text."""
+    """Full normalization pass -> the canonical clean text."""
     return clean_text(text)

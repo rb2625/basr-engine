@@ -38,7 +38,7 @@ REDDIT_SUBREDDITS: list[str] = [
 # News feeds: (name, url). Google News topic queries give UAE-specific coverage;
 # site-scoped Google News feeds stand in for publishers that removed direct RSS
 # (verified live 2026-08-16: Khaleej Times + Gulf News RSS are 404, WAM feed
-# returns an error — see PLAN.md Amendment A3).
+# returns an error - see PLAN.md Amendment A3).
 NEWS_FEEDS: list[tuple[str, str]] = [
     ("Bloomberg Arabia", "https://feeds.bloomberg.com/bview/news.rss"),
     ("Google News UAE Biz", "https://news.google.com/rss/search?q=UAE+business+economy&hl=en-AE&gl=AE&ceid=AE:en"),
@@ -63,14 +63,14 @@ DEFAULT_SINCE_HOURS: int = 48           # lookback when no cursor is supplied
 # ---------------------------------------------------------------------------
 
 # Signals processed per run through the expensive LLM classifier. Tune to your
-# budget — this is the main cost control.
+# budget - this is the main cost control.
 MAX_LLM_PROCESS: int = 60
 
-# YouTube — UAE news channels as (channel_id, display name).
+# YouTube - UAE news channels as (channel_id, display name).
 # Channel ids are stable; resolved and pinned from the API's channel search.
 # Keep this list small: each channel costs 1 quota unit per video per run.
 YOUTUBE_CHANNELS: list[tuple[str, str]] = [
-    # (channel_id, display name) — resolved live via the API channel search (2026-08-16)
+    # (channel_id, display name) - resolved live via the API channel search (2026-08-16)
     ("UCXTuTQZarVcFR_fgQXvsLpw", "Gulf News"),
     ("UCaeG9NIqdx-xcZGt7ETfkpA", "Khaleej Times"),
     ("UCGYf0VFdlSTzcJghW9z1DAA", "The National News"),

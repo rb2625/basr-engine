@@ -1,6 +1,6 @@
-"""Eval sets for the BASR classifiers (Phase 2, §6.7 + §11).
+"""Eval sets for the BASR classifiers (Phase 2, sec 6.7 + sec 11).
 
-Every item carries two labels — ``sentiment`` and ``signal`` — matching the two
+Every item carries two labels - ``sentiment`` and ``signal`` - matching the two
 headline classifier tasks. The full v1 target is **500 labeled items**; this
 module ships a curated seed (80) that covers Arabic (MSA + Gulf), Arabizi,
 English, sarcasm, and the classic filtering traps (personal complaints that
@@ -46,7 +46,7 @@ ITEMS: list[EvalItem] = [
     EvalItem("الطلب على السكن الفاخر في أبوظبي يتزايد", "ar", "positive", "opportunity"),
     EvalItem("مخاوف من ركود في قطاع الضيافة بعد تراجع السياحة", "ar", "negative", "stress"),
     EvalItem("إطلاق خدمة توصيل جديدة بأسعار تنافسية", "ar", "positive", "opportunity"),
-    EvalItem("إفلاس شركة مقاولات كبرى تاركة آلاف الوظائف مهددة", "ar", "negative", "stress", "no named entity → systemic stress per v1 rules (named business would be closure)"),
+    EvalItem("إفلاس شركة مقاولات كبرى تاركة آلاف الوظائف مهددة", "ar", "negative", "stress", "no named entity -> systemic stress per v1 rules (named business would be closure)"),
     EvalItem("البنك المركزي خفض الفائدة على الإيداعات", "ar", "positive", "opportunity"),
     EvalItem("أسعار التأمين الصحي ارتفعت بشكل ملحوظ", "ar", "negative", "stress"),
     EvalItem("مبادرة جديدة لتدريب الشباب على البرمجة مجانا", "ar", "positive", "opportunity"),
@@ -86,9 +86,9 @@ ITEMS: list[EvalItem] = [
     EvalItem("Emirates announces direct flights to 12 new destinations", "en", "positive", "opportunity"),
     EvalItem("What's the best phone under 2000 dirhams?", "en", "neutral", "neutral", "consumer preference question"),
     EvalItem("Weather is nice today in Dubai", "en", "neutral", "neutral"),
-    EvalItem("Great, another rent increase. Just what we needed.", "en", "negative", "stress", "sarcasm — still negative"),
+    EvalItem("Great, another rent increase. Just what we needed.", "en", "negative", "stress", "sarcasm - still negative"),
     EvalItem("Salik charges are the best thing ever", "en", "negative", "stress", "sarcasm"),
-    EvalItem("Amazing, our flight got cancelled. Fantastic service.", "en", "negative", "neutral", "sarcasm; personal service complaint → no economic signal"),
+    EvalItem("Amazing, our flight got cancelled. Fantastic service.", "en", "negative", "neutral", "sarcasm; personal service complaint -> no economic signal"),
     EvalItem("Dubai Real Estate prices hit record high in Q3", "en", "positive", "opportunity"),
     EvalItem("Restaurant industry struggling as costs rise, several closures in Marina", "en", "negative", "closure"),
     EvalItem("New visa reforms expected to boost talent inflow", "en", "positive", "opportunity"),

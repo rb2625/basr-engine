@@ -1,6 +1,6 @@
 """Live Bluesky feed via the public Jetstream v2 firehose (keyless, free, open).
 
-Bluesky's Jetstream is a public websocket stream of network events — no API key,
+Bluesky's Jetstream is a public websocket stream of network events - no API key,
 no approval, no quota. It is the "live" layer of the platform (the X/Twitter
 firehose is now paid; this is the open equivalent).
 

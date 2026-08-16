@@ -7,10 +7,10 @@ Two-step design:
    Free tier: 10,000 quota units/day, NO billing account / card required
    (per Google's API docs, verified 2026).
 
-Quota: commentThreads.list costs 1 unit per call (up to 100 threads) — the free
+Quota: commentThreads.list costs 1 unit per call (up to 100 threads) - the free
 daily quota covers comment collection for many videos.
 
-Config: `YOUTUBE_CHANNELS` in basr/config.py — (channel_id, display name) pairs,
+Config: `YOUTUBE_CHANNELS` in basr/config.py - (channel_id, display name) pairs,
 resolved and pinned via the API's channel search.
 """
 
@@ -31,7 +31,7 @@ VIDEO_FEED = "https://www.youtube.com/feeds/videos.xml?channel_id={channel_id}"
 
 _YT_NS = {
     "atom": "http://www.w3.org/2005/Atom",
-    # NOTE: the feed declares "xml/schemas/2015" (no "xmlns") — verified live.
+    # NOTE: the feed declares "xml/schemas/2015" (no "xmlns") - verified live.
     "yt": "http://www.youtube.com/xml/schemas/2015",
     "media": "http://search.yahoo.com/mrss/",
 }
@@ -69,10 +69,10 @@ class YouTubeCommentsAdapter(SourceAdapter):
 
     async def fetch(self, since: datetime | None = None, limit: int = 100) -> list[RawDoc]:
         if not self.api_key:
-            print("[-] youtube_comments: no YOUTUBE_API_KEY in env — skipping source")
+            print("[-] youtube_comments: no YOUTUBE_API_KEY in env - skipping source")
             return []
         if not self.channels:
-            print("[-] youtube_comments: no channels configured — skipping source")
+            print("[-] youtube_comments: no channels configured - skipping source")
             return []
 
         docs: list[RawDoc] = []
@@ -109,7 +109,7 @@ class YouTubeCommentsAdapter(SourceAdapter):
         return docs
 
     async def _recent_videos(self, channel_id: str) -> list[tuple[str, str]]:
-        """Keyless channel RSS → [(video_id, title)] for the latest uploads."""
+        """Keyless channel RSS -> [(video_id, title)] for the latest uploads."""
         url = VIDEO_FEED.format(channel_id=channel_id)
         try:
             resp = await self.get_with_retry(url)
@@ -146,10 +146,10 @@ class YouTubeCommentsAdapter(SourceAdapter):
             data = resp.json()
         except httpx.HTTPStatusError as exc:
             # Distinguish quota exhaustion from other 403s (e.g. comments
-            # disabled on the video — common on UAE gov media channels).
+            # disabled on the video - common on UAE gov media channels).
             reason = self._error_reason(exc)
             if reason == "quotaExceeded":
-                print(f"    [-] youtube_comments {name}: daily quota exhausted — stopping source")
+                print(f"    [-] youtube_comments {name}: daily quota exhausted - stopping source")
                 raise QuotaExhausted from exc
             print(f"    [-] youtube_comments {name} (video {video_id}): HTTP {exc.response.status_code} reason={reason or exc}")
             return []
@@ -209,7 +209,7 @@ class YouTubeCommentsAdapter(SourceAdapter):
 
 
 class QuotaExhausted(Exception):
-    """Raised when the YouTube daily quota runs out — the pipeline should
+    """Raised when the YouTube daily quota runs out - the pipeline should
     degrade gracefully and stop this source for the run."""
 
 
@@ -228,4 +228,4 @@ if __name__ == "__main__":
     try:
         asyncio.run(_smoke_test())
     except QuotaExhausted:
-        print("[-] Quota exhausted — try again tomorrow (free tier resets daily)")
+        print("[-] Quota exhausted - try again tomorrow (free tier resets daily)")

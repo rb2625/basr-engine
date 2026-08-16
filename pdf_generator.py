@@ -43,17 +43,17 @@ def clean_text(text: str) -> str:
     """Replace Unicode smart quotes and special chars with ASCII equivalents."""
     replacements = {
         "\u2018": "'",   # left single quote
-        "\u2019": "'",   # right single quote  ← this is what crashed you
+        "\u2019": "'",   # right single quote  <- this is what crashed you
         "\u201c": '"',   # left double quote
         "\u201d": '"',   # right double quote
         "\u2013": "-",   # en dash
         "\u2014": "-",   # em dash
         "\u2026": "...", # ellipsis
-        "\u00e9": "e",   # é
-        "\u00e0": "a",   # à
-        "\u00fc": "u",   # ü
-        "\u00f6": "o",   # ö
-        "\u00e4": "a",   # ä
+        "\u00e9": "e",   # e
+        "\u00e0": "a",   # a
+        "\u00fc": "u",   # u
+        "\u00f6": "o",   # o
+        "\u00e4": "a",   # a
         "\u00b0": " deg", # degree symbol
         "\u00a0": " ",   # non-breaking space
         "\u20ac": "EUR", # euro sign
@@ -108,7 +108,7 @@ class BASRReport(FPDF):
         self.ln()
 
 
-# ── Standalone helper — defined OUTSIDE create_pdf_report ────────
+# -- Standalone helper - defined OUTSIDE create_pdf_report --------
 def add_key_signals_page(pdf: BASRReport, all_signals: list) -> None:
     """Page 2: Top 8 signals ranked by intensity then confidence."""
     type_colors: dict[str, tuple[int, int, int]] = {
@@ -177,7 +177,7 @@ def create_pdf_report(current_signals: list, client_name: str = "Valued Client")
     db_signals = get_signals_from_db()
     all_signals: list = db_signals if len(db_signals) > len(current_signals) else current_signals
 
-    # Remove duplicate summaries — keep only first occurrence
+    # Remove duplicate summaries - keep only first occurrence
     seen_summaries: set = set()
     deduped_signals: list = []
     for s in all_signals:
@@ -217,7 +217,7 @@ def create_pdf_report(current_signals: list, client_name: str = "Valued Client")
     pdf.set_margins(14, 24, 14)
     pdf.set_auto_page_break(auto=True, margin=18)
 
-    # ── PAGE 1: COVER ─────────────────────────────────────────────
+    # -- PAGE 1: COVER ---------------------------------------------
     pdf.add_page()
     pdf.ln(20)
 
@@ -284,10 +284,10 @@ def create_pdf_report(current_signals: list, client_name: str = "Valued Client")
         pdf.cell(20, 6, f"  {count}")
         pdf.ln()
 
-    # ── PAGE 2: KEY SIGNALS ───────────────────────────────────────
+    # -- PAGE 2: KEY SIGNALS ---------------------------------------
     add_key_signals_page(pdf, all_signals)
 
-    # ── PAGES 3+: SECTOR DETAIL ───────────────────────────────────
+    # -- PAGES 3+: SECTOR DETAIL -----------------------------------
     sector_order = sorted(sectors.keys(), key=lambda x: -sectors.get(x, 0))
 
     for sector in sector_order:
@@ -386,4 +386,4 @@ if __name__ == "__main__":
          "extracted_entities": {"companies": [], "locations": ["UAE"]}},
     ]
     create_pdf_report(test, client_name="Sample DIFC Investment Advisory")
-    print("Done — open the PDF in your folder.")
+    print("Done - open the PDF in your folder.")

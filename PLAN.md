@@ -1,22 +1,22 @@
-# BASR 2.0 — Master Plan (single source of truth)
+# BASR 2.0 - Master Plan (single source of truth)
 
 > **Standard:** the product will be *finished perfectly*, not "good enough." Nothing ships
 > half-done. Monetization is a consequence of a perfect product, and only begins after the
-> **Perfection Gate** (§12) passes — the gate is binary.
+> **Perfection Gate** (sec 12) passes - the gate is binary.
 >
 > **Discipline:** we move by this plan, phase by phase, in order. A phase is done only when
 > its Definition of Done passes. No scope drift, no version churn. Changes to this plan
 > require an explicit amendment (marked here).
 
-**Name:** BASR (بصيرة — "insight")
-**One-liner:** *UAE public sentiment intelligence and decision support — real-time, Arabic-native, early-warning, measured.*
+**Name:** BASR (بصيرة - "insight")
+**One-liner:** *UAE public sentiment intelligence and decision support - real-time, Arabic-native, early-warning, measured.*
 
 ---
 
 ## 1. Vision
 
 BASR continuously ingests what people say about the UAE across Reddit, news, YouTube,
-reviews, and live feeds — in Arabic, Arabizi, and English — classifies signals, detects
+reviews, and live feeds - in Arabic, Arabizi, and English - classifies signals, detects
 emerging issues *before they blow up*, and produces decision-ready briefings for
 universities, brands, agencies, government entities, and analysts. A free public dashboard
 is the users layer and the proof of quality; org-facing intelligence is the product.
@@ -31,37 +31,37 @@ is the users layer and the proof of quality; org-facing intelligence is the prod
 
 **What BASR is NOT (out of scope, locked):**
 - No private/closed data, no personal-data targeting, no login-walled scraping.
-- No LinkedIn scraping (ToS + fragile) — replaced by YouTube + reviews + live feed.
+- No LinkedIn scraping (ToS + fragile) - replaced by YouTube + reviews + live feed.
 - No crypto/blockchain, no mobile apps in v1 (PWA later if warranted), no paid APIs.
 - No scope expansion until the Perfection Gate passes.
 
 ## 3. Architecture (locked)
 
 ```
-ADAPTERS (one contract → RawDoc)          STORE (Supabase)
-  reddit_arctic (posts+comments)      →   raw_docs (immutable, deduped, hashed authors)
-  reddit_rss (freshness)              →   normalized_docs
-  news_rss (11 feeds)                 →   classifications / topics / entities
-  youtube_comments                    →   time_series (hour/day aggregates)
-  google_reviews                      →   alerts / briefs / orgs / eval_*
+ADAPTERS (one contract -> RawDoc)          STORE (Supabase)
+  reddit_arctic (posts+comments)      ->   raw_docs (immutable, deduped, hashed authors)
+  reddit_rss (freshness)              ->   normalized_docs
+  news_rss (11 feeds)                 ->   classifications / topics / entities
+  youtube_comments                    ->   time_series (hour/day aggregates)
+  google_reviews                      ->   alerts / briefs / orgs / eval_*
   bluesky_firehose (live)
-        │
-        ▼
+        |
+        v
 NLP PIPELINE                           INTELLIGENCE
-  normalizer (Arabizi→Arabic)          time-series aggregation
+  normalizer (Arabizi->Arabic)          time-series aggregation
   language detection (fasttext)        anomaly detection (STL + z-score ensemble)
-  sentiment/emotion (fine-tuned        alerting (severity low→critical)
+  sentiment/emotion (fine-tuned        alerting (severity low->critical)
     Gulf Arabic model + LLM ensemble)  agent layer: briefs, severity, responses,
   signal taxonomy (v1 lineage)           scheduled reports
   topics (BERTopic + LLM labels)       EVAL HARNESS: every model + agent scored
   entities + geocoding
-        │
-        ▼
+        |
+        v
 DELIVERY
-  Next.js dashboard (public + org console) · PDF reports (upgraded) · alerts (email/Telegram)
+  Next.js dashboard (public + org console)  -  PDF reports (upgraded)  -  alerts (email/Telegram)
 ```
 
-## 4. Technology decisions — LOCKED
+## 4. Technology decisions - LOCKED
 
 | Concern | Decision | Why |
 |---|---|---|
@@ -78,52 +78,52 @@ DELIVERY
 | Dashboard | Next.js + Tailwind + Mapbox GL + Recharts + Supabase Auth | proven stack, free |
 | Reports | fpdf2 (upgraded: sentiment stats, anomaly section) | v1 lineage |
 | Alerts | Email (Resend free) + Telegram bot | free |
-| Deploy | Vercel (dashboard) · HF Spaces (models) · Supabase (db) · GH Actions (cron) | 0 AED hard cap |
+| Deploy | Vercel (dashboard)  -  HF Spaces (models)  -  Supabase (db)  -  GH Actions (cron) | 0 AED hard cap |
 
-## 5. Data sources — LOCKED
+## 5. Data sources - LOCKED
 
 | # | Source | Adapter | Status |
 |---|---|---|---|
-| 1 | Reddit posts+comments (freshness + depth) | `reddit_arctic` (keyless archive) | ✅ built, live-tested (13 docs) |
-| 2 | ~~Reddit RSS~~ **removed — see Amendment A1** (Reddit blocks keyless RSS) | — | — |
-| 3 | News RSS (11 feeds incl. Khaleej, Gulf News, The National, WAM) | `news_rss` (refactor of v1) | ✅ built, live-tested (30 items/feed) |
-| 4 | YouTube comments (UAE news channels) | `youtube_comments` (keyless RSS discovery + Data API, no card) | ✅ built, live-tested (5 channels pinned; commentsDisabled handled) |
-| 5 | ~~Google reviews~~ **replaced — Amendment A2** · Apple App Store reviews (UAE gov + delivery apps) | `apple_reviews` (official iTunes RSS, keyless, no card) | ✅ built, live-tested (10 reviews, Arabic + EN) |
-| 6 | Live global feed filtered to UAE | `bluesky_firehose` (Jetstream v2, free) | ✅ built, live-tested (513 frames/15s; word-boundary UAE filter) |
-| — | LinkedIn | **excluded** (locked) | — |
+| 1 | Reddit posts+comments (freshness + depth) | `reddit_arctic` (keyless archive) | [x] built, live-tested (13 docs) |
+| 2 | ~~Reddit RSS~~ **removed - see Amendment A1** (Reddit blocks keyless RSS) | - | - |
+| 3 | News RSS (11 feeds incl. Khaleej, Gulf News, The National, WAM) | `news_rss` (refactor of v1) | [x] built, live-tested (30 items/feed) |
+| 4 | YouTube comments (UAE news channels) | `youtube_comments` (keyless RSS discovery + Data API, no card) | [x] built, live-tested (5 channels pinned; commentsDisabled handled) |
+| 5 | ~~Google reviews~~ **replaced - Amendment A2**  -  Apple App Store reviews (UAE gov + delivery apps) | `apple_reviews` (official iTunes RSS, keyless, no card) | [x] built, live-tested (10 reviews, Arabic + EN) |
+| 6 | Live global feed filtered to UAE | `bluesky_firehose` (Jetstream v2, free) | [x] built, live-tested (513 frames/15s; word-boundary UAE filter) |
+| - | LinkedIn | **excluded** (locked) | - |
 
 **Adapter contract:** `RawDoc{source, external_id, url, title, text, author_hash,
-published_at, fetched_at, lang, location_hint, media_links, meta}` → `raw_docs` table.
+published_at, fetched_at, lang, location_hint, media_links, meta}` -> `raw_docs` table.
 Dedupe key: `source:external_id`.
 
-## 6. NLP pipeline spec — LOCKED
+## 6. NLP pipeline spec - LOCKED
 
-1. **Normalize:** strip HTML/URLs/emoji; transliterate Arabizi → Arabic; normalize dialect spellings.
-2. **Language ID:** fasttext → `ar` / `arz` / `en` / `mixed`.
+1. **Normalize:** strip HTML/URLs/emoji; transliterate Arabizi -> Arabic; normalize dialect spellings.
+2. **Language ID:** fasttext -> `ar` / `arz` / `en` / `mixed`.
 3. **Sentiment + emotion:** fine-tuned Gulf-Arabic model (primary) for ar/arz; English model for en; **Groq LLM ensemble** for mixed/ambiguous/neutral-judgment calls. Output: score (-1..1), label, emotion, sarcasm flag, confidence.
-4. **Signal taxonomy (v1 lineage):** `signal_type` (stress/closure/opportunity/neutral), `sector`, `intensity` (1–5), `confidence`, `summary_en` — via the v1 prompt (kept, it is good).
-5. **Topics:** BERTopic clusters → LLM labels → stable topic table.
-6. **Entities:** gazetteer (UAE cities/areas, authorities, universities, brands) + LLM extraction → geocoded (Mapbox geocoding free tier) → PostGIS.
+4. **Signal taxonomy (v1 lineage):** `signal_type` (stress/closure/opportunity/neutral), `sector`, `intensity` (1-5), `confidence`, `summary_en` - via the v1 prompt (kept, it is good).
+5. **Topics:** BERTopic clusters -> LLM labels -> stable topic table.
+6. **Entities:** gazetteer (UAE cities/areas, authorities, universities, brands) + LLM extraction -> geocoded (Mapbox geocoding free tier) -> PostGIS.
 7. **Eval:** every component scored on the eval set (Phase 2). Scores published on the dashboard ("measured platform").
 
-**Targets:** sentiment F1 ≥ 88% (eval v1), ≥ 90% (eval v2 after iteration); language ID ≥ 97%.
+**Targets:** sentiment F1 >= 88% (eval v1), >= 90% (eval v2 after iteration); language ID >= 97%.
 
-## 7. Intelligence spec — LOCKED
+## 7. Intelligence spec - LOCKED
 
 - **Time series:** hourly + daily buckets; dimensions: entity / topic / sector / emirate / global. Aggregates: volume, sentiment mean/std.
-- **Anomaly:** STL decomposition (seasonality: day-of-week, Ramadan, exam seasons) + rolling z-score ensemble → `anomaly_score`, flag when above threshold and volume ≥ minimum and evidence exists.
-- **Alerts:** severity low/medium/high/critical; status lifecycle open → acknowledged → dismissed/promoted; channels: email + Telegram (WhatsApp after gate).
+- **Anomaly:** STL decomposition (seasonality: day-of-week, Ramadan, exam seasons) + rolling z-score ensemble -> `anomaly_score`, flag when above threshold and volume >= minimum and evidence exists.
+- **Alerts:** severity low/medium/high/critical; status lifecycle open -> acknowledged -> dismissed/promoted; channels: email + Telegram (WhatsApp after gate).
 - **Human-in-the-loop:** analyst/org can promote an alert into a brief.
 
-## 8. Agent spec — LOCKED
+## 8. Agent spec - LOCKED
 
 Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
-1. **Issue brief** — what/where/who, sentiment trajectory, top evidence with links.
-2. **Severity assessment** — impact × urgency × spread, justified.
-3. **Recommended responses** — ordered options for the owning org.
-4. **Scheduled reports** — daily "UAE Pulse", weekly sector digest, custom org reports (v1 lineage, upgraded with sentiment + anomaly + Arabic).
+1. **Issue brief** - what/where/who, sentiment trajectory, top evidence with links.
+2. **Severity assessment** - impact x urgency x spread, justified.
+3. **Recommended responses** - ordered options for the owning org.
+4. **Scheduled reports** - daily "UAE Pulse", weekly sector digest, custom org reports (v1 lineage, upgraded with sentiment + anomaly + Arabic).
 
-## 9. Dashboard spec — LOCKED
+## 9. Dashboard spec - LOCKED
 
 - **Public (free):** live UAE sentiment map (Mapbox), trend charts, topic explorer, anomaly feed, search, published eval scores. The acquisition + proof layer.
 - **Org console (post-gate, paid):** entity trackers, alert management, brief library, report builder, white-label.
@@ -138,61 +138,61 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 5. Scheduled reports (daily/weekly).
 6. Open eval sets + published scores (the trust layer).
 
-## 11. Roadmap — phases with strict Definitions of Done
+## 11. Roadmap - phases with strict Definitions of Done
 
 > Order is fixed. A phase is complete only when its DoD fully passes. No "almost."
 
-**Phase 0 — Foundations** ✅ **COMPLETE (2026-08-16)**
-- ✅ `basr/` package, `config.py`, adapter contract (`base.py`)
-- ✅ Reddit Arctic adapter (live-tested: 13 real docs)
-- ✅ `schema.sql` executed in Supabase — all 15 tables verified live via the API
-- ✅ DoD passed: contract + schema reviewed and locked
+**Phase 0 - Foundations** [x] **COMPLETE (2026-08-16)**
+- [x] `basr/` package, `config.py`, adapter contract (`base.py`)
+- [x] Reddit Arctic adapter (live-tested: 13 real docs)
+- [x] `schema.sql` executed in Supabase - all 15 tables verified live via the API
+- [x] DoD passed: contract + schema reviewed and locked
 
-**Phase 1 — Full ingestion** *(in progress — see §13)*
-- ✅ `news_rss` refactored onto the contract (live-tested: Google News UAE 30 items/feed)
-- ~~`reddit_rss`~~ removed by **Amendment A1** (Reddit blocks keyless RSS — 302→login, 403)
-- ✅ `bluesky_firehose` built + live-tested (Jetstream v2 spec, word-boundary UAE keywords; false-positive bug 'choradeira'→'deira' found & fixed)
-- ✅ `apple_reviews` built + live-tested (keyless iTunes RSS; replaces Google Places by **Amendment A2**; Arabic + English review sentiment)
-- ✅ `youtube_comments` built + live-tested (keyless RSS video discovery + Data API comments; 5 UAE news channels pinned in config; commentsDisabled handled without false quota errors)
-- ✅ Build `basr/store/` (persistence: dedupe upserts, batches, retry) + `basr/orchestrator.py` — **live-verified**
-- ✅ Update GitHub Actions cron (2×/day, staggered sources, run-log artifact)
-- ✅ **DoD PASSED (2026-08-16):** end-to-end run inserted **270 deduped rows** (reddit 61, news 100, apple 100, youtube 9); second run proved idempotency (**0 inserted / 269 skipped**); zero crashes; retries verified live
-- ✅ `schema.sql` re-run in Supabase (idempotency fix: `DROP POLICY IF EXISTS` before each `CREATE POLICY` — the 42710 fix); `pipeline_runs` live, run logging verified end-to-end
+**Phase 1 - Full ingestion** *(in progress - see sec 13)*
+- [x] `news_rss` refactored onto the contract (live-tested: Google News UAE 30 items/feed)
+- ~~`reddit_rss`~~ removed by **Amendment A1** (Reddit blocks keyless RSS - 302->login, 403)
+- [x] `bluesky_firehose` built + live-tested (Jetstream v2 spec, word-boundary UAE keywords; false-positive bug 'choradeira'->'deira' found & fixed)
+- [x] `apple_reviews` built + live-tested (keyless iTunes RSS; replaces Google Places by **Amendment A2**; Arabic + English review sentiment)
+- [x] `youtube_comments` built + live-tested (keyless RSS video discovery + Data API comments; 5 UAE news channels pinned in config; commentsDisabled handled without false quota errors)
+- [x] Build `basr/store/` (persistence: dedupe upserts, batches, retry) + `basr/orchestrator.py` - **live-verified**
+- [x] Update GitHub Actions cron (2x/day, staggered sources, run-log artifact)
+- [x] **DoD PASSED (2026-08-16):** end-to-end run inserted **270 deduped rows** (reddit 61, news 100, apple 100, youtube 9); second run proved idempotency (**0 inserted / 269 skipped**); zero crashes; retries verified live
+- [x] `schema.sql` re-run in Supabase (idempotency fix: `DROP POLICY IF EXISTS` before each `CREATE POLICY` - the 42710 fix); `pipeline_runs` live, run logging verified end-to-end
 
-**Phase 2 — NLP v1 + eval** *(in progress — see §13)*
-- ✅ `basr/nlp/` built: normalizer (HTML/emoji/URL cleanup + Arabizi→Arabic dictionary & char-map), language ID (heuristic ar/arz/en/mixed + optional fasttext path — **A4**), classifier (Groq llama-3.3-70b-v, v1-lineage prompt + sentiment/emotion/sarcasm), pipeline, CLI (`python -m basr.nlp`, incremental flush, budget-aware)
-- ✅ Live-verified end-to-end: 10 real docs classified into Supabase (sentiment/emotion/signal/entities), idempotent re-runs
-- ✅ `basr/eval/` built: 77-item curated seed (ar/arz/en, sarcasm, filtering traps) + scoring harness (accuracy/P/R/F1 + confusion) — **full 500-item set is the remaining labeling work**
-- ⬜ Topics (BERTopic) + entities/geocoding — next after eval closes
-- ⬜ Eval run v1 (needs Groq budget) + score published
-- **DoD (revised, see A5):** sentiment F1 ≥ 88% on eval v1; every ingested doc classified *within the free-tier daily token budget*; scores logged
+**Phase 2 - NLP v1 + eval** *(in progress - see sec 13)*
+- [x] `basr/nlp/` built: normalizer (HTML/emoji/URL cleanup + Arabizi->Arabic dictionary & char-map), language ID (heuristic ar/arz/en/mixed + optional fasttext path - **A4**), classifier (Groq llama-3.3-70b-v, v1-lineage prompt + sentiment/emotion/sarcasm), pipeline, CLI (`python -m basr.nlp`, incremental flush, budget-aware)
+- [x] Live-verified end-to-end: 10 real docs classified into Supabase (sentiment/emotion/signal/entities), idempotent re-runs
+- [x] `basr/eval/` built: 77-item curated seed (ar/arz/en, sarcasm, filtering traps) + scoring harness (accuracy/P/R/F1 + confusion) - **full 500-item set is the remaining labeling work**
+- [ ] Topics (BERTopic) + entities/geocoding - next after eval closes
+- [ ] Eval run v1 (needs Groq budget) + score published
+- **DoD (revised, see A5):** sentiment F1 >= 88% on eval v1; every ingested doc classified *within the free-tier daily token budget*; scores logged
 
-**Phase 3 — Dashboard v1 (public)**
+**Phase 3 - Dashboard v1 (public)**
 - Next.js app: map, trends, topics, anomaly feed, search; deployed to Vercel
 - **DoD:** live URL; loads real Supabase data; works on mobile
 
-**Phase 4 — Early warning**
+**Phase 4 - Early warning**
 - time_series aggregation + anomaly detection + alerts
-- **DoD:** a real alert fires on a real spike (verified, not simulated); alert → email/Telegram delivered
+- **DoD:** a real alert fires on a real spike (verified, not simulated); alert -> email/Telegram delivered
 
-**Phase 5 — Agents + reports**
+**Phase 5 - Agents + reports**
 - Briefs, severity, recommended responses, scheduled reports; agent eval harness
 - **DoD:** briefs pass eval suite; daily/weekly reports auto-generated and delivered
 
-**Phase 6 — Perfection pass**
+**Phase 6 - Perfection pass**
 - Backfill history, tests (unit + integration), docs (README, architecture, runbook), privacy/ToS audit, performance, Arabic coverage pass, dead-code removal (praw)
-- **DoD:** Perfection Gate checklist (§12) all-green
+- **DoD:** Perfection Gate checklist (sec 12) all-green
 
-**Phase 7 — Pilot & monetization** *(only after Phase 6 passes)*
-- Pilot: AURAK comms (free) → case study
+**Phase 7 - Pilot & monetization** *(only after Phase 6 passes)*
+- Pilot: AURAK comms (free) -> case study
 - Org plans: free/pro/enterprise; custom reports; media licensing of "UAE Pulse"
 - **DoD:** signed pilot + first paid customer + public case study
 
-## 12. Perfection Gate (binary — all must pass)
+## 12. Perfection Gate (binary - all must pass)
 
 1. All Phase DoDs passed, in order, no skipped items.
-2. Sentiment F1 ≥ 90% on eval v2 (expanded set); eval scores public.
-3. Ingestion runs 30 consecutive days with zero unhandled failures; uptime of dashboard ≥ 99%.
+2. Sentiment F1 >= 90% on eval v2 (expanded set); eval scores public.
+3. Ingestion runs 30 consecutive days with zero unhandled failures; uptime of dashboard >= 99%.
 4. A real (non-simulated) anomaly alert has fired and been delivered.
 5. Tests pass in CI; docs complete (README, architecture, runbook, data sources, privacy policy).
 6. Privacy audit green: authors hashed, no private data, robots.txt + ToS respected, UAE media-law compliant (aggregated trends only, no individual accusations).
@@ -200,26 +200,26 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 
 Only then does monetization begin (Phase 7). Before the gate: no charging, no pitching, no "good enough."
 
-## 13. Status — where we are (checkpoint, 2026-08-16)
+## 13. Status - where we are (checkpoint, 2026-08-16)
 
-**Done:** package structure · adapter contract · Reddit Arctic adapter (verified live:
-13 real posts+comments from r/dubai + r/UAE on 2026-08-16) · full schema.sql (269 lines).
+**Done:** package structure  -  adapter contract  -  Reddit Arctic adapter (verified live:
+13 real posts+comments from r/dubai + r/UAE on 2026-08-16)  -  full schema.sql (269 lines).
 
 **Critical finding this checkpoint:** PullPush blocks programmatic access ("paid
-scraping" 429) → replaced with Arctic Shift, verified working from the user's IP.
+scraping" 429) -> replaced with Arctic Shift, verified working from the user's IP.
 
 **Phase 0 COMPLETE (2026-08-16):** schema executed in Supabase; all 15 tables verified
 live via the PostgREST API from the user's machine (doc_topics/doc_entities use
-composite keys — no `id` column, verified via their real columns).
+composite keys - no `id` column, verified via their real columns).
 
 **Phase 1 COMPLETE (2026-08-16):** store + orchestrator + cron built and live-verified.
 End-to-end run: 270 rows inserted from 4 data-producing sources (reddit_arctic 61,
 news_rss 100, apple_reviews 100, youtube_comments 9; bluesky 0 matches in a 45s
 window = genuine scarcity, live-feed layer is supplementary). Re-run: 0 inserted /
-269 skipped — idempotent dedupe proven. Live testing caught + fixed: async
+269 skipped - idempotent dedupe proven. Live testing caught + fixed: async
 Supabase client has no `close()` (store now defensive); Khaleej Times / Gulf News /
-WAM direct RSS are dead (404 / bad-param) → replaced with site-scoped Google News
-feeds (all 11 feeds now live, 30 items each).**Next:** Phase 2 — NLP v1 + eval.
+WAM direct RSS are dead (404 / bad-param) -> replaced with site-scoped Google News
+feeds (all 11 feeds now live, 30 items each).**Next:** Phase 2 - NLP v1 + eval.
 
 **Phase 1 fully closed (2026-08-16):** schema re-run succeeded after the 42710
 idempotency fix (policies now dropped before create); `pipeline_runs` verified
@@ -227,14 +227,14 @@ live with a real logged run. Run logging is end-to-end operational.
 
 **Phase 2 (2026-08-16):** NLP layer built + live-verified (10 real docs
 classified end-to-end). Live testing caught the single most important
-constraint of the project so far — **Groq's free tier caps llama-3.3-70b-v at
-100,000 tokens/day (~64 docs/day at our prompt size)** — recorded as **A5**.
+constraint of the project so far - **Groq's free tier caps llama-3.3-70b-v at
+100,000 tokens/day (~64 docs/day at our prompt size)** - recorded as **A5**.
 The classifier is now budget-aware (stops honestly, docs stay unclassified for
 the next run). The backfill of the remaining ~220 docs is bounded by the daily
 budget: it drains over successive cron runs; the fine-tuned small model
 (planned) is what removes the ceiling. Also fixed a real schema bug: missing
 UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
-(**A6**) — cleaned live (43 clean rows) and the constraint is now in schema.sql.
+(**A6**) - cleaned live (43 clean rows) and the constraint is now in schema.sql.
 
 ## 14. Working rules
 
@@ -249,59 +249,59 @@ UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
 ## 15. Amendments
 
 **A6 (2026-08-16): classifications(raw_doc_id) must be UNIQUE.** Live cleanup
-found 25 duplicated classification rows: retried upserts (lost response →
+found 25 duplicated classification rows: retried upserts (lost response ->
 retry re-inserts) multiplied rows because the table had no unique constraint
 on raw_doc_id. Fixed three ways: (1) cleaned the live table (43 clean rows;
 error-payload rows deleted so those docs get retried), (2) schema.sql now adds
 the constraint idempotently via a guarded DO block (re-run the SQL editor),
 (3) the store upserts classifications with on_conflict="raw_doc_id".
 
-**A5 (2026-08-16): Groq free tier = 100k tokens/day on llama-3.3-70b-v — the
+**A5 (2026-08-16): Groq free tier = 100k tokens/day on llama-3.3-70b-v - the
 LLM-first backfill is budget-bounded.** Verified live: the free tier caps the
 70b model at 100,000 tokens/day (the 429 message carries the exact counter:
 "tokens per day (TPD): Limit 100000"). At ~1,550 tokens/doc that is ~64
-classified docs/day — far below the ~220-doc Phase 1 backlog, and it explains
-why burst pacing (2 workers × 8s ≈ 23k tok/min) tripped the ~12k tok/min
-window. Engineering response: (1) classifier is budget-aware — on the first
+classified docs/day - far below the ~220-doc Phase 1 backlog, and it explains
+why burst pacing (2 workers x 8s ~ 23k tok/min) tripped the ~12k tok/min
+window. Engineering response: (1) classifier is budget-aware - on the first
 TPD 429 it parses the API's own counter and stops classifying immediately,
 leaving the rest unclassified for the next run (no 429 hammering); (2) pacing
-serialized (workers=1, 10s gap ≈ 6 RPM ≈ 9.3k tok/min, safely under the
+serialized (workers=1, 10s gap ~ 6 RPM ~ 9.3k tok/min, safely under the
 window); (3) hard-failed docs are NOT written as zero-confidence rows, so they
-stay unclassified and get retried; (4) PLAN §11 DoD revised accordingly. The
+stay unclassified and get retried; (4) PLAN sec 11 DoD revised accordingly. The
 real unlock remains the fine-tuned Gulf-Arabic model for high-volume sentiment
-(plan §4) — with it, the 70b is reserved for synthesis only.
+(plan sec 4) - with it, the 70b is reserved for synthesis only.
 
-**A4 (2026-08-16): fasttext lid.176 deferred — heuristic language ID for v1.**
+**A4 (2026-08-16): fasttext lid.176 deferred - heuristic language ID for v1.**
 fasttext has no Windows wheel (verified live: both `fasttext` and
 `fasttext-wheel` fail to build without a compiler on this machine). v1 ships a
-deterministic heuristic (Arabic-script ratio → ar/arz via dialect markers;
-Latin + Arabizi digit-letters/tokens → arz; else en; both strong → mixed),
+deterministic heuristic (Arabic-script ratio -> ar/arz via dialect markers;
+Latin + Arabizi digit-letters/tokens -> arz; else en; both strong -> mixed),
 live-tested against ar/arz/en/mixed cases including URL robustness. The
 `FasttextLangID` wrapper stays in code so the Linux cron runner can opt in
-(model file present → automatic).
+(model file present -> automatic).
 
-**A3 (2026-08-16): Phase 1 completion — pipeline_runs table + news feed fixes.** (1) Added
+**A3 (2026-08-16): Phase 1 completion - pipeline_runs table + news feed fixes.** (1) Added
 `pipeline_runs` operational table (run status, source counts, inserted/skipped, failures)
 satisfying the Phase 1 DoD "cron produces a run log"; the store logs every run and degrades
 gracefully if the table is missing. (2) Verified live that Khaleej Times (`/rss/uaenews.xml`)
 and Gulf News (`/rss/`) direct RSS are dead (404) and WAM (`/feed/rss`) returns a bad-param
-error → replaced all three with site-scoped Google News feeds (`site:khaleejtimes.com`,
+error -> replaced all three with site-scoped Google News feeds (`site:khaleejtimes.com`,
 `site:gulfnews.com`, `site:wam.ae`), all verified 200 with 30 items. (3) Supabase async
-client exposes no `close()`/`aclose()` in the pinned version → store close is now defensive.
+client exposes no `close()`/`aclose()` in the pinned version -> store close is now defensive.
 
 **A2 (2026-08-16): Google Places API replaced with Apple App Store reviews.** Google's
 Places API requires a billing account (card on file), which the project rule forbids
 (hard 0-AED cap, no card risk). Replaced with the official iTunes customer-reviews
-RSS feed — free, keyless, no card, verified live (UAE PASS, DubaiNow, talabat, RTA
+RSS feed - free, keyless, no card, verified live (UAE PASS, DubaiNow, talabat, RTA
 Dubai; Arabic + English reviews captured). YouTube Data API v3 does NOT require a
-card (free 10,000 quota units/day per Google docs, 2026) — kept as source #4.
+card (free 10,000 quota units/day per Google docs, 2026) - kept as source #4.
 
 **A1 (2026-08-16): Reddit RSS adapter removed.** Verified live from the user's IP:
-`old.reddit.com/r/dubai/new/.rss` now 302→login and `www.reddit.com` returns 403
+`old.reddit.com/r/dubai/new/.rss` now 302->login and `www.reddit.com` returns 403
 Blocked. Keyless Reddit RSS is dead. Arctic Shift (already built, keyless) is the
-single Reddit source — it covers posts + comments, freshness + depth. `feed_common.py`
+single Reddit source - it covers posts + comments, freshness + depth. `feed_common.py`
 is retained (news_rss uses it). No other change: news_rss is live-tested at 30 items/feed.
 
 ---
 
-*Last amended: 2026-08-16 — Phase 0 ✅ · Phase 1 ✅ · Phase 2 in progress (NLP layer built + live-verified); Amendments A1–A6 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE).*
+*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer built + live-verified); Amendments A1-A6 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE).*

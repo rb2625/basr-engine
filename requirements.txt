@@ -1,4 +1,4 @@
-# BASR 2.0 — new ingestion pipeline (basr/orchestrator.py)
+# BASR 2.0 - new ingestion pipeline (basr/orchestrator.py)
 httpx
 websockets
 groq

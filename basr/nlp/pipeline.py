@@ -1,4 +1,4 @@
-"""Per-document NLP pipeline: normalize → language ID → classify.
+"""Per-document NLP pipeline: normalize -> language ID -> classify.
 
 One raw document produces:
 - a ``normalized_docs`` row (clean_text, lang, dialect)
@@ -6,7 +6,7 @@ One raw document produces:
 - an updated ``raw_docs.lang``
 
 The heavy Groq call is synchronous, so batches run through a small thread pool
-with the classifier's own pacing — the pool size is deliberately modest (free
+with the classifier's own pacing - the pool size is deliberately modest (free
 tier rate limits are the bottleneck, not CPU).
 """
 
@@ -31,14 +31,14 @@ def process_doc(
 
     Returns (normalized_row, classification_row | None, lang). A hard model
     failure (confidence 0, error raw) returns ``None`` for the classification
-    row — the doc stays unclassified so the next run retries it. Never raises.
+    row - the doc stays unclassified so the next run retries it. Never raises.
     """
     clean = clean_text(text)
     # fasttext (if present on Linux) else the heuristic.
     fasttext = get_langid()
     lang = fasttext.detect(clean) if fasttext is not None else detect_language(clean)
 
-    # Give the LLM the Arabizi hint alongside the cleaned original — it reads
+    # Give the LLM the Arabizi hint alongside the cleaned original - it reads
     # Arabizi natively, but the transliteration disambiguates digit-letters.
     hint = arabizi_to_arabic(clean) if lang == "arz" else ""
     llm_text = f"{hint}\n---\n{clean}" if hint and hint != clean else clean
@@ -74,7 +74,7 @@ async def classify_docs(
     classifier: GroqClassifier,
     *,
     # Serialized: the free tier's token-per-minute window is the binding
-    # constraint, not request rate — 2 workers just bursts into 429s.
+    # constraint, not request rate - 2 workers just bursts into 429s.
     workers: int = 1,
 ) -> list[tuple[dict[str, Any], dict[str, Any] | None, str]]:
     """Classify a list of raw-doc dicts ({id, text, title}) concurrently."""

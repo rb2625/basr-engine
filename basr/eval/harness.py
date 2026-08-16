@@ -1,4 +1,4 @@
-"""Eval harness — the platform's own scorecard (PLAN.md §6.7, §12.2).
+"""Eval harness - the platform's own scorecard (PLAN.md sec 6.7, sec 12.2).
 
 Every classifier is scored on the labeled eval sets; scores are meant to be
 published on the dashboard ("measured, not vibes"). This module:

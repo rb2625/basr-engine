@@ -1,7 +1,7 @@
 """Language identification for BASR docs.
 
-Returns one of: ``ar``, ``arz``, ``en``, ``mixed``, ``other`` — matching the
-``raw_docs.lang`` column and PLAN.md §6.2.
+Returns one of: ``ar``, ``arz``, ``en``, ``mixed``, ``other`` - matching the
+``raw_docs.lang`` column and PLAN.md sec 6.2.
 
 Design (recorded as Amendment A4): fasttext ``lid.176`` is the locked long-term
 choice, but it has **no Windows wheel** (verified live on this machine: both
@@ -9,11 +9,11 @@ choice, but it has **no Windows wheel** (verified live on this machine: both
 ships a deterministic heuristic that is more than adequate for this pipeline's
 three target languages:
 
-* Arabic script ratio → ``ar`` (Gulf dialect markers push it to ``arz``)
+* Arabic script ratio -> ``ar`` (Gulf dialect markers push it to ``arz``)
 * Latin script + Arabizi markers (digit-letters ``2 3 5 6 7 8 9`` in words or
-  high-frequency Arabizi tokens) → ``arz``
-* Latin script without Arabizi markers → ``en``
-* Substantial Arabic + English together → ``mixed``
+  high-frequency Arabizi tokens) -> ``arz``
+* Latin script without Arabizi markers -> ``en``
+* Substantial Arabic + English together -> ``mixed``
 
 If ``fasttext`` becomes importable (e.g. on the Linux cron runner with
 ``lid.176.bin`` present), it takes over automatically via ``FasttextLangID``.
@@ -29,7 +29,7 @@ _ARABIC_RE = re.compile(
 )
 _LATIN_RE = re.compile(r"[A-Za-z]")
 
-# Gulf / Egyptian / Levantine dialect markers → arz.
+# Gulf / Egyptian / Levantine dialect markers -> arz.
 _DIALECT_TOKENS = {
     "شلون", "ماكو", "زين", "هاي", "هيج", "دش", "اجل", "بس",
     "وين", "شو", "شنو", "عندي", "أبغى", "ابي", "الحين", "حين",
@@ -76,7 +76,7 @@ def detect_language(text: str | None) -> str:
     """Classify a document into ar / arz / en / mixed / other."""
     if not text:
         return "other"
-    # URLs inflate the Latin ratio (https://t.co/...) — drop them first so a
+    # URLs inflate the Latin ratio (https://t.co/...) - drop them first so a
     # pure-Arabic post with a link is still "ar", not "mixed".
     text = _URL_RE.sub(" ", text)
     ar_ratio, la_ratio = _script_ratio(text)

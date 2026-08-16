@@ -1,5 +1,5 @@
 -- ============================================================================
--- BASR 2.0 — Schema migration
+-- BASR 2.0 - Schema migration
 -- Run in the Supabase SQL editor (or via `supabase db push`). Idempotent.
 --
 -- Design principles:
@@ -75,7 +75,7 @@ CREATE INDEX IF NOT EXISTS idx_classifications_doc ON classifications (raw_doc_i
 CREATE INDEX IF NOT EXISTS idx_classifications_signal ON classifications (signal_type, intensity_score);
 CREATE INDEX IF NOT EXISTS idx_classifications_sentiment ON classifications (sentiment_label);
 
--- One classification per document (idempotent re-runs; Amendment A6 — this
+-- One classification per document (idempotent re-runs; Amendment A6 - this
 -- constraint was missing in the initial migration, so retried upserts could
 -- multiply rows. The DO block keeps the file re-runnable).
 DO $$
@@ -247,7 +247,7 @@ CREATE TABLE IF NOT EXISTS eval_runs (
 );
 
 -- ============================================================================
--- 6b. PIPELINE RUNS (operational log — Phase 1 DoD: "cron produces a run log")
+-- 6b. PIPELINE RUNS (operational log - Phase 1 DoD: "cron produces a run log")
 -- ============================================================================
 
 CREATE TABLE IF NOT EXISTS pipeline_runs (
@@ -310,5 +310,5 @@ CREATE POLICY "briefs_service_only"  ON briefs            FOR ALL USING (false) 
 --    v1's `economic_signals` table is left untouched; a data migration moves
 --    its rows into raw_docs + classifications once the new pipeline is live.
 --    v1's `orchestrator.py` / `scraper_*.py` remain untouched until Phase 6 cleanup;
---    the new pipeline is `basr/orchestrator.py` (see PLAN.md §13).
+--    the new pipeline is `basr/orchestrator.py` (see PLAN.md sec 13).
 -- ============================================================================

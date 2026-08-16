@@ -8,7 +8,7 @@ Usage:
 Idempotent by design: docs with an existing classification are skipped, and
 ``normalized_docs`` has UNIQUE(raw_doc_id). Re-running classifies only what
 is new. Pacing (8s between Groq calls on the free tier) means ~100 docs take
-≈15 minutes — run it as the second stage of the cron.
+~15 minutes - run it as the second stage of the cron.
 """
 
 from __future__ import annotations
@@ -29,19 +29,19 @@ FLUSH_EVERY = 10  # persist progress in slices so interruption never loses work
 async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False) -> int:
     t0 = time.monotonic()
     print("=" * 60)
-    print("  BASR Intelligence Engine — NLP classification stage")
+    print("  BASR Intelligence Engine - NLP classification stage")
     print(f"  {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC   dry_run={dry_run}")
     print("=" * 60)
 
     classifier = GroqClassifier()
     async with SupabaseStore() as store:
         docs = await store.fetch_unclassified_docs(limit)
-        print(f"[+] {len(docs)} unclassified docs" + ("" if docs else " — nothing to do"))
+        print(f"[+] {len(docs)} unclassified docs" + ("" if docs else " - nothing to do"))
         if not docs:
             return 0
 
         # Classify + flush in slices so an interrupted backfill keeps what it
-        # did (upserts are idempotent — re-running skips classified docs).
+        # did (upserts are idempotent - re-running skips classified docs).
         all_results: list = []
         n_written = c_written = 0
         for start in range(0, len(docs), FLUSH_EVERY):
@@ -49,7 +49,7 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False) -> int:
             slice_results = await classify_docs(slice_docs, classifier)
             all_results.extend(slice_results)
             if not dry_run:
-                # Classification rows are None on hard model failure — leave
+                # Classification rows are None on hard model failure - leave
                 # those docs unclassified so the next run retries them.
                 nw, cw = await store.upsert_nlp_rows(
                     [r[0] for r in slice_results],

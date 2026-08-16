@@ -33,7 +33,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
                        dry_run: bool = False) -> int:
     t0 = time.monotonic()
     print("=" * 60)
-    print("  BASR eval harness — classifier scorecard")
+    print("  BASR eval harness - classifier scorecard")
     print(f"  {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC   dry_run={dry_run}")
     print("=" * 60)
 
@@ -53,7 +53,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
                 # covers ar / arz / en / sarcasm.
                 step = max(1, len(items) // limit)
                 items = items[::step][:limit]
-            print(f"\n[+] Task {ds['task']!r} — dataset {ds['name']} ({len(items)} items)")
+            print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} ({len(items)} items)")
             metrics = run_eval(
                 classifier, items, ds["task"],
                 extract=_TASK_EXTRACT[ds["task"]],

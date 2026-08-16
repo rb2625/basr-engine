@@ -1,13 +1,13 @@
 """LLM classification: sentiment + emotion + BASR v1-lineage signal taxonomy.
 
-The system prompt is the **v1 lineage** — ``processor.py``'s prompt is kept
-nearly verbatim (it is good, per PLAN.md §6.4) and extended with the
+The system prompt is the **v1 lineage** - ``processor.py``'s prompt is kept
+nearly verbatim (it is good, per PLAN.md sec 6.4) and extended with the
 sentiment/emotion fields the schema demands. Output is a single JSON object
 that maps 1:1 onto the ``classifications`` table.
 
 Model: ``llama-3.3-70b-versatile`` on Groq's free tier (zero marginal cost,
 locked in the plan). Rate limits on the free tier are real, so every request
-is paced (default 8s minimum gap) and retried with backoff on 429/5xx — a
+is paced (default 8s minimum gap) and retried with backoff on 429/5xx - a
 batch of 100 docs takes ~15 minutes, which is fine for a cron stage.
 """
 
@@ -39,7 +39,7 @@ SECTORS = (
 )
 
 # ---------------------------------------------------------------------------
-# Prompt — v1 lineage + sentiment/emotion extension
+# Prompt - v1 lineage + sentiment/emotion extension
 # ---------------------------------------------------------------------------
 
 _SENTIMENT_BLOCK = """
@@ -47,9 +47,9 @@ SENTIMENT CLASSIFICATION RULES (in addition to the above):
 - sentiment_score: float -1.0 (very negative) .. 1.0 (very positive). 0 = neutral.
 - sentiment_label: "positive" | "negative" | "neutral" | "mixed"
 - emotion: one of "anger" | "fear" | "joy" | "sadness" | "disgust" |
-  "surprise" | "trust" | "anticipation" | "neutral" — the dominant emotion
+  "surprise" | "trust" | "anticipation" | "neutral" - the dominant emotion
   of the speaker/writer, not the topic's general mood.
-- sarcasm: boolean — true only when the text is clearly ironic/sarcastic
+- sarcasm: boolean - true only when the text is clearly ironic/sarcastic
   (e.g. "great, another rent increase"). Sarcastic negative statements still
   get a negative sentiment_score.
 - A complaint about a service/business = negative sentiment even when it is
@@ -64,13 +64,13 @@ Your job is to extract ONLY genuine economic intelligence signals from text.
 You fluently understand formal Arabic, Gulf dialects, Egyptian and Levantine Arabic,
 English, and Arabizi (3ashan, wallah, khara, yalla, 7aram, inshallah).
 
-STRICT FILTERING RULES — classify as "neutral" and intensity 1 if the text is:
-- International company news with no direct UAE market connection → neutral
+STRICT FILTERING RULES - classify as "neutral" and intensity 1 if the text is:
+- International company news with no direct UAE market connection -> neutral
 - Personal complaints about individual situations unless they reveal
-  a systemic pattern affecting a named company or sector → neutral
-- International company news with no direct UAE market connection → neutral
-- Any signal where the UAE is not the primary affected market → neutral
-- Personal complaints about government services or individual situations → neutral
+  a systemic pattern affecting a named company or sector -> neutral
+- International company news with no direct UAE market connection -> neutral
+- Any signal where the UAE is not the primary affected market -> neutral
+- Personal complaints about government services or individual situations -> neutral
   unless they reveal a systemic pattern affecting a named company or sector
 - Personal social posts (dating, relationships, personal opinions)
 - Generic product recommendations with no market implication
@@ -94,7 +94,7 @@ CLASSIFICATION RULES:
 - signal_type: "stress", "closure", "opportunity", or "neutral"
 - sector: "F&B", "Real Estate", "Tech", "Retail", "Logistics", "Finance",
   "Government Services", "Education", "Healthcare", "Transport", "General"
-  Use "General" ONLY for cross-sector macro signals — not for personal posts
+  Use "General" ONLY for cross-sector macro signals - not for personal posts
 - confidence_score: float 0.0 to 1.0
 - intensity_score: 1 to 5
   1 = vague individual complaint, no named entity
@@ -124,7 +124,7 @@ OUTPUT: ONLY a valid JSON object with exactly these keys:
   "summary_en": "<one sentence>"
 }}
 No markdown. No backticks. If the text has no genuine economic signal,
-return signal_type "neutral" and intensity 1 — but ALWAYS still score
+return signal_type "neutral" and intensity 1 - but ALWAYS still score
 sentiment, emotion and sarcasm.
 """
 
@@ -149,7 +149,7 @@ class ClassifyResult:
     raw: dict = field(default_factory=dict)
 
     def to_row(self, raw_doc_id: int) -> dict[str, Any]:
-        """Map onto the classifications table columns (schema.sql §2)."""
+        """Map onto the classifications table columns (schema.sql sec 2)."""
         return {
             "raw_doc_id": raw_doc_id,
             "sentiment_score": round(max(-1.0, min(1.0, self.sentiment_score)), 3),
@@ -203,7 +203,7 @@ def _validate(data: dict) -> ClassifyResult:
         signal_type=_pick(data.get("signal_type"), SIGNAL_TYPES, "neutral"),
         sector=_pick(data.get("sector"), SECTORS, "General"),
         intensity_score=_clamp_int(data.get("intensity_score"), 1, 5, 1),
-        # The model sometimes echoes the v1 key "confidence_score" — accept both.
+        # The model sometimes echoes the v1 key "confidence_score" - accept both.
         confidence=_clamp_float(
             data.get("confidence", data.get("confidence_score")), 0.0, 1.0, 0.0
         ),
@@ -256,8 +256,8 @@ class GroqClassifier:
         self,
         *,
         api_key: str | None = None,
-        # Free tier ≈12k tokens/min for llama-3.3-70b-v (~7.7 calls/min at our
-        # ~1,550 tok/call). 10s gap = 6 RPM ≈ 9.3k tok/min — safe margin.
+        # Free tier ~12k tokens/min for llama-3.3-70b-v (~7.7 calls/min at our
+        # ~1,550 tok/call). 10s gap = 6 RPM ~ 9.3k tok/min - safe margin.
         min_gap_s: float = 10.0,
         max_attempts: int = 3,
     ) -> None:
@@ -270,7 +270,7 @@ class GroqClassifier:
         # Daily token budget (Amendment A5): the free tier caps llama-3.3-70b-v
         # at 100k tokens/day. We self-calibrate from the API's own counter on
         # the first 429, so a cron run stops classifying honestly instead of
-        # hammering retries — the remaining docs stay unclassified for the
+        # hammering retries - the remaining docs stay unclassified for the
         # next run (or the fine-tuned model, which is the real unlock).
         self._daily_exhausted = False
 
@@ -303,7 +303,7 @@ class GroqClassifier:
 
     def classify(self, text: str, *, title: str | None = None) -> ClassifyResult:
         """Classify one document. Returns a validated result (never raises for
-        model errors — the pipeline needs graceful degradation, working rule 3)."""
+        model errors - the pipeline needs graceful degradation, working rule 3)."""
         user_content = (
             f"Analyze this text from the UAE digital ecosystem:\n\n{text}"
             if not title
@@ -344,7 +344,7 @@ class GroqClassifier:
                         self._daily_exhausted = True
                         print(
                             f"    [-] Groq daily token budget exhausted "
-                            f"({used}/{limit}) — docs stay unclassified for next run"
+                            f"({used}/{limit}) - docs stay unclassified for next run"
                         )
                         return self._budget_exhausted(f"{used}/{limit} used")
                     if attempt < self._max_attempts:

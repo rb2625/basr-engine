@@ -1,4 +1,4 @@
-"""Apple App Store reviews via the official iTunes RSS feed — keyless, no card.
+"""Apple App Store reviews via the official iTunes RSS feed - keyless, no card.
 
 Replaces the Google Places API plan (which requires a billing account/card) with
 an official, free, keyless source: Apple publishes every app's recent reviews as
@@ -24,7 +24,7 @@ from urllib.parse import quote
 
 from .base import RawDoc, SourceAdapter, hash_author
 
-# (name, Apple app id) — UAE apps with real user sentiment.
+# (name, Apple app id) - UAE apps with real user sentiment.
 # App ids are stable; searchable at any time via the Search endpoint above.
 APP_REVIEW_TARGETS: tuple[tuple[str, int], ...] = (
     ("UAE PASS", 1377158818),
@@ -147,7 +147,7 @@ async def _smoke_test() -> None:
     print(f"[+] Collected {len(docs)} reviews")
     for d in docs[:5]:
         rating = d.meta.get("rating")
-        print(f"  - {rating}★ {d.text[:70]!r}")
+        print(f"  - {rating}* {d.text[:70]!r}")
 
 
 if __name__ == "__main__":

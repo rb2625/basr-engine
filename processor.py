@@ -14,13 +14,13 @@ Your job is to extract ONLY genuine economic intelligence signals from text.
 You fluently understand formal Arabic, Gulf dialects, Egyptian and Levantine Arabic,
 English, and Arabizi (3ashan, wallah, khara, yalla, 7aram, inshallah).
 
-STRICT FILTERING RULES — classify as "neutral" and intensity 1 if the text is:
-- International company news with no direct UAE market connection → neutral
+STRICT FILTERING RULES - classify as "neutral" and intensity 1 if the text is:
+- International company news with no direct UAE market connection -> neutral
 - Personal complaints about individual situations unless they reveal 
-  a systemic pattern affecting a named company or sector → neutral
-- International company news with no direct UAE market connection → neutral
-- Any signal where the UAE is not the primary affected market → neutral
-- Personal complaints about government services or individual situations → neutral
+  a systemic pattern affecting a named company or sector -> neutral
+- International company news with no direct UAE market connection -> neutral
+- Any signal where the UAE is not the primary affected market -> neutral
+- Personal complaints about government services or individual situations -> neutral
   unless they reveal a systemic pattern affecting a named company or sector
 - Personal social posts (dating, relationships, personal opinions)
 - Generic product recommendations with no market implication
@@ -42,7 +42,7 @@ Only classify as stress/closure/opportunity if the text contains:
 CLASSIFICATION RULES:
 - signal_type: "stress", "closure", "opportunity", or "neutral"
 - sector: "F&B", "Real Estate", "Tech", "Retail", "Logistics", "Finance", "General"
-  Use "General" ONLY for cross-sector macro signals — not for personal posts
+  Use "General" ONLY for cross-sector macro signals - not for personal posts
 - confidence_score: float 0.0 to 1.0
 - intensity_score: 1 to 5
   1 = vague individual complaint, no named entity
@@ -105,7 +105,7 @@ def process_raw_signal(raw_signal_text):
         if "summary_en" not in structured_data or not structured_data["summary_en"]:
             structured_data["summary_en"] = "No summary available."
 
-        # Fix extracted_entities — Groq sometimes returns a flat list instead of a dict
+        # Fix extracted_entities - Groq sometimes returns a flat list instead of a dict
         entities = structured_data.get("extracted_entities", {})
         if isinstance(entities, list):
             structured_data["extracted_entities"] = {

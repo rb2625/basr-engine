@@ -1,10 +1,10 @@
-"""End-to-end ingestion pipeline: all sources → Supabase store.
+"""End-to-end ingestion pipeline: all sources -> Supabase store.
 
 This is the single entry point the cron runs. It:
 
 1. Builds every configured source adapter.
 2. Runs them concurrently, staggered by a small offset (politeness), each with
-   its own timeout — one failing source never kills the run (working rule 3).
+   its own timeout - one failing source never kills the run (working rule 3).
 3. Dedupes across sources, then upserts into ``raw_docs`` (idempotent).
 4. Logs the run to ``pipeline_runs`` (graceful if the table is missing).
 5. Prints a structured summary and sets the exit code (0 = store succeeded).
@@ -38,7 +38,7 @@ from .config import (
 )
 from .store import SupabaseStore
 
-# NLP stage (Phase 2) — imported lazily inside run_pipeline so a missing
+# NLP stage (Phase 2) - imported lazily inside run_pipeline so a missing
 # groq key never breaks plain ingestion.
 _NLP_DEFAULT_LIMIT = 50
 
@@ -107,10 +107,10 @@ async def _run_one(name: str, adapter: object, kwargs: dict, timeout: float, off
         docs = await asyncio.wait_for(adapter.fetch(**kwargs), timeout=timeout)
         return SourceResult(name=name, docs=docs)
     except QuotaExhausted as exc:
-        print(f"[-] {name}: YouTube daily quota exhausted — skipping source this run")
+        print(f"[-] {name}: YouTube daily quota exhausted - skipping source this run")
         return SourceResult(name=name, error=f"quota_exhausted: {exc}")
     except asyncio.TimeoutError:
-        print(f"[-] {name}: timed out after {timeout}s — continuing with other sources")
+        print(f"[-] {name}: timed out after {timeout}s - continuing with other sources")
         return SourceResult(name=name, error=f"timeout after {timeout}s")
     except Exception as exc:  # source isolation: never let one source kill the run
         print(f"[-] {name}: {exc.__class__.__name__}: {str(exc)[:120]}")
@@ -125,7 +125,7 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
     limit = limit or DEFAULT_FETCH_LIMIT
 
     print("=" * 60)
-    print("  BASR Intelligence Engine — ingestion pipeline")
+    print("  BASR Intelligence Engine - ingestion pipeline")
     print(f"  {started_at:%Y-%m-%d %H:%M:%S} UTC   dry_run={dry_run}")
     print("=" * 60)
 
@@ -198,7 +198,7 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
     if failures:
         lines.append(f"  failures: {len(failures)}  ({'; '.join(failures)})")
     if store_error:
-        lines.append(f"  store   : FAILED — {store_error}")
+        lines.append(f"  store   : FAILED - {store_error}")
     lines.append("-" * 60)
     print("\n" + "\n".join(lines))
 
@@ -217,7 +217,7 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
 
     if dry_run:
         return 0
-    # Exit non-zero only if the store itself failed (nothing persisted) — a
+    # Exit non-zero only if the store itself failed (nothing persisted) - a
     # failed source is normal drift, handled by design.
     return 1 if (store_error or status == "failed") else 0
 

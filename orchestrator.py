@@ -53,9 +53,9 @@ async def run_pipeline(max_to_process: int = 10, generate_pdf: bool = True, clie
             signal_type = ai_result.get("signal_type", "?")
             sector = ai_result.get("sector", "?")
             intensity = ai_result.get("intensity_score", "?")
-            print(f"→ [{signal_type.upper()}] {sector} | Intensity: {intensity}/5")
+            print(f"-> [{signal_type.upper()}] {sector} | Intensity: {intensity}/5")
         else:
-            print("→ [SKIPPED] AI returned no result")
+            print("-> [SKIPPED] AI returned no result")
 
     print(f"\n[+] AI Processing complete: {len(processed_signals)} signals classified")
     reddit_count = sum(1 for s in raw_payload if s.get("source_platform") == "reddit")
@@ -65,7 +65,7 @@ async def run_pipeline(max_to_process: int = 10, generate_pdf: bool = True, clie
     
     if reddit_count == 0:
         print("[!] WARNING: No Reddit data collected today.")
-        print("[!] Report will be news-only — consider waiting for Reddit recovery before sending to clients.")
+        print("[!] Report will be news-only - consider waiting for Reddit recovery before sending to clients.")
 
     # STEP 3: Save to Supabase
     print(f"\n[3/4] Saving to Supabase database...")

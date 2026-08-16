@@ -44,7 +44,7 @@ class RawDoc:
 def hash_author(author: str | None) -> str | None:
     """Hash a username so raw identities are never persisted.
 
-    A 16-hex-char prefix keeps ~2^64 space — enough to fingerprint an author for
+    A 16-hex-char prefix keeps ~2^64 space - enough to fingerprint an author for
     trend analysis while making de-anonymization impractical.
     """
     if not author:
