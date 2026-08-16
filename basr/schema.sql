@@ -278,6 +278,13 @@ ALTER TABLE briefs             ENABLE ROW LEVEL SECURITY;
 
 -- Default: only the service role can touch org data (policies are added once
 -- auth is wired in the dashboard migration).
+-- NOTE: `CREATE POLICY` has no IF NOT EXISTS in PostgreSQL, so each policy is
+-- dropped first to keep the whole migration idempotent (safe to re-run).
+DROP POLICY IF EXISTS "orgs_service_only"    ON orgs;
+DROP POLICY IF EXISTS "trackers_service_only" ON org_trackers;
+DROP POLICY IF EXISTS "subs_service_only"    ON org_subscriptions;
+DROP POLICY IF EXISTS "briefs_service_only"  ON briefs;
+
 CREATE POLICY "orgs_service_only"    ON orgs              FOR ALL USING (false) WITH CHECK (false);
 CREATE POLICY "trackers_service_only" ON org_trackers     FOR ALL USING (false) WITH CHECK (false);
 CREATE POLICY "subs_service_only"    ON org_subscriptions FOR ALL USING (false) WITH CHECK (false);
