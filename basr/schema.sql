@@ -232,6 +232,27 @@ CREATE TABLE IF NOT EXISTS eval_runs (
 );
 
 -- ============================================================================
+-- 6b. PIPELINE RUNS (operational log — Phase 1 DoD: "cron produces a run log")
+-- ============================================================================
+
+CREATE TABLE IF NOT EXISTS pipeline_runs (
+    id            BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    started_at    TIMESTAMPTZ NOT NULL DEFAULT now(),
+    finished_at   TIMESTAMPTZ,
+    status        TEXT NOT NULL DEFAULT 'running'
+                  CHECK (status IN ('running', 'success', 'partial', 'failed', 'dry_run')),
+    source_counts JSONB NOT NULL DEFAULT '{}'::jsonb,   -- {source: docs_fetched}
+    inserted      INTEGER NOT NULL DEFAULT 0,
+    skipped       INTEGER NOT NULL DEFAULT 0,
+    failures      JSONB NOT NULL DEFAULT '[]'::jsonb,   -- [{source: reason}]
+    error         TEXT,
+    created_at    TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_started ON pipeline_runs (started_at DESC);
+CREATE INDEX IF NOT EXISTS idx_pipeline_runs_status ON pipeline_runs (status, started_at DESC);
+
+-- ============================================================================
 -- 7. TRIGGERS
 -- ============================================================================
 
@@ -266,4 +287,6 @@ CREATE POLICY "briefs_service_only"  ON briefs            FOR ALL USING (false) 
 -- 9. BACK-COMPAT NOTE
 --    v1's `economic_signals` table is left untouched; a data migration moves
 --    its rows into raw_docs + classifications once the new pipeline is live.
+--    v1's `orchestrator.py` / `scraper_*.py` remain untouched until Phase 6 cleanup;
+--    the new pipeline is `basr/orchestrator.py` (see PLAN.md §13).
 -- ============================================================================

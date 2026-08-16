@@ -36,7 +36,9 @@ REDDIT_SUBREDDITS: list[str] = [
 ]
 
 # News feeds: (name, url). Google News topic queries give UAE-specific coverage;
-# direct publisher feeds add authoritative sources.
+# site-scoped Google News feeds stand in for publishers that removed direct RSS
+# (verified live 2026-08-16: Khaleej Times + Gulf News RSS are 404, WAM feed
+# returns an error — see PLAN.md Amendment A3).
 NEWS_FEEDS: list[tuple[str, str]] = [
     ("Bloomberg Arabia", "https://feeds.bloomberg.com/bview/news.rss"),
     ("Google News UAE Biz", "https://news.google.com/rss/search?q=UAE+business+economy&hl=en-AE&gl=AE&ceid=AE:en"),
@@ -45,10 +47,10 @@ NEWS_FEEDS: list[tuple[str, str]] = [
     ("Google News UAE Retail", "https://news.google.com/rss/search?q=Dubai+retail+restaurant+closure&hl=en-AE&gl=AE&ceid=AE:en"),
     ("Google News UAE Banks", "https://news.google.com/rss/search?q=UAE+bank+finance+ADCB+Emirates+NBD&hl=en-AE&gl=AE&ceid=AE:en"),
     ("Google News UAE PropTech", "https://news.google.com/rss/search?q=Dubai+property+rent+landlord&hl=en-AE&gl=AE&ceid=AE:en"),
-    ("Khaleej Times", "https://www.khaleejtimes.com/rss/uaenews.xml"),
-    ("Gulf News", "https://gulfnews.com/rss/"),
+    ("Khaleej Times", "https://news.google.com/rss/search?q=site:khaleejtimes.com&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Gulf News", "https://news.google.com/rss/search?q=site:gulfnews.com&hl=en-AE&gl=AE&ceid=AE:en"),
     ("The National", "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml"),
-    ("WAM", "https://wam.ae/en/feed/rss"),
+    ("WAM", "https://news.google.com/rss/search?q=site:wam.ae&hl=en-AE&gl=AE&ceid=AE:en"),
 ]
 
 # Default fetch limits per source run.

@@ -1,8 +1,10 @@
+# BASR 2.0 — new ingestion pipeline (basr/orchestrator.py)
 httpx
-playwright
+websockets
 groq
 supabase
 fpdf2
 python-dotenv
-praw
-websockets
+
+# v1 pipeline only (frozen until Phase 6 cleanup): praw, playwright are no
+# longer used by the new pipeline and are intentionally NOT installed.

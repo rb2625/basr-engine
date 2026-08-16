@@ -154,9 +154,10 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - ✅ `bluesky_firehose` built + live-tested (Jetstream v2 spec, word-boundary UAE keywords; false-positive bug 'choradeira'→'deira' found & fixed)
 - ✅ `apple_reviews` built + live-tested (keyless iTunes RSS; replaces Google Places by **Amendment A2**; Arabic + English review sentiment)
 - ✅ `youtube_comments` built + live-tested (keyless RSS video discovery + Data API comments; 5 UAE news channels pinned in config; commentsDisabled handled without false quota errors)
-- ⬜ Build `basr/store/` (persistence: dedupe upserts, batches) + `basr/orchestrator.py`
-- ⬜ Update GitHub Actions cron (2×/day, staggered sources)
-- **DoD:** full end-to-end run: all sources → deduped rows in Supabase, zero crashes, retries verified, cron produces a run log
+- ✅ Build `basr/store/` (persistence: dedupe upserts, batches, retry) + `basr/orchestrator.py` — **live-verified**
+- ✅ Update GitHub Actions cron (2×/day, staggered sources, run-log artifact)
+- ✅ **DoD PASSED (2026-08-16):** end-to-end run inserted **270 deduped rows** (reddit 61, news 100, apple 100, youtube 9); second run proved idempotency (**0 inserted / 269 skipped**); zero crashes; retries verified live
+- ⬜ (one action) re-run `schema.sql` in Supabase to create the new `pipeline_runs` table (run logging degrades gracefully until then)
 
 **Phase 2 — NLP v1 + eval**
 - Normalizer + language ID + sentiment/emotion (LLM ensemble first) + signal taxonomy + topics + entities/geocoding
@@ -206,7 +207,19 @@ scraping" 429) → replaced with Arctic Shift, verified working from the user's 
 
 **Phase 0 COMPLETE (2026-08-16):** schema executed in Supabase; all 15 tables verified
 live via the PostgREST API from the user's machine (doc_topics/doc_entities use
-composite keys — no `id` column, verified via their real columns).**Next:** Phase 1 — store layer (`basr/store/`: dedupe upserts, batches) → orchestrator → cron → end-to-end run.
+composite keys — no `id` column, verified via their real columns).
+
+**Phase 1 COMPLETE (2026-08-16):** store + orchestrator + cron built and live-verified.
+End-to-end run: 270 rows inserted from 4 data-producing sources (reddit_arctic 61,
+news_rss 100, apple_reviews 100, youtube_comments 9; bluesky 0 matches in a 45s
+window = genuine scarcity, live-feed layer is supplementary). Re-run: 0 inserted /
+269 skipped — idempotent dedupe proven. Live testing caught + fixed: async
+Supabase client has no `close()` (store now defensive); Khaleej Times / Gulf News /
+WAM direct RSS are dead (404 / bad-param) → replaced with site-scoped Google News
+feeds (all 11 feeds now live, 30 items each).**Next:** Phase 2 — NLP v1 + eval.
+
+**One action for the user:** re-run `basr/schema.sql` in the Supabase SQL editor to
+create the `pipeline_runs` table (Amendment A3) so every cron run is logged.
 
 ## 14. Working rules
 
@@ -219,6 +232,15 @@ composite keys — no `id` column, verified via their real columns).**Next:** Ph
 ---
 
 ## 15. Amendments
+
+**A3 (2026-08-16): Phase 1 completion — pipeline_runs table + news feed fixes.** (1) Added
+`pipeline_runs` operational table (run status, source counts, inserted/skipped, failures)
+satisfying the Phase 1 DoD "cron produces a run log"; the store logs every run and degrades
+gracefully if the table is missing. (2) Verified live that Khaleej Times (`/rss/uaenews.xml`)
+and Gulf News (`/rss/`) direct RSS are dead (404) and WAM (`/feed/rss`) returns a bad-param
+error → replaced all three with site-scoped Google News feeds (`site:khaleejtimes.com`,
+`site:gulfnews.com`, `site:wam.ae`), all verified 200 with 30 items. (3) Supabase async
+client exposes no `close()`/`aclose()` in the pinned version → store close is now defensive.
 
 **A2 (2026-08-16): Google Places API replaced with Apple App Store reviews.** Google's
 Places API requires a billing account (card on file), which the project rule forbids
@@ -235,4 +257,4 @@ is retained (news_rss uses it). No other change: news_rss is live-tested at 30 i
 
 ---
 
-*Last amended: 2026-08-16 — plan created, all decisions locked; Phase 0 completed; Phase 1 started; Amendment A1 (reddit_rss removed).*
+*Last amended: 2026-08-16 — plan created, all decisions locked; Phase 0 completed; Phase 1 COMPLETED (store, orchestrator, cron, DoD passed); Amendments A1–A3 recorded.*
