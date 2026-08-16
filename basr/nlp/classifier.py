@@ -147,6 +147,7 @@ class ClassifyResult:
     extracted_entities: dict = field(default_factory=lambda: {"companies": [], "locations": []})
     summary_en: str = "No summary available."
     raw: dict = field(default_factory=dict)
+    model_version: str = MODEL_VERSION
 
     def to_row(self, raw_doc_id: int) -> dict[str, Any]:
         """Map onto the classifications table columns (schema.sql sec 2)."""
@@ -160,7 +161,7 @@ class ClassifyResult:
             "sector": self.sector,
             "intensity_score": self.intensity_score,
             "confidence": round(max(0.0, min(1.0, self.confidence)), 3),
-            "model_version": MODEL_VERSION,
+            "model_version": self.model_version,
             "raw": self.raw,
         }
 

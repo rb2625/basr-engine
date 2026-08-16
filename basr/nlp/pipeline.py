@@ -5,9 +5,12 @@ One raw document produces:
 - a ``classifications`` row (sentiment + signal taxonomy)
 - an updated ``raw_docs.lang``
 
-The heavy Groq call is synchronous, so batches run through a small thread pool
-with the classifier's own pacing - the pool size is deliberately modest (free
-tier rate limits are the bottleneck, not CPU).
+Two-stage classification (Amendment A7): the zero-cost lexicon fast path
+handles the clear-cut majority; everything ambiguous (sarcasm, conflicting
+signals, weak evidence) falls back to the Groq LLM. The heavy Groq call is
+synchronous, so batches run through a small thread pool with the classifier's
+own pacing - the pool size is deliberately modest (free tier rate limits are
+the bottleneck, not CPU).
 """
 
 from __future__ import annotations
@@ -18,20 +21,63 @@ from typing import Any
 
 from .classifier import ClassifyResult, GroqClassifier
 from .langid import detect_language, get_langid
+from .lexicon import LexiconClassifier, ROUTE_CONFIDENCE
 from .normalizer import arabizi_to_arabic, clean_text
+
+
+def classify_with_fallback(
+    lexicon: LexiconClassifier,
+    classifier: GroqClassifier,
+    text: str,
+    title: str | None,
+    lang: str,
+) -> tuple[ClassifyResult, str]:
+    """Lexicon first, LLM fallback. Returns (result, path) where path is
+    'lexicon' or 'llm'. The lexicon runs on the same text the LLM would see
+    (Arabizi hint + cleaned original) so both surfaces feed the keyword matcher.
+    """
+    lex_result = lexicon.classify(text, title=title, lang=lang)
+    if lex_result.confidence >= ROUTE_CONFIDENCE:
+        return lex_result, "lexicon"
+    llm_result = classifier.classify(text, title=title)
+    return llm_result, "llm"
+
+
+class HybridClassifier:
+    """Production routing as a single object, for the eval harness: lexicon
+    fast path first, LLM fallback. Mirrors classify_with_fallback exactly.
+    """
+
+    def __init__(
+        self,
+        lexicon: LexiconClassifier | None = None,
+        classifier: GroqClassifier | None = None,
+    ) -> None:
+        self._lexicon = lexicon or LexiconClassifier()
+        self._classifier = classifier or GroqClassifier()
+
+    def classify(
+        self, text: str, *, title: str | None = None, lang: str | None = None
+    ) -> ClassifyResult:
+        result, _ = classify_with_fallback(
+            self._lexicon, self._classifier, text, title, lang or "mixed"
+        )
+        return result
 
 
 def process_doc(
     doc_id: int,
     text: str,
     title: str | None,
+    lexicon: LexiconClassifier,
     classifier: GroqClassifier,
-) -> tuple[dict[str, Any], dict[str, Any] | None, str]:
+) -> tuple[dict[str, Any], dict[str, Any] | None, str, str]:
     """Normalize + detect language + classify one raw doc.
 
-    Returns (normalized_row, classification_row | None, lang). A hard model
-    failure (confidence 0, error raw) returns ``None`` for the classification
-    row - the doc stays unclassified so the next run retries it. Never raises.
+    Returns (normalized_row, classification_row | None, lang, path) where path
+    is 'lexicon' or 'llm'. A hard model failure (confidence 0, error raw)
+    returns ``None`` for the classification row - the doc stays unclassified
+    so the next run retries it. Never raises.
     """
     clean = clean_text(text)
     # fasttext (if present on Linux) else the heuristic.
@@ -40,13 +86,15 @@ def process_doc(
 
     # Give the LLM the Arabizi hint alongside the cleaned original - it reads
     # Arabizi natively, but the transliteration disambiguates digit-letters.
+    # The lexicon benefits from both surfaces too.
     hint = arabizi_to_arabic(clean) if lang == "arz" else ""
-    llm_text = f"{hint}\n---\n{clean}" if hint and hint != clean else clean
+    classify_text = f"{hint}\n---\n{clean}" if hint and hint != clean else clean
 
-    result: ClassifyResult = classifier.classify(llm_text, title=title)
+    result, path = classify_with_fallback(lexicon, classifier, classify_text,
+                                          title, lang)
 
-    # The LLM's own language read is usually right; trust it over the heuristic
-    # for mixed texts (schema keeps raw output for audit either way).
+    # The model's own language read is usually right; trust it over the
+    # heuristic for mixed texts (schema keeps raw output for audit either way).
     if result.confidence > 0.0 and result.detected_language != "mixed":
         lang = result.detected_language
 
@@ -58,7 +106,7 @@ def process_doc(
     }
     hard_failure = result.confidence == 0.0 and "error" in result.raw
     classification_row = None if hard_failure else result.to_row(doc_id)
-    return normalized_row, classification_row, lang
+    return normalized_row, classification_row, lang, path
 
 
 def _dialect_from(lang: str) -> str | None:
@@ -72,14 +120,21 @@ def _dialect_from(lang: str) -> str | None:
 async def classify_docs(
     docs: list[dict[str, Any]],
     classifier: GroqClassifier,
+    lexicon: LexiconClassifier | None = None,
     *,
     # Serialized: the free tier's token-per-minute window is the binding
     # constraint, not request rate - 2 workers just bursts into 429s.
     workers: int = 1,
-) -> list[tuple[dict[str, Any], dict[str, Any] | None, str]]:
-    """Classify a list of raw-doc dicts ({id, text, title}) concurrently."""
+) -> list[tuple[dict[str, Any], dict[str, Any] | None, str, str]]:
+    """Classify a list of raw-doc dicts ({id, text, title}) concurrently.
+
+    Each result is (normalized_row, classification_row | None, lang, path).
+    The lexicon fast path is used when provided (Amendment A7).
+    """
     if not docs:
         return []
+    if lexicon is None:
+        lexicon = LexiconClassifier()
     loop = asyncio.get_running_loop()
     with ThreadPoolExecutor(max_workers=workers) as pool:
         futures = [
@@ -89,6 +144,7 @@ async def classify_docs(
                 d["id"],
                 d.get("text") or "",
                 d.get("title"),
+                lexicon,
                 classifier,
             )
             for d in docs

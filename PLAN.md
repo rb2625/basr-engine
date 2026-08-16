@@ -235,6 +235,15 @@ budget: it drains over successive cron runs; the fine-tuned small model
 (planned) is what removes the ceiling. Also fixed a real schema bug: missing
 UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
 (**A6**) - cleaned live (43 clean rows) and the constraint is now in schema.sql.
+Second build of the session: the **zero-cost lexicon fast path** (**A7**) - a
+keyword classifier (en/ar/arz) that catches the clear-cut majority with ZERO
+LLM tokens; anything ambiguous (sarcasm, conflicting signals, weak evidence)
+scores low and falls back to the LLM. Measured on the eval set (77 items):
+signal accuracy 0.883 with 1.0 precision on every non-neutral class (zero
+false alarms); sentiment 0.831 with the neutral/trap cases deliberately
+deferred. Live-verified on real docs: 4/12 routed to the lexicon with zero
+tokens, the rest correctly deferred (the LLM's daily budget was exhausted and
+it stopped honestly - docs stayed unclassified for retry).
 
 ## 14. Working rules
 
@@ -305,6 +314,21 @@ Blocked. Keyless Reddit RSS is dead. Arctic Shift (already built, keyless) is th
 single Reddit source - it covers posts + comments, freshness + depth. `feed_common.py`
 is retained (news_rss uses it). No other change: news_rss is live-tested at 30 items/feed.
 
+**A7 (2026-08-16): zero-cost lexicon fast path.** `basr/nlp/lexicon.py`
+classifies the clear-cut docs with keyword evidence and zero tokens: sentiment,
+emotion, v1 signal taxonomy, sector, known UAE entities. Confidence is
+conservative by design - sarcasm, conflicting strong signals, weak evidence,
+and questions all collapse confidence so the pipeline (or the hybrid eval
+path) falls back to the LLM. Stamps `model_version=lexicon-v1`. Routing
+threshold ROUTE_CONFIDENCE=0.55 in pipeline.py. Measured on the eval set
+(lexicon-only forced answers): signal acc 0.883 / macro-F1 0.861 with
+precision 1.0 on stress/closure/opportunity (zero false alarms); sentiment acc
+0.831 - every neutral-label and sarcasm trap defers to the LLM in production.
+Eval CLI gained `--path llm|lexicon|hybrid`. The store now degrades to a plain
+insert when the A6 UNIQUE constraint is missing (42P10) instead of failing -
+safe for the single-process cron; re-running schema.sql is still the permanent
+fix and adds the constraint.
+
 ---
 
-*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer built + live-verified); Amendments A1-A6 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE).*
+*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval harness + lexicon fast path live-verified); Amendments A1-A7 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path).*

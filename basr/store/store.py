@@ -29,6 +29,11 @@ try:
 except ImportError:  # pragma: no cover - dependency is in requirements.txt
     create_async_client = None
 
+try:
+    from postgrest.exceptions import APIError as PostgrestAPIError
+except ImportError:  # pragma: no cover
+    PostgrestAPIError = Exception
+
 BATCH_SIZE = 100
 MAX_ATTEMPTS = 4
 BASE_DELAY_S = 1.5
@@ -223,20 +228,16 @@ class SupabaseStore:
         if normalized_rows:
             for start in range(0, len(normalized_rows), self.batch_size):
                 batch = normalized_rows[start : start + self.batch_size]
-                resp = await self._with_retry(
-                    lambda b=batch: self._client.table("normalized_docs")
-                    .upsert(b, ignore_duplicates=True, on_conflict="raw_doc_id")
-                    .execute()
+                resp = await self._upsert_any(
+                    "normalized_docs", batch, on_conflict="raw_doc_id"
                 )
                 n_written += len(resp.data or [])
 
         if classification_rows:
             for start in range(0, len(classification_rows), self.batch_size):
                 batch = classification_rows[start : start + self.batch_size]
-                resp = await self._with_retry(
-                    lambda b=batch: self._client.table("classifications")
-                    .upsert(b, ignore_duplicates=True, on_conflict="raw_doc_id")
-                    .execute()
+                resp = await self._upsert_any(
+                    "classifications", batch, on_conflict="raw_doc_id"
                 )
                 c_written += len(resp.data or [])
 
@@ -357,6 +358,31 @@ class SupabaseStore:
         except Exception as exc:
             print(f"    [-] eval run write failed: {str(exc)[:120]}")
             return False
+
+    async def _upsert_any(
+        self, table: str, rows: list[dict], *, on_conflict: str
+    ) -> Any:
+        """Upsert with on_conflict, degrading to a plain insert when the
+        table lacks the unique constraint (schema.sql not re-run yet, e.g.
+        classifications before Amendment A6 lands). A plain insert is safe for
+        the single-process cron because fetch_unclassified_docs already filters
+        classified docs - the DB constraint removes the race entirely once the
+        schema is re-applied. Never retries 42P10 (permanent, not transient)."""
+        try:
+            return await self._with_retry(
+                lambda: self._client.table(table)
+                .upsert(rows, ignore_duplicates=True, on_conflict=on_conflict)
+                .execute()
+            )
+        except PostgrestAPIError as exc:
+            if getattr(exc, "code", "") != "42P10":
+                raise
+            print(f"    [-] {table}: no UNIQUE({on_conflict}) constraint - "
+                  f"degrading to plain insert (re-run schema.sql for the "
+                  f"permanent dedupe guarantee)")
+            return await self._with_retry(
+                lambda: self._client.table(table).insert(rows).execute()
+            )
 
     # ------------------------------------------------------------------
     # Retry helper

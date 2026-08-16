@@ -44,10 +44,13 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False) -> int:
         # did (upserts are idempotent - re-running skips classified docs).
         all_results: list = []
         n_written = c_written = 0
+        n_lexicon = n_llm = 0
         for start in range(0, len(docs), FLUSH_EVERY):
             slice_docs = docs[start : start + FLUSH_EVERY]
             slice_results = await classify_docs(slice_docs, classifier)
             all_results.extend(slice_results)
+            n_lexicon += sum(1 for r in slice_results if r[3] == "lexicon")
+            n_llm += sum(1 for r in slice_results if r[3] == "llm")
             if not dry_run:
                 # Classification rows are None on hard model failure - leave
                 # those docs unclassified so the next run retries them.
@@ -55,7 +58,7 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False) -> int:
                     [r[0] for r in slice_results],
                     [r[1] for r in slice_results if r[1] is not None],
                     [(d["id"], lang)
-                     for d, (_, _, lang) in zip(slice_docs, slice_results)],
+                     for d, (_, _, lang, _) in zip(slice_docs, slice_results)],
                 )
                 n_written += nw
                 c_written += cw
@@ -66,17 +69,21 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False) -> int:
               and (r[1].get("confidence", 0) > 0 or r[1].get("raw"))]
         degraded = len(results) - len(ok)
         langs = {}
-        for _, _, lang in results:
+        for _, _, lang, _ in results:
             langs[lang] = langs.get(lang, 0) + 1
 
         if dry_run:
             print(f"[dry-run] would write {len(results)} normalized + "
                   f"{len(results)} classifications; langs={langs}")
+            print(f"[dry-run] routing: {n_lexicon} lexicon (zero tokens) / "
+                  f"{n_llm} llm")
             return 0
 
     elapsed = time.monotonic() - t0
     print("-" * 60)
     print(f"  Classified {len(results)} docs in {elapsed:.1f}s   model={MODEL_VERSION}")
+    print(f"  lexicon fast path        : {n_lexicon} (zero tokens)")
+    print(f"  llm calls                : {n_llm}")
     print(f"  normalized_docs written : {n_written}")
     print(f"  classifications written : {c_written}")
     print(f"  degraded (low conf)     : {degraded}")

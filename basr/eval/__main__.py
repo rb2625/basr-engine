@@ -1,14 +1,16 @@
 """Run the eval harness over the labeled datasets.
 
 Usage:
-    python -m basr.eval                 # score both tasks, log to Supabase
-    python -m basr.eval --limit 12      # quick slice (fewer Groq calls)
+    python -m basr.eval                 # score both tasks (LLM), log to Supabase
+    python -m basr.eval --path lexicon  # score the zero-token fast path only
+    python -m basr.eval --path hybrid   # production routing (lexicon + LLM)
+    python -m basr.eval --limit 12      # quick slice
     python -m basr.eval --task sentiment
     python -m basr.eval --dry-run       # score only, no DB writes
 
-Note: each scored item costs one Groq call (paced ~8s on the free tier), so a
-full run of both tasks over 80 items takes ~20 minutes. ``--limit`` slices the
-items for quick verification runs.
+Note: each LLM-path item costs one Groq call (paced ~10s on the free tier), so
+a full run of both tasks over 80 items takes ~25 minutes. ``--limit`` slices
+the items for quick verification runs. The lexicon path is instant and free.
 """
 
 from __future__ import annotations
@@ -19,6 +21,8 @@ import time
 from datetime import datetime, timezone
 
 from ..nlp.classifier import GroqClassifier, MODEL_VERSION
+from ..nlp.lexicon import LexiconClassifier, LEXICON_VERSION
+from ..nlp.pipeline import HybridClassifier
 from ..store import SupabaseStore
 from .datasets import DATASETS
 from .harness import print_report, run_eval
@@ -28,16 +32,27 @@ _TASK_EXTRACT = {
     "signal": lambda r: r.signal_type,
 }
 
+HYBRID_VERSION = "hybrid-lexicon-v1+groq-llama-3.3-70b-v1"
+
+
+def _make_classifier(path: str):
+    if path == "lexicon":
+        return LexiconClassifier(), LEXICON_VERSION
+    if path == "hybrid":
+        return HybridClassifier(), HYBRID_VERSION
+    return GroqClassifier(), MODEL_VERSION
+
 
 async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
-                       dry_run: bool = False) -> int:
+                       dry_run: bool = False, path: str = "llm") -> int:
     t0 = time.monotonic()
     print("=" * 60)
     print("  BASR eval harness - classifier scorecard")
-    print(f"  {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC   dry_run={dry_run}")
+    print(f"  {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC   "
+          f"dry_run={dry_run} path={path}")
     print("=" * 60)
 
-    classifier = GroqClassifier()
+    classifier, model_version = _make_classifier(path)
     all_metrics: list[tuple[str, dict]] = []
     store = None if dry_run else SupabaseStore()
     if store is not None:
@@ -70,7 +85,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
         for name, metrics in all_metrics:
             ok = await store.log_eval_run(
                 dataset_name=name,
-                model_version=MODEL_VERSION,
+                model_version=model_version,
                 accuracy=metrics["accuracy"],
                 precision=metrics["macro_precision"],
                 recall=metrics["macro_recall"],
@@ -78,7 +93,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
                 detail={"per_class": metrics["per_class"], "n": metrics["n"],
                         "confusion": metrics["confusion"]},
             )
-            print(f"[+] eval_runs logged for {name}: {ok}")
+            print(f"[+] eval_runs logged for {name} ({model_version}): {ok}")
     finally:
         if store is not None:
             await store.close()
@@ -92,9 +107,11 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="max items per task")
     parser.add_argument("--task", choices=("sentiment", "signal"), default=None)
     parser.add_argument("--dry-run", action="store_true", help="score only, no DB writes")
+    parser.add_argument("--path", choices=("llm", "lexicon", "hybrid"),
+                        default="llm", help="classifier to score")
     args = parser.parse_args()
     raise SystemExit(asyncio.run(run_eval_cli(
-        limit=args.limit, task=args.task, dry_run=args.dry_run)))
+        limit=args.limit, task=args.task, dry_run=args.dry_run, path=args.path)))
 
 
 if __name__ == "__main__":
