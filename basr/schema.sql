@@ -75,6 +75,21 @@ CREATE INDEX IF NOT EXISTS idx_classifications_doc ON classifications (raw_doc_i
 CREATE INDEX IF NOT EXISTS idx_classifications_signal ON classifications (signal_type, intensity_score);
 CREATE INDEX IF NOT EXISTS idx_classifications_sentiment ON classifications (sentiment_label);
 
+-- One classification per document (idempotent re-runs; Amendment A6 — this
+-- constraint was missing in the initial migration, so retried upserts could
+-- multiply rows. The DO block keeps the file re-runnable).
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_constraint
+        WHERE conname = 'classifications_doc_unique'
+    ) THEN
+        ALTER TABLE classifications
+            ADD CONSTRAINT classifications_doc_unique UNIQUE (raw_doc_id);
+    END IF;
+END
+$$;
+
 -- ----------------------------------------------------------------------------
 -- Topics
 -- ----------------------------------------------------------------------------

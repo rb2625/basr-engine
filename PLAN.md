@@ -159,10 +159,13 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - ✅ **DoD PASSED (2026-08-16):** end-to-end run inserted **270 deduped rows** (reddit 61, news 100, apple 100, youtube 9); second run proved idempotency (**0 inserted / 269 skipped**); zero crashes; retries verified live
 - ✅ `schema.sql` re-run in Supabase (idempotency fix: `DROP POLICY IF EXISTS` before each `CREATE POLICY` — the 42710 fix); `pipeline_runs` live, run logging verified end-to-end
 
-**Phase 2 — NLP v1 + eval**
-- Normalizer + language ID + sentiment/emotion (LLM ensemble first) + signal taxonomy + topics + entities/geocoding
-- Eval set v1: 500 labeled items (ar/arz/en) + eval harness
-- **DoD:** sentiment F1 ≥ 88% on eval v1; every ingested doc classified; scores logged
+**Phase 2 — NLP v1 + eval** *(in progress — see §13)*
+- ✅ `basr/nlp/` built: normalizer (HTML/emoji/URL cleanup + Arabizi→Arabic dictionary & char-map), language ID (heuristic ar/arz/en/mixed + optional fasttext path — **A4**), classifier (Groq llama-3.3-70b-v, v1-lineage prompt + sentiment/emotion/sarcasm), pipeline, CLI (`python -m basr.nlp`, incremental flush, budget-aware)
+- ✅ Live-verified end-to-end: 10 real docs classified into Supabase (sentiment/emotion/signal/entities), idempotent re-runs
+- ✅ `basr/eval/` built: 77-item curated seed (ar/arz/en, sarcasm, filtering traps) + scoring harness (accuracy/P/R/F1 + confusion) — **full 500-item set is the remaining labeling work**
+- ⬜ Topics (BERTopic) + entities/geocoding — next after eval closes
+- ⬜ Eval run v1 (needs Groq budget) + score published
+- **DoD (revised, see A5):** sentiment F1 ≥ 88% on eval v1; every ingested doc classified *within the free-tier daily token budget*; scores logged
 
 **Phase 3 — Dashboard v1 (public)**
 - Next.js app: map, trends, topics, anomaly feed, search; deployed to Vercel
@@ -222,6 +225,17 @@ feeds (all 11 feeds now live, 30 items each).**Next:** Phase 2 — NLP v1 + eval
 idempotency fix (policies now dropped before create); `pipeline_runs` verified
 live with a real logged run. Run logging is end-to-end operational.
 
+**Phase 2 (2026-08-16):** NLP layer built + live-verified (10 real docs
+classified end-to-end). Live testing caught the single most important
+constraint of the project so far — **Groq's free tier caps llama-3.3-70b-v at
+100,000 tokens/day (~64 docs/day at our prompt size)** — recorded as **A5**.
+The classifier is now budget-aware (stops honestly, docs stay unclassified for
+the next run). The backfill of the remaining ~220 docs is bounded by the daily
+budget: it drains over successive cron runs; the fine-tuned small model
+(planned) is what removes the ceiling. Also fixed a real schema bug: missing
+UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
+(**A6**) — cleaned live (43 clean rows) and the constraint is now in schema.sql.
+
 ## 14. Working rules
 
 1. Move by this plan, in order. One phase at a time.
@@ -233,6 +247,38 @@ live with a real logged run. Run logging is end-to-end operational.
 ---
 
 ## 15. Amendments
+
+**A6 (2026-08-16): classifications(raw_doc_id) must be UNIQUE.** Live cleanup
+found 25 duplicated classification rows: retried upserts (lost response →
+retry re-inserts) multiplied rows because the table had no unique constraint
+on raw_doc_id. Fixed three ways: (1) cleaned the live table (43 clean rows;
+error-payload rows deleted so those docs get retried), (2) schema.sql now adds
+the constraint idempotently via a guarded DO block (re-run the SQL editor),
+(3) the store upserts classifications with on_conflict="raw_doc_id".
+
+**A5 (2026-08-16): Groq free tier = 100k tokens/day on llama-3.3-70b-v — the
+LLM-first backfill is budget-bounded.** Verified live: the free tier caps the
+70b model at 100,000 tokens/day (the 429 message carries the exact counter:
+"tokens per day (TPD): Limit 100000"). At ~1,550 tokens/doc that is ~64
+classified docs/day — far below the ~220-doc Phase 1 backlog, and it explains
+why burst pacing (2 workers × 8s ≈ 23k tok/min) tripped the ~12k tok/min
+window. Engineering response: (1) classifier is budget-aware — on the first
+TPD 429 it parses the API's own counter and stops classifying immediately,
+leaving the rest unclassified for the next run (no 429 hammering); (2) pacing
+serialized (workers=1, 10s gap ≈ 6 RPM ≈ 9.3k tok/min, safely under the
+window); (3) hard-failed docs are NOT written as zero-confidence rows, so they
+stay unclassified and get retried; (4) PLAN §11 DoD revised accordingly. The
+real unlock remains the fine-tuned Gulf-Arabic model for high-volume sentiment
+(plan §4) — with it, the 70b is reserved for synthesis only.
+
+**A4 (2026-08-16): fasttext lid.176 deferred — heuristic language ID for v1.**
+fasttext has no Windows wheel (verified live: both `fasttext` and
+`fasttext-wheel` fail to build without a compiler on this machine). v1 ships a
+deterministic heuristic (Arabic-script ratio → ar/arz via dialect markers;
+Latin + Arabizi digit-letters/tokens → arz; else en; both strong → mixed),
+live-tested against ar/arz/en/mixed cases including URL robustness. The
+`FasttextLangID` wrapper stays in code so the Linux cron runner can opt in
+(model file present → automatic).
 
 **A3 (2026-08-16): Phase 1 completion — pipeline_runs table + news feed fixes.** (1) Added
 `pipeline_runs` operational table (run status, source counts, inserted/skipped, failures)
@@ -258,4 +304,4 @@ is retained (news_rss uses it). No other change: news_rss is live-tested at 30 i
 
 ---
 
-*Last amended: 2026-08-16 — plan created, all decisions locked; Phase 0 completed; Phase 1 COMPLETED (store, orchestrator, cron, DoD passed); Amendments A1–A3 recorded.*
+*Last amended: 2026-08-16 — Phase 0 ✅ · Phase 1 ✅ · Phase 2 in progress (NLP layer built + live-verified); Amendments A1–A6 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE).*

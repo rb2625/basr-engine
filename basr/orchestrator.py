@@ -13,6 +13,7 @@ Usage:
     python -m basr.orchestrator            # full run
     python -m basr.orchestrator --dry-run  # fetch only, no DB writes
     python -m basr.orchestrator --limit 50 # cap docs per source
+    python -m basr.orchestrator --nlp      # run the NLP classification stage after ingestion
 """
 
 from __future__ import annotations
@@ -36,6 +37,10 @@ from .config import (
     get_settings,
 )
 from .store import SupabaseStore
+
+# NLP stage (Phase 2) — imported lazily inside run_pipeline so a missing
+# groq key never breaks plain ingestion.
+_NLP_DEFAULT_LIMIT = 50
 
 # Per-source runtime knobs (bounded so a cron run finishes in minutes).
 SOURCE_TIMEOUT_S = 300          # hard ceiling per source
@@ -112,7 +117,8 @@ async def _run_one(name: str, adapter: object, kwargs: dict, timeout: float, off
         return SourceResult(name=name, error=f"{exc.__class__.__name__}: {str(exc)[:120]}")
 
 
-async def run_pipeline(*, limit: int | None = None, dry_run: bool = False) -> int:
+async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
+                       nlp: bool = False, nlp_limit: int | None = None) -> int:
     """Run the full ingestion pipeline. Returns the process exit code."""
     t0 = time.monotonic()
     started_at = datetime.now(timezone.utc)
@@ -173,7 +179,15 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False) -> in
             print(f"[-] Store failed: {store_error}")
             status = "failed"
 
-    # --- 4. Summary ---------------------------------------------------------------------
+    # --- 4. NLP classification stage (Phase 2) -------------------------------
+    if nlp and not store_error:
+        from .nlp.__main__ import run_nlp  # lazy: needs GROQ_API_KEY
+        try:
+            await run_nlp(limit=nlp_limit or _NLP_DEFAULT_LIMIT, dry_run=dry_run)
+        except Exception as exc:
+            print(f"[-] NLP stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
+
+    # --- 5. Summary ---------------------------------------------------------------------
     elapsed = time.monotonic() - t0
     finished_at = datetime.now(timezone.utc)
     lines = [
@@ -212,8 +226,11 @@ def main() -> None:
     parser = argparse.ArgumentParser(description="BASR ingestion pipeline")
     parser.add_argument("--limit", type=int, default=None, help="max docs per source")
     parser.add_argument("--dry-run", action="store_true", help="fetch only, no DB writes")
+    parser.add_argument("--nlp", action="store_true", help="run NLP classification after ingestion")
+    parser.add_argument("--nlp-limit", type=int, default=None, help="max docs to classify")
     args = parser.parse_args()
-    raise SystemExit(asyncio.run(run_pipeline(limit=args.limit, dry_run=args.dry_run)))
+    raise SystemExit(asyncio.run(run_pipeline(limit=args.limit, dry_run=args.dry_run,
+                                              nlp=args.nlp, nlp_limit=args.nlp_limit)))
 
 
 if __name__ == "__main__":

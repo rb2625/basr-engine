@@ -181,6 +181,77 @@ class SupabaseStore:
         return counts
 
     # ------------------------------------------------------------------
+    # NLP outputs (Phase 2)
+    # ------------------------------------------------------------------
+
+    async def fetch_unclassified_docs(self, limit: int = 100) -> list[dict]:
+        """Return raw_docs that have no classification yet (id, text, title).
+
+        Two PostgREST queries: the classified ids first, then the unclassified
+        rows via ``id=not.in.(...)``. Returns [] when everything is classified.
+        """
+        if self._client is None:
+            return []
+        classified = await self._with_retry(
+            lambda: self._client.table("classifications")
+            .select("raw_doc_id")
+            .limit(100000)
+            .execute()
+        )
+        done = {r["raw_doc_id"] for r in (classified.data or [])}
+
+        query = self._client.table("raw_docs").select("id,text,title")
+        if done:
+            query = query.not_.in_("id", sorted(done))
+        resp = await self._with_retry(
+            lambda: query.order("published_at", desc=True).limit(limit).execute()
+        )
+        return resp.data or []
+
+    async def upsert_nlp_rows(
+        self,
+        normalized_rows: list[dict],
+        classification_rows: list[dict],
+        lang_pairs: list[tuple[int, str]],
+    ) -> tuple[int, int]:
+        """Write normalized_docs + classifications (batched, idempotent) and
+        backfill raw_docs.lang. Returns (normalized_written, classifications_written)."""
+        n_written = c_written = 0
+        if self._client is None:
+            return 0, 0
+
+        if normalized_rows:
+            for start in range(0, len(normalized_rows), self.batch_size):
+                batch = normalized_rows[start : start + self.batch_size]
+                resp = await self._with_retry(
+                    lambda b=batch: self._client.table("normalized_docs")
+                    .upsert(b, ignore_duplicates=True, on_conflict="raw_doc_id")
+                    .execute()
+                )
+                n_written += len(resp.data or [])
+
+        if classification_rows:
+            for start in range(0, len(classification_rows), self.batch_size):
+                batch = classification_rows[start : start + self.batch_size]
+                resp = await self._with_retry(
+                    lambda b=batch: self._client.table("classifications")
+                    .upsert(b, ignore_duplicates=True, on_conflict="raw_doc_id")
+                    .execute()
+                )
+                c_written += len(resp.data or [])
+
+        for doc_id, lang in lang_pairs:
+            if not lang:
+                continue
+            await self._with_retry(
+                lambda d=doc_id, l=lang: self._client.table("raw_docs")
+                .update({"lang": l})
+                .eq("id", d)
+                .execute()
+            )
+        return n_written, c_written
+
+    # ------------------------------------------------------------------
     # Run log
     # ------------------------------------------------------------------
 
@@ -222,6 +293,72 @@ class SupabaseStore:
             return False
 
     # ------------------------------------------------------------------
+    # Eval
+    # ------------------------------------------------------------------
+
+    async def upsert_eval_dataset(self, name: str, lang: str, task: str, items: list) -> bool:
+        """Insert or replace an eval dataset (idempotent on name)."""
+        if self._client is None:
+            return False
+        try:
+            await self._with_retry(
+                lambda: self._client.table("eval_datasets")
+                .upsert(
+                    {"name": name, "lang": lang, "task": task, "items": items},
+                    on_conflict="name",
+                )
+                .execute()
+            )
+            return True
+        except Exception as exc:
+            print(f"    [-] eval dataset write failed: {str(exc)[:120]}")
+            return False
+
+    async def log_eval_run(
+        self,
+        *,
+        dataset_name: str,
+        model_version: str,
+        accuracy: float,
+        precision: float,
+        recall: float,
+        f1: float,
+        detail: dict,
+    ) -> bool:
+        """Record one eval run in eval_runs (graceful on failure)."""
+        if self._client is None:
+            return False
+        try:
+            ds = await self._with_retry(
+                lambda: self._client.table("eval_datasets")
+                .select("id")
+                .eq("name", dataset_name)
+                .limit(1)
+                .execute()
+            )
+            if not (ds.data or []):
+                return False
+            await self._with_retry(
+                lambda: self._client.table("eval_runs")
+                .insert(
+                    {
+                        "dataset_id": ds.data[0]["id"],
+                        "model_version": model_version,
+                        "accuracy": round(accuracy, 4),
+                        "precision": round(precision, 4),
+                        "recall": round(recall, 4),
+                        "f1": round(f1, 4),
+                        "detail": detail,
+                    }
+                )
+                .execute()
+            )
+            return True
+        except Exception as exc:
+            print(f"    [-] eval run write failed: {str(exc)[:120]}")
+            return False
+
+    # ------------------------------------------------------------------
     # Retry helper
     # ------------------------------------------------------------------
 
@@ -229,6 +366,9 @@ class SupabaseStore:
         self, call: Callable[[], Coroutine[Any, Any, Any]]
     ) -> Any:
         """Run ``call`` with exponential backoff + jitter on transient failures."""
+        # A no-op client guard: some methods below call _with_retry directly.
+        if self._client is None:
+            raise RuntimeError("SupabaseStore: store is not open")
         attempt = 0
         while True:
             try:
