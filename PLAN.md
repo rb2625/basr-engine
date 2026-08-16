@@ -243,6 +243,9 @@ UNIQUE on classifications(raw_doc_id) let retried upserts duplicate rows
 3. Every source failure degrades gracefully; the platform never dies with one source.
 4. Quality over speed; "step by step even if it takes time" is the operating principle.
 5. This plan changes only by explicit amendment, recorded here.
+6. Plain ASCII everywhere: no em/en dashes, arrows, or other non-ASCII
+   punctuation in code, docs, comments, or commit messages. Arabic text
+   content is the only exception (it is data, not punctuation).
 
 ---
 
