@@ -157,7 +157,7 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - ✅ Build `basr/store/` (persistence: dedupe upserts, batches, retry) + `basr/orchestrator.py` — **live-verified**
 - ✅ Update GitHub Actions cron (2×/day, staggered sources, run-log artifact)
 - ✅ **DoD PASSED (2026-08-16):** end-to-end run inserted **270 deduped rows** (reddit 61, news 100, apple 100, youtube 9); second run proved idempotency (**0 inserted / 269 skipped**); zero crashes; retries verified live
-- ⬜ (one action) re-run `schema.sql` in Supabase to create the new `pipeline_runs` table (run logging degrades gracefully until then)
+- ✅ `schema.sql` re-run in Supabase (idempotency fix: `DROP POLICY IF EXISTS` before each `CREATE POLICY` — the 42710 fix); `pipeline_runs` live, run logging verified end-to-end
 
 **Phase 2 — NLP v1 + eval**
 - Normalizer + language ID + sentiment/emotion (LLM ensemble first) + signal taxonomy + topics + entities/geocoding
@@ -218,8 +218,9 @@ Supabase client has no `close()` (store now defensive); Khaleej Times / Gulf New
 WAM direct RSS are dead (404 / bad-param) → replaced with site-scoped Google News
 feeds (all 11 feeds now live, 30 items each).**Next:** Phase 2 — NLP v1 + eval.
 
-**One action for the user:** re-run `basr/schema.sql` in the Supabase SQL editor to
-create the `pipeline_runs` table (Amendment A3) so every cron run is logged.
+**Phase 1 fully closed (2026-08-16):** schema re-run succeeded after the 42710
+idempotency fix (policies now dropped before create); `pipeline_runs` verified
+live with a real logged run. Run logging is end-to-end operational.
 
 ## 14. Working rules
 
