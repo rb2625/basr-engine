@@ -477,6 +477,22 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A15 (2026-08-17): Phase 2 budget wall mapped + eval hardened.** The
+"00:00 UTC reset" assumption was wrong: the gpt-oss-120b free-tier counter is
+a ROLLING window that frees gradually as usage ages out (observed: the
+counter dropped ~1.6k tokens in 7 minutes around 20:00 UTC; a 1,971-token
+probe then succeeded on the freed headroom, but the eval hit the wall again
+on its first call at 199,952/200,000). Two defenses added so the scorecard
+can never be corrupted by a wall: (1) the eval now refuses to log ANY run
+with failed calls (confidence 0) - it prints the incomplete notice and
+returns exit 3, so eval_runs only ever holds fully-measured runs;
+(2) scripts/watch_phase_2.sh retries the canonical hybrid eval every 45
+minutes in the background until it completes and logs, then stops. It is
+running now (nohup) - when the wall frees ~154k tokens the run lands by
+itself. close_phase_2.py now drives the eval in-process (the nested
+subprocess broke on Windows: WinError 10106 on asyncio._overlapped). Phase 2
+DoD remains pending the first fully-measured hybrid run.
+
 **A14 (2026-08-17): Phase 5 delivery proven + Phase 2 eval launched.** With the
 SQL editor re-run, the ``reports`` table is live (A13's schema addition). The
 first real daily report was built, stored, and DELIVERED: ``UAE Pulse -
@@ -564,4 +580,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval running) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 in progress (agent layer + eval green, first UAE Pulse DELIVERED over Telegram; weekly digest pending first cron cycle); Amendments A1-A14 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (budget wall mapped; auto-watcher retries the eval every 45 min, scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 in progress (agent layer + eval green, first UAE Pulse DELIVERED over Telegram; weekly digest pending first cron cycle); Amendments A1-A15 recorded.*

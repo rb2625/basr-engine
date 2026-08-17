@@ -17,9 +17,13 @@ Usage (from the repo root):
 from __future__ import annotations
 
 import asyncio
-import subprocess
+import os
 import sys
 
+# Make the repo root importable when run as scripts/close_phase_2.py.
+sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
+
+from basr.eval.__main__ import run_eval_cli
 from basr.store.store import SupabaseStore
 
 
@@ -65,12 +69,12 @@ async def main() -> int:
         return 1
 
     print("\n[+] Budget available. Running the canonical eval (~40 min)...")
-    proc = subprocess.run(
-        [sys.executable, "-m", "basr.eval", "--path", "hybrid"],
-        env={"PYTHONIOENCODING": "utf-8"},
-    )
-    if proc.returncode != 0:
-        print("[-] eval failed")
+    # Run in-process (a nested subprocess breaks on Windows - WinError 10106
+    # on asyncio's _overlapped import) and it shares the probe's client anyway.
+    code = await run_eval_cli(path="hybrid")
+    if code != 0:
+        print("[-] eval did not complete cleanly (incomplete runs are never")
+        print("    logged - retry when the budget has more headroom)")
         return 1
 
     rows = await latest_hybrid_scores()

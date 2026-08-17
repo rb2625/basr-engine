@@ -129,9 +129,18 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
         if dry_run or store is None:
             return 0
 
-        # Persist datasets (idempotent) + this run's scores.
+        # Persist datasets (idempotent) + this run's scores. A run with ANY
+        # failed calls (confidence 0 - usually the daily budget wall) is
+        # INCOMPLETE and must never be published as a scorecard: log nothing
+        # so a retry later produces the one true measurement.
         for ds in DATASETS:
             await store.upsert_eval_dataset(ds["name"], ds["lang"], ds["task"], ds["items"])
+        incomplete = any(m["failures"] > 0 for _, m in all_metrics)
+        if incomplete:
+            print("\n[!] eval incomplete (failed calls) - NOT logged to eval_runs.")
+            print("    Retry when the daily token budget has headroom; the scorecard")
+            print("    only ever records a fully-measured run.")
+            return 3
         for name, metrics in all_metrics:
             ok = await store.log_eval_run(
                 dataset_name=name,
