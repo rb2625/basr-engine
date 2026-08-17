@@ -202,8 +202,11 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - [x] Arabic coverage mapped: lexicon ar 0.771 / arz 0.512 / en 0.623 (arz is the gap)
 - [x] Fine-tuned Gulf-Arabic model v1: local char n-gram NB, both tasks, wired into the
       hybrid as a fast path (lexicon -> local -> LLM); v2: sentiment 0.817, signal 0.658
-- [ ] Eval v2 canonical hybrid run (needs the rolling budget window - watcher retries)
-- [ ] Backfill history: 28+ days of time_series so the anomaly baseline matures
+- [ ] Eval v2 canonical hybrid run (needs the rolling budget window - watcher retries;
+      last attempt got through all but 6 calls before the wall - retrying every 45 min)
+- [x] Backfill history: enriched 345 un-enriched docs (zero tokens), rebuilt time_series;
+      global series now 28 buckets (STL threshold met - stl_z fired at 4.563 on Aug 16),
+      topic:9 matured to 15; anomaly detection re-run idempotent (no duplicate alerts)
 - **DoD:** Perfection Gate checklist (sec 12) all-green
 
 **Phase 7 - Pilot & monetization** *(only after Phase 6 passes)*
