@@ -105,7 +105,7 @@ _TASK_EXTRACT = {
     "signal": lambda r: r.signal_type,
 }
 
-HYBRID_VERSION = f"hybrid-lexicon-v1+{MODEL_VERSION}"
+HYBRID_VERSION = f"hybrid-local-v1+{MODEL_VERSION}"  # A18: local-first routing
 
 
 def _make_classifier(path: str):

@@ -40,23 +40,30 @@ def classify_with_fallback(
     lang: str,
     local: object | None = None,
 ) -> tuple[ClassifyResult, str]:
-    """Lexicon first, then the local model (if given), then the LLM.
-    Returns (result, path) where path is 'lexicon' | 'local' | 'llm'.
+    """Local model first, then the lexicon, then the LLM.
+    Returns (result, path) where path is 'local' | 'lexicon' | 'llm'.
+
+    Ordering rationale (measured, A18): on the fresh eval v2 set the local
+    n-gram model scores sentiment macro-F1 0.723 while the lexicon scores
+    0.281 - the lexicon is confidently WRONG on hard items (it reads "rents
+    at record high" as positive) and was overriding better local calls.
+    Local first fixes that; the lexicon stays as a second fast path, the LLM
+    only sees genuinely ambiguous items.
     """
-    lex_result = lexicon.classify(text, title=title, lang=lang)
-    if lex_result.confidence >= ROUTE_CONFIDENCE:
-        return lex_result, "lexicon"
     if local is not None:
         local_result = local.classify(text, title=title, lang=lang)
         if local_result.confidence >= LOCAL_CONFIDENCE:
             return local_result, "local"
+    lex_result = lexicon.classify(text, title=title, lang=lang)
+    if lex_result.confidence >= ROUTE_CONFIDENCE:
+        return lex_result, "lexicon"
     llm_result = classifier.classify(text, title=title)
     return llm_result, "llm"
 
 
 class HybridClassifier:
-    """Production routing as a single object, for the eval harness: lexicon
-    fast path, then the local model, then the LLM. Mirrors
+    """Production routing as a single object, for the eval harness: local
+    fast path, then the lexicon, then the LLM. Mirrors
     classify_with_fallback exactly."""
 
     def __init__(

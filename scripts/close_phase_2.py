@@ -4,9 +4,12 @@ The gpt-oss-120b free tier caps at 200,000 tokens/day (Amendment A5/A10).
 The canonical hybrid eval needs ~154k tokens, so it can only run after the
 00:00 UTC reset. This script:
 
-1. probes the budget with one tiny call (the counter rides the 429 error),
-2. runs the canonical eval when budget is available (~40 min, logs to
-   eval_runs),
+1. reads any RECENT complete hybrid run from eval_runs first - a logged run
+   is the one true measurement, and re-running would just burn the budget
+   window it already spent (the resume cache means retries are cheap, but a
+   complete logged scorecard is final),
+2. only runs the canonical eval when no fresh complete run exists
+   (~40 min, logs to eval_runs),
 3. reads the logged hybrid scores and reports the Phase 2 DoD verdict
    (sentiment macro-F1 >= 0.88).
 
@@ -71,22 +74,24 @@ async def main() -> int:
     print("  Close Phase 2: canonical hybrid eval + DoD verdict")
     print("=" * 60)
 
-    if not probe_budget():
-        print("\n[!] Budget still exhausted - the daily counter resets at 00:00")
-        print("    UTC (~4h). Re-run this script after the reset. Nothing was")
-        print("    logged.")
-        return 1
-
-    print("\n[+] Budget available. Running the canonical eval (~40 min)...")
-    # Run in-process (a nested subprocess breaks on Windows - WinError 10106
-    # on asyncio's _overlapped import) and it shares the probe's client anyway.
-    code = await run_eval_cli(path="hybrid", eval_set="v2")
-    if code != 0:
-        print("[-] eval did not complete cleanly (incomplete runs are never")
-        print("    logged - retry when the budget has more headroom)")
-        return 1
-
     rows = await latest_hybrid_scores()
+    fresh = [r for r in rows if r.get("dataset_name") in ("sentiment-v2", "signal-v2")]
+    if len(fresh) == 2:
+        print("\n[+] Complete hybrid v2 run already logged - reading it (no re-run).")
+    else:
+        if not probe_budget():
+            print("\n[!] Budget still exhausted - the rolling window has no headroom")
+            print("    for a fresh eval. Nothing was logged.")
+            return 1
+        print("\n[+] Budget available. Running the canonical eval (~40 min)...")
+        # Run in-process (a nested subprocess breaks on Windows - WinError 10106
+        # on asyncio's _overlapped import) and it shares the probe's client anyway.
+        code = await run_eval_cli(path="hybrid", eval_set="v2")
+        if code != 0:
+            print("[-] eval did not complete cleanly (incomplete runs are never")
+            print("    logged - retry when the budget has more headroom)")
+            return 1
+        rows = await latest_hybrid_scores()
     if not rows:
         print("[-] no hybrid eval_runs found after the run")
         return 1

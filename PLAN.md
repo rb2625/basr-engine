@@ -202,12 +202,17 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - [x] Arabic coverage mapped: lexicon ar 0.771 / arz 0.512 / en 0.623 (arz is the gap)
 - [x] Fine-tuned Gulf-Arabic model v1: local char n-gram NB, both tasks, wired into the
       hybrid as a fast path (lexicon -> local -> LLM); v2: sentiment 0.817, signal 0.658
-- [ ] Eval v2 canonical hybrid run (budget-bounded; resume cache added so each retry
-      only re-pays wall-hit calls - watcher grinds until the rolling window frees enough)
+- [x] Eval v2 canonical hybrid run: LANDED + logged 2026-08-17 (sentiment acc 0.808 /
+      macro-F1 0.556; signal acc 0.650 / F1 0.688). Verdict: sentiment BELOW the 0.88
+      bar. Root cause found: the lexicon-first routing let a confidently-WRONG lexicon
+      (v2 macro-F1 0.281) override the local model (0.723). Routing flipped to local->
+      lexicon->LLM (A19) - dry-run v2 macro-F1 0.686 on the new order; canonical
+      re-measurement queued behind the budget window (resume cache keyed per version).
 - [x] Backfill history: enriched 345 un-enriched docs (zero tokens), rebuilt time_series;
       global series now 28 buckets (STL threshold met - stl_z fired at 4.563 on Aug 16),
       topic:9 matured to 15; anomaly detection re-run idempotent (no duplicate alerts)
-- **DoD:** Perfection Gate checklist (sec 12) all-green
+- **DoD:** Perfection Gate checklist (sec 12) all-green (sentiment F1 bar NOT met yet -
+      local-first routing is the measured path to it; canonical rerun pending budget)
 
 **Phase 7 - Pilot & monetization** *(detailed plan in A18; only after Phase 6 passes)*
 - [ ] Pilot: AURAK comms (free, 4 weeks) -> case study -> public reference
@@ -493,6 +498,25 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A19 (2026-08-17): canonical v2 eval LANDED - verdict below bar + routing fix.**
+The canonical hybrid v2 run finally completed and logged (sentiment acc 0.808,
+macro-F1 0.556; signal acc 0.650, macro-F1 0.688; eval_runs ids 14-15). The
+Phase 2 bar is sentiment macro-F1 >= 0.88 - the run measured 0.556, so the
+DoD stays OPEN (honest: the scorecard is real, the bar is not met). The run
+also exposed the root cause: with lexicon-first routing, the lexicon - which
+scores only 0.281 macro-F1 on v2 because it reads "rents at record high" as
+positive - was confidently overriding the local model (0.723 macro-F1 on the
+same set). Two fixes: (1) routing flipped to local -> lexicon -> LLM (local
+is the stronger fast path; the LLM only sees genuinely ambiguous items), and
+(2) the hybrid version string is now hybrid-local-v1 so the resume cache and
+logged model_version are keyed per routing (the old cache never leaks into
+the new measurement). Dry-run v2 on the new order: sentiment macro-F1 0.686
+(with 7 LLM-routed items still hitting the budget wall - the true number is
+higher once the window frees). close_phase_2.py now reads a logged complete
+run instead of re-burning tokens to re-run one. Next: when the budget frees,
+re-run the canonical eval on the new routing; if the LLM's 7 ambiguous items
+resolve well, the bar may close without further model work.
+
 **A18 (2026-08-17): Phase 7 plan - pilot and monetization.**
 Phase 7 is the first revenue stage; it starts ONLY after the Perfection Gate
 (sec 12) is all-green. Build order, each step gated on the last:
@@ -683,4 +707,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (v2 watcher retries the hybrid eval with the resume cache; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (29 tests + CI, privacy audit green, backfill DONE: global series 28 buckets + STL active, eval v2 built, local model wired, resume cache added) - Phase 7 planned in A18; Amendments A1-A18 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (canonical v2 eval LANDED and logged: sentiment macro-F1 0.556 vs the 0.88 bar - BELOW; routing flipped local-first in A19, canonical re-measurement queued) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (29 tests + CI, privacy audit green, backfill DONE, canonical eval measured, local-first routing fix) - Phase 7 planned in A18; Amendments A1-A19 recorded.*
