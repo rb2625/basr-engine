@@ -5,10 +5,14 @@ nearly verbatim (it is good, per PLAN.md sec 6.4) and extended with the
 sentiment/emotion fields the schema demands. Output is a single JSON object
 that maps 1:1 onto the ``classifications`` table.
 
-Model: ``llama-3.3-70b-versatile`` on Groq's free tier (zero marginal cost,
-locked in the plan). Rate limits on the free tier are real, so every request
-is paced (default 8s minimum gap) and retried with backoff on 429/5xx - a
-batch of 100 docs takes ~15 minutes, which is fine for a cron stage.
+Model: ``openai/gpt-oss-120b`` on Groq's free tier (Amendment A10 - Groq
+retired llama-3.3-70b-versatile, so the classifier was re-benchmarked against
+the models still available: gpt-oss-120b won (qwen/qwen3.6-27b fails Groq's
+json_object mode entirely, allam-2-7b is weak, gpt-oss-20b trails). Note that
+Groq's json_object response mode rejects gpt-oss output, so it is NOT used -
+the prompt's strong JSON instruction plus the tolerant _extract_json parser
+carry the load. Rate limits on the free tier are real, so every request is
+paced (default 6s minimum gap) and retried with backoff on 429/5xx.
 """
 
 from __future__ import annotations
@@ -20,8 +24,8 @@ import time
 from dataclasses import dataclass, field
 from typing import Any
 
-MODEL = "llama-3.3-70b-versatile"
-MODEL_VERSION = "groq-llama-3.3-70b-v1"
+MODEL = "openai/gpt-oss-120b"
+MODEL_VERSION = "groq-gpt-oss-120b-v1"
 
 # ---------------------------------------------------------------------------
 # Taxonomies (validated outputs)
@@ -52,6 +56,24 @@ SENTIMENT CLASSIFICATION RULES (in addition to the above):
 - sarcasm: boolean - true only when the text is clearly ironic/sarcastic
   (e.g. "great, another rent increase"). Sarcastic negative statements still
   get a negative sentiment_score.
+- Sentiment tracks the writer's view of ECONOMIC topics (prices, jobs,
+  housing, companies, services, policies) and their experiences with
+  services and products. Everything else is "neutral": weather, movies and
+  entertainment, food, personal plans, personal purchases of consumer
+  products (phone, laptop, TV, games console), general observations,
+  questions, and vague statements without a concrete subject (e.g. "the
+  economy is good" with no sector or measurement). Enjoying a movie is NOT
+  positive sentiment - it is neutral.
+- Factual announcements of economic EVENTS keep the event's sentiment:
+  a price/fee increase, closure, layoff, or service cut is negative;
+  new investments, openings, launches, expansions, tax exemptions, fee cuts,
+  price drops, hiring surges, and record profits are positive - the event
+  direction decides, not the tone of the announcement.
+- Ironic praise of something genuinely bad ("Great, another rent increase.
+  Just what we needed." / "Salik charges are the best thing ever") is
+  NEGATIVE sentiment with sarcasm=true. Never take ironic praise at face
+  value - judge the underlying situation (genuine praise wrapped in
+  sarcastic surprise stays positive).
 - A complaint about a service/business = negative sentiment even when it is
   not a systemic economic signal (signal_type stays "neutral" unless the
   economic rules above say otherwise).
@@ -59,54 +81,46 @@ SENTIMENT CLASSIFICATION RULES (in addition to the above):
 
 SYSTEM_PROMPT = f"""
 You are an elite macroeconomic data analyst specializing in the UAE market.
-Your job is to extract ONLY genuine economic intelligence signals from text.
+You extract ONLY genuine economic intelligence signals from text. You fluently
+understand formal Arabic, Gulf/Egyptian/Levantine dialects, English, and
+Arabizi (3ashan, wallah, khara, yalla, 7aram, inshallah).
 
-You fluently understand formal Arabic, Gulf dialects, Egyptian and Levantine Arabic,
-English, and Arabizi (3ashan, wallah, khara, yalla, 7aram, inshallah).
-
-STRICT FILTERING RULES - classify as "neutral" and intensity 1 if the text is:
-- International company news with no direct UAE market connection -> neutral
-- Personal complaints about individual situations unless they reveal
-  a systemic pattern affecting a named company or sector -> neutral
-- International company news with no direct UAE market connection -> neutral
-- Any signal where the UAE is not the primary affected market -> neutral
-- Personal complaints about government services or individual situations -> neutral
-  unless they reveal a systemic pattern affecting a named company or sector
-- Personal social posts (dating, relationships, personal opinions)
-- Generic product recommendations with no market implication
-- Entertainment news unrelated to UAE economy
-- International news with no clear UAE economic connection
+STRICT FILTERING - classify as "neutral" (intensity 1) if the text is:
+- International news with no direct UAE market connection
+- Personal complaints about individual situations unless they reveal a
+  systemic pattern affecting a named company or sector
+- Personal social posts, dating/relationships, personal opinions
+- Generic product recommendations, consumer preference questions
+- Entertainment or weather news unrelated to the UAE economy
 - Student questions about education programs
-- Individual consumer preference questions (best shawarma, teeth whitening etc.)
+- EXCEPTION: complaints about universal personal-cost items that affect
+  everyone (Salik tolls, fees, rent, prices, utility bills) ARE stress
+  signals even without a named company - they reveal a sector-wide pattern
 
-Only classify as stress/closure/opportunity if the text contains:
-- Specific companies, banks, developers, or sectors experiencing measurable change
-- Labor market signals (layoffs, hiring surges, salary trends)
-- Real estate market movements (rent changes, closures, demand shifts)
+Only classify stress/closure/opportunity if the text contains:
+- Named companies/banks/developers/sectors with measurable change
+- Labor signals (layoffs, hiring surges, salary trends)
+- Real estate movements (rent changes, closures, demand shifts)
 - Financial stress (loan issues, payment failures, bank problems)
-- Business closures or openings with named entities
-  (bankruptcy/insolvency/shutdown of a NAMED business = "closure")
-- Supply chain or pricing disruptions affecting UAE market
-- Regulatory or policy changes affecting businesses
-- Macro indicators (GDP, PMI, trade, inflation signals)
+- Business closures/openings with named entities (bankruptcy/insolvency/
+  shutdown of a NAMED business = "closure")
+- Supply-chain or pricing disruptions, regulatory changes, or macro
+  indicators (GDP, PMI, trade, inflation)
 
 CLASSIFICATION RULES:
-- signal_type: "stress", "closure", "opportunity", or "neutral"
-- sector: "F&B", "Real Estate", "Tech", "Retail", "Logistics", "Finance",
-  "Government Services", "Education", "Healthcare", "Transport", "General"
-  Use "General" ONLY for cross-sector macro signals - not for personal posts
-- confidence_score: float 0.0 to 1.0
-- intensity_score: 1 to 5
-  1 = vague individual complaint, no named entity
-  2 = named company or location, moderate signal
-  3 = multiple reports or clear business impact
-  4 = significant named-company or sector-wide impact
-  5 = systemic risk, mass layoffs, major market disruption, macro indicator
+- signal_type: "stress" | "closure" | "opportunity" | "neutral"
+- sector: F&B | Real Estate | Tech | Retail | Logistics | Finance | Government
+  Services | Education | Healthcare | Transport | General (General only for
+  cross-sector macro signals, not personal posts)
+- confidence_score: 0.0 to 1.0
+- intensity_score 1-5: 1 vague individual complaint, no named entity; 2 named
+  company/location, moderate signal; 3 multiple reports or clear business
+  impact; 4 significant named-company/sector-wide impact; 5 systemic risk,
+  mass layoffs, major market disruption, macro indicator
 - extracted_entities: {{"companies": ["names"], "locations": ["places"]}}
   Only include real company names and real UAE locations
-- summary_en: ONE sentence stating the specific economic implication.
-  Must name specific companies or locations where available.
-  Never write vague summaries like "there is a demand for X services".
+- summary_en: ONE sentence naming the specific economic implication and the
+  companies/locations involved. Never vague ("there is demand for X").
 {_SENTIMENT_BLOCK}
 
 OUTPUT: ONLY a valid JSON object with exactly these keys:
@@ -257,9 +271,10 @@ class GroqClassifier:
         self,
         *,
         api_key: str | None = None,
-        # Free tier ~12k tokens/min for llama-3.3-70b-v (~7.7 calls/min at our
-        # ~1,550 tok/call). 10s gap = 6 RPM ~ 9.3k tok/min - safe margin.
-        min_gap_s: float = 10.0,
+        # Free-tier RPM is model-specific; gpt-oss-120b answered ~1s/call in
+        # benchmarking with no 429 at a 1.5s gap, but a 6s gap (10 RPM) keeps
+        # a safe margin for the daily-token wall and burst behavior.
+        min_gap_s: float = 6.0,
         max_attempts: int = 3,
     ) -> None:
         from groq import Groq  # local import: heavy, only needed at runtime
@@ -324,8 +339,12 @@ class GroqClassifier:
                         {"role": "user", "content": user_content},
                     ],
                     temperature=0.1,
-                    response_format={"type": "json_object"},
-                    max_tokens=450,
+                    # NOTE (A10): Groq's json_object response mode rejects
+                    # gpt-oss output (json_validate_failed with an empty
+                    # failed_generation), so it is deliberately NOT used here -
+                    # the prompt's strict JSON instruction plus _extract_json
+                    # (which tolerates fences and stray text) handle it.
+                    max_tokens=600,
                 )
                 content = (response.choices[0].message.content or "").strip()
                 if not content:

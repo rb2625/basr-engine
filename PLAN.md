@@ -257,10 +257,12 @@ disambiguation) that were fixed at the root: signal acc 0.700 / macro-F1
 answers; the neutral traps defer). Production routing on 500: 240/500 (48%)
 handled by the lexicon at 95.0% accuracy (signal) for free, 52% deferred to
 the LLM. Scores persisted to eval_runs (lexicon-v1). Fifth build: **Phase 3 dashboard v1** (A9) - built clean and verified serving real
-Supabase data. Note: the full LLM-path hybrid eval is still pending - the
-Groq daily budget had NOT reset when attempted (it re-burned the last tokens
-on the first real call), so the run aborted honestly and its polluted row was
-deleted. It runs once the daily budget resets.
+Supabase data. Sixth build: **model migration + live deploy** (A10) - Groq
+retired llama-3.3-70b-versatile; the classifier was re-benchmarked to
+openai/gpt-oss-120b and the dashboard was deployed live to Vercel. The full
+LLM-path hybrid eval was restructured into single-pass combined scoring
+(one LLM call per item scores both tasks, matching production) and is ready
+to run once the gpt-oss-120b daily budget (200k tokens/day) resets.
 
 ## 14. Working rules
 
@@ -346,6 +348,41 @@ insert when the A6 UNIQUE constraint is missing (42P10) instead of failing -
 safe for the single-process cron; re-running schema.sql is still the permanent
 fix and adds the constraint.
 
+**A10 (2026-08-17): model migration to gpt-oss-120b + live deploy.** Groq
+retired llama-3.3-70b-versatile (the A5-era default) from the account - the
+model name 404'd. `basr/eval/benchmark.py` (new, permanent) re-benchmarked
+the available free-tier models through the same harness used for published
+scorecards: openai/gpt-oss-120b won (6/6 on the smoke sample);
+qwen/qwen3.6-27b fails Groq's json_object mode entirely; allam-2-7b is weak;
+gpt-oss-20b trails. Three engineering findings absorbed:
+1. Groq's json_object response mode rejects gpt-oss output (json_validate_failed
+   with an empty failed_generation), so it is NOT used - the prompt's strict
+   JSON instruction plus the tolerant _extract_json parser carry the load.
+2. The gpt-oss-120b free tier caps at 200k tokens/day (~260-275 calls). The
+   eval harness was restructured to combined single-pass scoring: one LLM
+   call per item returns all fields (exactly like production) and BOTH task
+   labels are scored from it - the full 500-item hybrid eval now fits in
+   ~154k tokens instead of ~308k. The old two-pass design could never finish
+   the DoD in one day.
+3. A baseline run exposed prompt-drift: gpt-oss read factual/entertainment
+   content as positive sentiment, missed some sarcasm, and neutralized
+   positive economic events. The sentiment block gained explicit rules:
+   non-economic factuals (weather, movies, purchases, questions, vague
+   statements) are neutral; economic announcements keep event direction
+   (investments/openings/tax exemptions/fee cuts/price drops are positive);
+   ironic praise is negative+sarcasm; universal cost complaints (Salik,
+   fees, rent) are stress signals even without a named company. The lexicon
+   gained three defer guards (irony patterns, weather mentions, personal
+   purchases) so those cases reach the LLM instead of being decided wrong
+   by keywords. Targeted retests: the failure classes from both baseline
+   runs now pass. Dashboard deployed live to Vercel
+   (dashboard-gamma-roan-31.vercel.app, root dir `dashboard`, env vars
+   SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY set server-side - the key never
+   reaches the browser), verified serving real data (346 docs, geocoded map,
+   KPIs). One action for the user: after the daily budget resets, run
+   `python -m basr.eval --path hybrid` BEFORE the cron's --nlp stage burns
+   the day's tokens - it logs the canonical Phase 2 DoD scorecard.
+
 **A9 (2026-08-16): public dashboard (Phase 3 v1).** `dashboard/` - Next.js 14
 (App Router) + Tailwind + Leaflet + Recharts, deployed to Vercel (root dir
 `dashboard`). Five views: Overview (KPIs, signal mix, top topics, 30-day
@@ -377,4 +414,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 DoD + lexicon + topics + geocoding all live-verified) - Phase 3 in progress (dashboard v1 built + verified); Amendments A1-A9 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding, A9 dashboard).*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 DoD + lexicon + topics + geocoding all live-verified; full hybrid eval ready to run after the daily budget reset) - Phase 3 in progress (dashboard v1 deployed live); Amendments A1-A10 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding, A9 dashboard, A10 gpt-oss-120b migration + live deploy).*

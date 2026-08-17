@@ -299,6 +299,43 @@ SARCASM_MARKERS = (
     "fantastic service", "so lucky", "so much fun", "great news",
 )
 
+# --- Irony patterns: positive cliches co-occurring with negative-topic words.
+# Fires even without direct negative vocabulary (e.g. "Great news for renters:
+# another 20% increase next year. Fantastic.") - always defer to the LLM.
+IRONY_RE = (
+    re.compile(
+        r"(great news|love how|love that|absolutely (fantastic|amazing|great|perfect)"
+        r"|just what we needed|best thing ever|can't wait|so (happy|excited|thrilled)"
+        r"|another (year|round|month) of).{0,80}"
+        r"(increase|hike|fee|rent|charge|toll|up again|delay|cancel)",
+        re.I,
+    ),
+    re.compile(
+        r"(increase|hike|fee|rent|charge|toll|delay|up again|another).{0,80}"
+        r"(fantastic|amazing|great|love it|just what we needed|perfect|wonderful|"
+        r"best thing|joy|thrilled|excited)",
+        re.I,
+    ),
+)
+
+# --- Factual weather mentions -> defer to the LLM (separates passing
+# pleasantries from substantive opinions like "perfect for outdoor markets").
+WEATHER_EN_RE = re.compile(
+    r"\b(weather|sunny|sunshine|raining|rainy|rain|humid|humidity|forecast|"
+    r"breeze|cloudy|storm)\b",
+    re.I,
+)
+WEATHER_AR_RE = re.compile(r"(الجو|الطقس|طقس|مطر|ممطر|شمس|مشمس|غائم)")
+WEATHER_ARZ_RE = re.compile(r"\b(taqs|matar|shams|jaww|shemes)\b", re.I)
+
+# --- Personal consumer purchases ("just bought a new phone") -> defer.
+PURCHASE_RE = re.compile(
+    r"\b(shari|bought|buying|buy|purchase|purchased|got a new|just got)\b.{0,40}"
+    r"\b(phone|iphone|mobile|mobayil|laptop|playstation|xbox|tv)\b",
+    re.I,
+)
+PURCHASE_AR_RE = re.compile(r"(شاري|بشتري|اشتريت|شراء).{0,30}(جوال|هاتف|موبايل)")
+
 # --- Arabic clitic prefixes to strip before dictionary lookup ---------------
 _AR_PREFIXES = ("وال", "بال", "فال", "لل", "ال", "و", "ف", "ب", "ل")
 
@@ -501,8 +538,10 @@ class LexiconClassifier:
         if best_sec_ev > 0:
             sector = best_sec
 
-        # Sarcasm: known marker + negative context, or a positive word
-        # appearing after negative evidence -> always defer to the LLM.
+        # Sarcasm: known marker + negative context, a positive word appearing
+        # after negative evidence, or an irony pattern where positive cliches
+        # and negative-topic words co-occur (even without direct negative
+        # vocabulary, e.g. "Great news for renters: another 20% increase").
         sarcasm = False
         lower = text.lower()
         if neg_ev > 0 and any(m in lower for m in SARCASM_MARKERS):
@@ -513,14 +552,32 @@ class LexiconClassifier:
             if any(w in tail for w in ("love", "great", "amazing", "fantastic",
                                        "perfect", "wonderful", "best")):
                 sarcasm = True
+        elif any(p.search(lower) for p in IRONY_RE):
+            sarcasm = True
+
+        # Factual weather talk ("weather is nice today", "الجو ممتاز") is a
+        # passing pleasantry, not economic sentiment - defer so the LLM can
+        # separate it from substantive opinions ("perfect for outdoor
+        # markets"). Only when no strong signal is present.
+        weather = bool(WEATHER_EN_RE.search(lower) or WEATHER_AR_RE.search(text)
+                       or WEATHER_ARZ_RE.search(lower))
+
+        # Personal consumer purchases ("just bought a new phone") are neutral
+        # life events, not opportunity signals - defer.
+        purchase = bool(PURCHASE_RE.search(lower) or PURCHASE_AR_RE.search(text))
 
         # Entities: known companies + UAE locations.
         companies = [c for c in COMPANIES if c in lower][:10]
         locations = [l for l in LOCATIONS if l in lower][:10]
 
-        # Confidence penalties: sarcasm, questions without strong signals.
+        # Confidence penalties: sarcasm, factual weather/purchase mentions,
+        # questions without strong signals.
         if sarcasm:
             overall *= 0.3
+        if weather and signal_conf == 0.0:
+            overall *= 0.4
+        if purchase and signal_conf == 0.0:
+            overall *= 0.4
         if "?" in text and signal_conf == 0.0:
             overall *= 0.5
         overall = max(0.0, min(1.0, overall))

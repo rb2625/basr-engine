@@ -8,9 +8,17 @@ Usage:
     python -m basr.eval --task sentiment
     python -m basr.eval --dry-run       # score only, no DB writes
 
-Note: each LLM-path item costs one Groq call (paced ~10s on the free tier), so
-a full run of both tasks over 80 items takes ~25 minutes. ``--limit`` slices
-the items for quick verification runs. The lexicon path is instant and free.
+Budget design (Amendment A10): when BOTH tasks run on an LLM path, each item
+is classified ONCE (one LLM call returning all fields, exactly like the
+production pipeline) and both task labels are scored from that result. This
+halves the token cost versus the old two-pass design and keeps the measured
+scorecard aligned with how the pipeline actually classifies docs.
+
+Note: each LLM-path item costs one Groq call (paced ~6s on the free tier), so
+a full run of both tasks over 500 items takes ~40 minutes and ~150-190k
+tokens - under the gpt-oss-120b free-tier daily cap of 200k. ``--limit``
+slices the items for quick verification runs. The lexicon path is instant
+and free.
 """
 
 from __future__ import annotations
@@ -25,14 +33,14 @@ from ..nlp.lexicon import LexiconClassifier, LEXICON_VERSION
 from ..nlp.pipeline import HybridClassifier
 from ..store import SupabaseStore
 from .datasets import DATASETS
-from .harness import print_report, run_eval
+from .harness import compute_metrics, confusion, print_report
 
 _TASK_EXTRACT = {
     "sentiment": lambda r: r.sentiment_label,
     "signal": lambda r: r.signal_type,
 }
 
-HYBRID_VERSION = "hybrid-lexicon-v1+groq-llama-3.3-70b-v1"
+HYBRID_VERSION = f"hybrid-lexicon-v1+{MODEL_VERSION}"
 
 
 def _make_classifier(path: str):
@@ -41,6 +49,44 @@ def _make_classifier(path: str):
     if path == "hybrid":
         return HybridClassifier(), HYBRID_VERSION
     return GroqClassifier(), MODEL_VERSION
+
+
+def _score_task(classifier, items, task: str, *, results: dict | None = None) -> dict:
+    """Classify (or reuse) each item and score one task's labels."""
+    y_true: list[str] = []
+    y_pred: list[str] = []
+    failures = 0
+    extract = _TASK_EXTRACT[task]
+    for i, item in enumerate(items, 1):
+        result = results.get(item["text"]) if results is not None else None
+        if result is None:
+            result = classifier.classify(item["text"])
+            if results is not None:
+                results[item["text"]] = result
+        expected = item["label"]
+        predicted = extract(result)
+        y_true.append(expected)
+        y_pred.append(predicted)
+        if predicted != expected:
+            print(f"    [{i}/{len(items)}] MISMATCH expected={expected!r} "
+                  f"got={predicted!r} | {item['text'][:70]}")
+        if result.confidence == 0.0:
+            failures += 1
+    metrics = compute_metrics(y_true, y_pred)
+    metrics["task"] = task
+    metrics["confusion"] = confusion(y_true, y_pred)
+    metrics["failures"] = failures
+    return metrics
+
+
+def _items(ds: dict, limit: int | None) -> list[dict]:
+    items = ds["items"]
+    if limit:
+        # Balanced slice: take every nth item so the quick run still
+        # covers ar / arz / en / sarcasm.
+        step = max(1, len(items) // limit)
+        items = items[::step][:limit]
+    return items
 
 
 async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
@@ -53,28 +99,32 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
     print("=" * 60)
 
     classifier, model_version = _make_classifier(path)
-    all_metrics: list[tuple[str, dict]] = []
     store = None if dry_run else SupabaseStore()
     if store is not None:
         await store.open()
 
     try:
-        for ds in DATASETS:
-            if task and ds["task"] != task:
-                continue
-            items = ds["items"]
-            if limit:
-                # Balanced slice: take every nth item so the quick run still
-                # covers ar / arz / en / sarcasm.
-                step = max(1, len(items) // limit)
-                items = items[::step][:limit]
-            print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} ({len(items)} items)")
-            metrics = run_eval(
-                classifier, items, ds["task"],
-                extract=_TASK_EXTRACT[ds["task"]],
-            )
-            print_report(f"  {ds['name']} ({ds['task']})", metrics)
-            all_metrics.append((ds["name"], metrics))
+        datasets = [ds for ds in DATASETS if not task or ds["task"] == task]
+        all_metrics: list[tuple[str, dict]] = []
+
+        if len(datasets) > 1 and path != "lexicon":
+            # Combined mode: classify each unique text ONCE (production
+            # behavior) and score every task from the same result.
+            results: dict[str, object] = {}
+            for ds in datasets:
+                items = _items(ds, limit)
+                print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} "
+                      f"({len(items)} items, shared single-pass calls)")
+                metrics = _score_task(classifier, items, ds["task"], results=results)
+                print_report(f"  {ds['name']} ({ds['task']})", metrics)
+                all_metrics.append((ds["name"], metrics))
+        else:
+            for ds in datasets:
+                items = _items(ds, limit)
+                print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} ({len(items)} items)")
+                metrics = _score_task(classifier, items, ds["task"])
+                print_report(f"  {ds['name']} ({ds['task']})", metrics)
+                all_metrics.append((ds["name"], metrics))
 
         if dry_run or store is None:
             return 0
