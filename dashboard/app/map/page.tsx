@@ -1,14 +1,19 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import Reveal from "@/components/Reveal";
+import Section from "@/components/Section";
 import { useApi } from "@/components/useApi";
 import type { MapData } from "@/lib/types";
 
 const MapView = dynamic(() => import("@/components/MapView"), {
   ssr: false,
   loading: () => (
-    <div className="flex h-[520px] items-center justify-center rounded-xl border border-zinc-200 bg-white text-sm text-zinc-400">
-      Loading map...
+    <div className="card flex h-[520px] items-center justify-center">
+      <div className="flex flex-col items-center gap-3">
+        <div className="skeleton h-4 w-40 rounded" />
+        <div className="skeleton h-4 w-56 rounded" />
+      </div>
     </div>
   ),
 });
@@ -16,29 +21,44 @@ const MapView = dynamic(() => import("@/components/MapView"), {
 export default function MapPage() {
   const { data, error, loading } = useApi<MapData>("map");
   return (
-    <div className="space-y-4">
-      <div>
-        <h1 className="text-xl font-bold">Entity sentiment map</h1>
-        <p className="mt-1 text-sm text-zinc-500">
-          Average sentiment and signal mix per UAE location, sized by mention volume.
-          Color: green = positive, amber = mixed, red = negative.
+    <div className="space-y-6">
+      <div className="mb-7">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+          Geospatial / coverage
+        </div>
+        <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
+          Entity sentiment map
+        </h1>
+        <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">
+          Average sentiment and signal mix per UAE location, sized by mention
+          volume. Coordinates come from the BASR gazetteer - curated, not a
+          third-party API.
         </p>
       </div>
-      {loading ? (
-        <div className="flex h-[520px] items-center justify-center rounded-xl border border-zinc-200 bg-white text-sm text-zinc-400">
-          Loading intelligence...
-        </div>
-      ) : error ? (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-6 text-sm text-red-700">
-          {error}
-        </div>
-      ) : (
-        <MapView locations={data?.locations || []} />
-      )}
-      <p className="text-xs text-zinc-400">
-        Locations come from the BASR gazetteer; coordinates are curated, not from a
-        third-party API. Tiles by OpenStreetMap.
-      </p>
+
+      <Reveal>
+        {loading ? (
+          <div className="card flex h-[520px] items-center justify-center">
+            <div className="skeleton h-4 w-56 rounded" />
+          </div>
+        ) : error ? (
+          <div className="card border-neg/30 p-6 text-sm text-neg">{error}</div>
+        ) : (
+          <MapView locations={data?.locations || []} />
+        )}
+      </Reveal>
+
+      <Reveal delay={120}>
+        <Section kicker="Method" title="How locations are scored">
+          <p className="text-sm leading-relaxed text-mute">
+            Every raw doc is tagged with up to three entities by the zero-token
+            gazetteer layer. Each location aggregates the sentiment of the docs
+            that mention it; the marker color is the average sentiment and the
+            size is mention volume. Negative share is the fraction of docs with
+            a stress or closure signal.
+          </p>
+        </Section>
+      </Reveal>
     </div>
   );
 }

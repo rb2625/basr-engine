@@ -3,43 +3,200 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: light;
+  color-scheme: dark;
+}
+
+html {
+  scrollbar-color: #2a3546 #0a0e14;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
+  background-color: #0a0e14;
+  color: #e6edf3;
+  font-family: var(--font-display), system-ui, sans-serif;
 }
 
-/* Sentiment + signal color helpers (kept in sync with the Badge component). */
+/* Ambient background: soft gold + teal glows over a fine grid. */
+.bg-ambient {
+  background-image:
+    radial-gradient(1100px 500px at 15% -10%, rgba(231, 184, 78, 0.09), transparent 60%),
+    radial-gradient(900px 480px at 90% -5%, rgba(61, 214, 140, 0.06), transparent 55%),
+    linear-gradient(rgba(148, 163, 184, 0.045) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(148, 163, 184, 0.045) 1px, transparent 1px);
+  background-size: auto, auto, 44px 44px, 44px 44px;
+  background-attachment: fixed;
+}
+
+/* ---- Motion ---- */
+@keyframes fadeUp {
+  from {
+    opacity: 0;
+    transform: translateY(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -400px 0;
+  }
+  100% {
+    background-position: 400px 0;
+  }
+}
+
+@keyframes mapPulse {
+  0%,
+  100% {
+    opacity: 0.95;
+  }
+  50% {
+    opacity: 0.5;
+  }
+}
+
+@keyframes barGrow {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+
+.anim-reveal {
+  opacity: 0;
+  animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, #131b27 25%, #1a2433 50%, #131b27 75%);
+  background-size: 800px 100%;
+  animation: shimmer 1.4s infinite linear;
+}
+
+.map-marker {
+  animation: mapPulse 2.6s ease-in-out infinite;
+}
+
+.bar-grow {
+  transform-origin: left center;
+  animation: barGrow 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .anim-reveal,
+  .map-marker,
+  .bar-grow,
+  .skeleton {
+    animation: none;
+    opacity: 1;
+  }
+}
+
+/* ---- Cards ---- */
+.card {
+  background: linear-gradient(180deg, #121a26 0%, #10161f 100%);
+  border: 1px solid rgba(148, 163, 184, 0.14);
+  border-radius: 0.9rem;
+  transition:
+    border-color 0.25s ease,
+    transform 0.25s ease,
+    box-shadow 0.25s ease;
+}
+
+.card:hover {
+  border-color: rgba(231, 184, 78, 0.35);
+  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+}
+
+.card-hoverable:hover {
+  transform: translateY(-2px);
+}
+
+/* ---- Sentiment + signal badges (dark) ---- */
 .sent-pos {
-  background-color: #d1fae5;
-  color: #065f46;
+  background: rgba(61, 214, 140, 0.12);
+  color: #5ee6a4;
+  border: 1px solid rgba(61, 214, 140, 0.3);
 }
 .sent-neg {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background: rgba(244, 101, 107, 0.12);
+  color: #f98b90;
+  border: 1px solid rgba(244, 101, 107, 0.3);
 }
 .sent-neu {
-  background-color: #f4f4f5;
-  color: #52525b;
+  background: rgba(91, 107, 126, 0.18);
+  color: #a7b4c3;
+  border: 1px solid rgba(91, 107, 126, 0.35);
 }
 .sent-mix {
-  background-color: #fef3c7;
-  color: #92400e;
+  background: rgba(231, 184, 78, 0.12);
+  color: #f0cd7d;
+  border: 1px solid rgba(231, 184, 78, 0.3);
 }
 .sig-stress {
-  background-color: #fee2e2;
-  color: #991b1b;
+  background: rgba(244, 101, 107, 0.14);
+  color: #f98b90;
+  border: 1px solid rgba(244, 101, 107, 0.32);
 }
 .sig-closure {
-  background-color: #ede9fe;
-  color: #5b21b6;
+  background: rgba(167, 139, 250, 0.14);
+  color: #c4b5fd;
+  border: 1px solid rgba(167, 139, 250, 0.32);
 }
 .sig-opportunity {
-  background-color: #d1fae5;
-  color: #065f46;
+  background: rgba(61, 214, 140, 0.14);
+  color: #5ee6a4;
+  border: 1px solid rgba(61, 214, 140, 0.32);
 }
 .sig-neutral {
-  background-color: #f4f4f5;
-  color: #52525b;
+  background: rgba(91, 107, 126, 0.18);
+  color: #a7b4c3;
+  border: 1px solid rgba(91, 107, 126, 0.35);
+}
+
+/* Recharts dark theme helpers */
+.recharts-cartesian-axis-tick text {
+  fill: #8b98a9;
+  font-family: var(--font-mono), monospace;
+  font-size: 10.5px;
+}
+.recharts-legend-item-text {
+  color: #a7b4c3 !important;
+  font-size: 12px;
+}
+
+/* Leaflet dark popup chrome */
+.leaflet-container {
+  background: #0a0e14;
+  font-family: var(--font-display), system-ui, sans-serif;
+}
+.leaflet-popup-content-wrapper,
+.leaflet-popup-tip {
+  background: #151d29;
+  color: #e6edf3;
+  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.8);
+}
+.leaflet-popup-content-wrapper {
+  border: 1px solid rgba(148, 163, 184, 0.2);
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: #8b98a9;
+}
+.leaflet-control-attribution {
+  background: rgba(10, 14, 20, 0.7) !important;
+  color: #5b6b7e !important;
+}
+.leaflet-control-attribution a {
+  color: #8b98a9 !important;
+}
+.leaflet-control-zoom a {
+  background: #151d29 !important;
+  color: #a7b4c3 !important;
+  border-color: rgba(148, 163, 184, 0.2) !important;
 }
