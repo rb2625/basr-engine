@@ -378,10 +378,13 @@ gpt-oss-20b trails. Three engineering findings absorbed:
    runs now pass. Dashboard deployed live to Vercel
    (dashboard-gamma-roan-31.vercel.app, root dir `dashboard`, env vars
    SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY set server-side - the key never
-   reaches the browser), verified serving real data (346 docs, geocoded map,
-   KPIs). One action for the user: after the daily budget resets, run
-   `python -m basr.eval --path hybrid` BEFORE the cron's --nlp stage burns
-   the day's tokens - it logs the canonical Phase 2 DoD scorecard.
+   reaches the   browser), verified serving real data (346 docs, geocoded map,
+   KPIs). One action for the user: after the daily budget resets (00:00
+   UTC), run `python -m basr.eval --path hybrid` first - it needs ~154k of
+   the 200k daily tokens and logs the canonical Phase 2 DoD scorecard. The
+   GitHub cron never passes --nlp (ingestion only), so classification and
+   eval share the daily budget only when run manually; run the eval before
+   any manual `basr.orchestrator --nlp` backlog drain.
 
 **A9 (2026-08-16): public dashboard (Phase 3 v1).** `dashboard/` - Next.js 14
 (App Router) + Tailwind + Leaflet + Recharts, deployed to Vercel (root dir
