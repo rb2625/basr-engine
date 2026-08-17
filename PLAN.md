@@ -209,9 +209,13 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
       topic:9 matured to 15; anomaly detection re-run idempotent (no duplicate alerts)
 - **DoD:** Perfection Gate checklist (sec 12) all-green
 
-**Phase 7 - Pilot & monetization** *(only after Phase 6 passes)*
-- Pilot: AURAK comms (free) -> case study
-- Org plans: free/pro/enterprise; custom reports; media licensing of "UAE Pulse"
+**Phase 7 - Pilot & monetization** *(detailed plan in A18; only after Phase 6 passes)*
+- [ ] Pilot: AURAK comms (free, 4 weeks) -> case study -> public reference
+- [ ] Org layer build: dashboard auth + org workspaces (schema ready: orgs/org_members)
+- [ ] Pricing + billing: free / pro / enterprise tiers; Stripe checkout (no card data stored)
+- [ ] Paid products: UAE Pulse daily (pro), weekly digest (pro), custom sector reports (enterprise)
+- [ ] Media licensing of "UAE Pulse" aggregated trends to UAE outlets
+- [ ] Growth: LinkedIn/portfolio launch post with the live dashboard + eval scorecard
 - **DoD:** signed pilot + first paid customer + public case study
 
 ## 12. Perfection Gate (binary - all must pass)
@@ -489,6 +493,35 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A18 (2026-08-17): Phase 7 plan - pilot and monetization.**
+Phase 7 is the first revenue stage; it starts ONLY after the Perfection Gate
+(sec 12) is all-green. Build order, each step gated on the last:
+(1) AURAK pilot (free, ~4 weeks): the comms office gets a private dashboard
+view + daily UAE Pulse + weekly digest over the SAME Telegram delivery that
+is already proven. Success metric: they act on at least one alert/report
+and say so (email or callout) - that becomes the case study quote. No
+custom code: it reuses the existing pipeline with an org-scoped view.
+(2) Org layer (the only real build): dashboard auth (one admin email per
+org), org workspaces keyed to the existing orgs/org_members schema, and a
+read-only scoped view so a pilot partner never sees other tenants' data.
+Rows in briefs/reports already carry org_id (nullable = public) - the
+scoping is a WHERE clause, not a data fork.
+(3) Pricing + billing: free tier (public dashboard + delayed UAE Pulse),
+pro (daily report + alerts to your inbox/Telegram + 1 custom sector), and
+enterprise (weekly digest + custom reports + API). Stripe Checkout for
+subscriptions; card data never touches our servers (PCI scope stays with
+Stripe). Billing events update orgs.plan.
+(4) Media licensing: package the aggregated "UAE Pulse" weekly narrative
+as a licensed feed for UAE outlets (WAM-adjacent sites, business desks),
+one per region to avoid exclusivity conflicts. Aggregated trends only -
+consistent with Gate 6 media-law compliance; no raw Reddit/YouTube quotes.
+(5) Growth: a launch post (LinkedIn + portfolio) showing the live
+dashboard, the published eval scorecard, and the pilot case study; a
+public pricing page; a waitlist for non-pilot orgs.
+DoD (all three): signed pilot agreement, first paid customer, public case
+study. Revenue targets are deliberately NOT set here - the gate is
+adoption proof, not a number.
+
 **A17 (2026-08-17): Phase 6 build - privacy audit, eval v2, local model wired.**
 (1) Privacy audit (Gate 6): verified in code - all 5 author-bearing adapters
 (reddit, apple reviews, youtube, bluesky, news/feed_common) hash authors via
@@ -650,4 +683,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (v2 watcher retries the hybrid eval; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (29 tests + CI, privacy audit green, eval v2 built with zero-overlap guard, local model wired into the hybrid: v2 sentiment 0.817 vs lexicon 0.367); Amendments A1-A17 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (v2 watcher retries the hybrid eval with the resume cache; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (29 tests + CI, privacy audit green, backfill DONE: global series 28 buckets + STL active, eval v2 built, local model wired, resume cache added) - Phase 7 planned in A18; Amendments A1-A18 recorded.*
