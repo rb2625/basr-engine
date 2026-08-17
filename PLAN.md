@@ -176,8 +176,11 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
       with Phase 4 (early warning), which owns the anomaly engine
 
 **Phase 4 - Early warning**
-- time_series aggregation + anomaly detection + alerts
-- **DoD:** a real alert fires on a real spike (verified, not simulated); alert -> email/Telegram delivered
+- [x] time_series aggregation (daily 45d + hourly 48h; global/topic/sector/emirate) - live
+- [x] anomaly ensemble (14-day z-score + STL, volume floor, severity tiers) - live, 4 alerts flagged
+- [x] alerts: lifecycle + evidence + delivery over Telegram/email - 4 alerts delivered + verified (2026-08-17)
+- [ ] DoD final call: a real alert fires on a REAL-WORLD spike (the first 4 flagged the corpus's
+      own ingestion ramp); delivery pipe proven - awaiting ~28+ days of cron history so flags mean events
 
 **Phase 5 - Agents + reports** (detailed plan in A12)
 - [ ] `basr/agents/` package: severity, brief, reports, CLI (`--brief`, `--report`, `--deliver`)
@@ -434,8 +437,14 @@ idempotently to schema.sql) do not exist until the SQL editor is re-run, so
 delivery probes for them and falls back to delivering open alerts without
 tracking. Dashboard gained an Early warning view (``/alerts``: severity
 badges, status dots, evidence docs) + ``view=alerts`` API, deployed live.
-Phase 4 DoD remaining: one delivery channel key (Telegram recommended) so
-an alert is actually delivered, not just detected.
+Delivery half of the Phase 4 DoD is now PROVEN (2026-08-17): with
+TELEGRAM_BOT_TOKEN + TELEGRAM_CHAT_ID configured in .env + GitHub secrets,
+all 4 open alerts were delivered over Telegram - each sendMessage returned
+HTTP 200 and the alerts table logged delivery_status=sent, channel=telegram,
+delivered_at for ids 9-12. The remaining DoD item is the "real-world spike"
+half: the first 4 spikes sat on the corpus's own ingestion days; as the cron
+accumulates history the baseline stabilizes and a flag will mean an actual
+event. The pipe (detect -> alert -> deliver) is complete and verified.
 
 **A12 (2026-08-17): Phase 5 plan - the agent layer (briefs + reports).**
 The decision-support build, all measured by the eval harness (plan sec 8).
@@ -512,4 +521,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval ready after budget reset) - Phase 3 [x] DoD passed - Phase 4 in progress (engine live + auto-runs in cron; DoD needs one delivery channel key) - Phase 5 planned (A12: agent layer - severity, briefs, reports, agent eval); Amendments A1-A12 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval ready after budget reset) - Phase 3 [x] DoD passed - Phase 4 in progress (engine live, delivery PROVEN over Telegram; DoD final call waits on real-world spike history) - Phase 5 planned (A12); Amendments A1-A12 recorded.*
