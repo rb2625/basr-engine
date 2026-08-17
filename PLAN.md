@@ -186,10 +186,12 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - [x] `basr/agents/` package: severity, brief, reports, CLI - built + live-verified
 - [x] Agent eval harness: severity agreement 1.000 (bar >= 0.85), brief 1.000 - logged
 - [x] Orchestrator `--agents` stage + cron wiring (`--intel --agents`)
-- [ ] Schema: `reports` table - in schema.sql, needs the SQL editor re-run
-- [ ] First stored + DELIVERED daily report (delivery reuses the Telegram channel)
-- [ ] Dashboard: Briefs + Reports pages built green - deploy to Vercel
-- **DoD:** briefs pass eval suite; daily/weekly reports auto-generated and delivered
+- [x] Schema: `reports` table live (SQL editor re-run 2026-08-17)
+- [x] First stored + DELIVERED daily report (UAE Pulse 2026-08-17, Telegram, verified sent)
+- [x] Dashboard: Briefs + Reports pages built green + deployed to Vercel
+- [ ] Weekly sector digest first run (cron generates it; one-week guard is in place)
+- **DoD:** briefs pass eval suite (1.000/1.000 logged); daily report auto-generated AND
+      delivered (2026-08-17, Telegram) - weekly digest pending first cron cycle
 
 **Phase 6 - Perfection pass**
 - Backfill history, tests (unit + integration), docs (README, architecture, runbook), privacy/ToS audit, performance, Arabic coverage pass, dead-code removal (praw)
@@ -475,6 +477,18 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A14 (2026-08-17): Phase 5 delivery proven + Phase 2 eval launched.** With the
+SQL editor re-run, the ``reports`` table is live (A13's schema addition). The
+first real daily report was built, stored, and DELIVERED: ``UAE Pulse -
+2026-08-17`` (reports id 1) - Telegram sendMessage HTTP 200, delivery logged
+(delivery_status=sent, channel=telegram, delivered_at). Its narrative is
+honest and grounded (volume -88.2% vs prior, sentiment n/a today, 4 open
+alerts). Phase 5 DoD's "daily report auto-generated and delivered" half is
+now PROVEN; the weekly digest first run rides the cron's one-week guard. The
+canonical Phase 2 hybrid eval (500 items x 2 tasks, single-pass) launched
+same day once the daily token budget reset; results logged to eval_runs and
+the Phase 2 DoD closes only if sentiment F1 >= 88% holds.
+
 **A12 (2026-08-17): Phase 5 plan - the agent layer (briefs + reports).**
 The decision-support build, all measured by the eval harness (plan sec 8).
 New package ``basr/agents/``, four parts, in build order:
@@ -550,4 +564,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval ready) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 in progress (agent layer built + eval green, A13; remaining: schema re-run, first delivered report, dashboard deploy); Amendments A1-A13 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval running) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 in progress (agent layer + eval green, first UAE Pulse DELIVERED over Telegram; weekly digest pending first cron cycle); Amendments A1-A14 recorded.*
