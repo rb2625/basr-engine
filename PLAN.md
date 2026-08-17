@@ -167,9 +167,13 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - [ ] Eval run v1 (needs Groq budget) + score published
 - **DoD (revised, see A5):** sentiment F1 >= 88% on eval v1; every ingested doc classified *within the free-tier daily token budget*; scores logged
 
-**Phase 3 - Dashboard v1 (public)**
-- Next.js app: map, trends, topics, anomaly feed, search; deployed to Vercel
-- **DoD:** live URL; loads real Supabase data; works on mobile
+**Phase 3 - Dashboard v1 (public)** [x] **DoD PASSED (2026-08-17)**
+- [x] Next.js app: overview, map, trends, topics, feed - deployed to Vercel (A9/A10)
+- [x] Redesigned: dark signal-room theme, custom type, animation (2026-08-17)
+- [x] DoD: live URL (dashboard-gamma-roan-31.vercel.app); loads real Supabase
+      data (verified 200 on every view); responsive on mobile
+- [ ] search + anomaly feed: search is dashboard v2; the anomaly feed lands
+      with Phase 4 (early warning), which owns the anomaly engine
 
 **Phase 4 - Early warning**
 - time_series aggregation + anomaly detection + alerts
@@ -263,6 +267,14 @@ openai/gpt-oss-120b and the dashboard was deployed live to Vercel. The full
 LLM-path hybrid eval was restructured into single-pass combined scoring
 (one LLM call per item scores both tasks, matching production) and is ready
 to run once the gpt-oss-120b daily budget (200k tokens/day) resets.
+Seventh build: **Phase 3 DoD passed + dashboard redesign** (2026-08-17) - the
+public dashboard shipped on A9/A10 and was redesigned from the default
+scaffold look into a custom dark signal-room theme (UAE-gold accents, Arabic
+wordmark, Space Grotesk + JetBrains Mono, count-up KPIs, staggered reveals,
+pulsing map markers, dark charts, skeleton loaders, prefers-reduced-motion
+respected). Verified on all five views locally and live, then deployed to
+Vercel. Search and the anomaly feed are deferred: the anomaly feed belongs to
+Phase 4 (it owns the anomaly engine) and search is dashboard v2.
 
 ## 14. Working rules
 
@@ -417,4 +429,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 DoD + lexicon + topics + geocoding all live-verified; full hybrid eval ready to run after the daily budget reset) - Phase 3 in progress (dashboard v1 deployed live); Amendments A1-A10 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding, A9 dashboard, A10 gpt-oss-120b migration + live deploy).*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 + lexicon + topics + geocoding live-verified; hybrid eval ready after budget reset) - Phase 3 [x] DoD passed (dashboard live + redesigned); Amendments A1-A10 recorded.*
