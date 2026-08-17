@@ -19,22 +19,86 @@ a full run of both tasks over 500 items takes ~40 minutes and ~150-190k
 tokens - under the gpt-oss-120b free-tier daily cap of 200k. ``--limit``
 slices the items for quick verification runs. The lexicon path is instant
 and free.
+
+Resume cache (Amendment A18): the free tier's token budget is a rolling
+window that frees gradually as usage ages out, so a long LLM-path run can
+hit the wall near the end. On an LLM path the harness now persists every
+successful (confidence > 0) classification to a local JSON cache keyed by
+model version + eval set, so a retry only re-pays for the calls that failed.
+The cache is cleared once a run logs a complete scorecard, so it can never
+mask a future classifier change.
 """
 
 from __future__ import annotations
 
 import argparse
 import asyncio
+import json
+import os
+import tempfile
 import time
+from dataclasses import asdict
 from datetime import datetime, timezone
+from typing import Any
 
-from ..nlp.classifier import GroqClassifier, MODEL_VERSION
+from ..nlp.classifier import ClassifyResult, GroqClassifier, MODEL_VERSION
 from ..nlp.lexicon import LexiconClassifier, LEXICON_VERSION
 from ..nlp.pipeline import HybridClassifier
 from ..store import SupabaseStore
 from .datasets import DATASETS
 from .datasets_v2 import DATASETS_V2
 from .harness import compute_metrics, confusion, print_report
+
+CACHE_DIR = os.environ.get("BASR_EVAL_CACHE_DIR", tempfile.gettempdir())
+CACHE_FILE = os.path.join(CACHE_DIR, "basr_eval_cache.json")
+
+
+class ResultCache:
+    """Disk cache of successful eval classifications, keyed by
+    model version + eval set so different classifiers never mix."""
+
+    def __init__(self, key: str, path: str = CACHE_FILE) -> None:
+        self.key = key
+        self.path = path
+        self._data: dict[str, dict] = {}
+        try:
+            with open(path, encoding="utf-8") as f:
+                blob = json.load(f)
+            self._data = blob.get(key, {})
+        except (OSError, ValueError):
+            self._data = {}
+
+    def get(self, text: str) -> ClassifyResult | None:
+        entry = self._data.get(text)
+        if not entry:
+            return None
+        try:
+            return ClassifyResult(**{k: v for k, v in entry.items() if k in
+                                     ClassifyResult.__dataclass_fields__})
+        except (TypeError, ValueError):
+            return None
+
+    def put(self, text: str, result: ClassifyResult) -> None:
+        if result.confidence <= 0.0:
+            return  # failed calls are never cached - they must be retried
+        self._data[text] = asdict(result)
+        self._save()
+
+    def _save(self) -> None:
+        try:
+            with open(self.path, "w", encoding="utf-8") as f:
+                json.dump({self.key: self._data}, f)
+        except OSError:
+            pass  # cache is an optimization; a full re-run is still correct
+
+    def clear(self) -> None:
+        try:
+            os.remove(self.path)
+        except OSError:
+            pass
+
+    def __len__(self) -> int:
+        return len(self._data)
 
 _TASK_EXTRACT = {
     "sentiment": lambda r: r.sentiment_label,
@@ -52,25 +116,31 @@ def _make_classifier(path: str):
     return GroqClassifier(), MODEL_VERSION
 
 
-def _score_task(classifier, items, task: str, *, results: dict | None = None) -> dict:
+def _score_task(classifier, items, task: str, *, results: dict | None = None,
+                cache: ResultCache | None = None) -> dict:
     """Classify (or reuse) each item and score one task's labels."""
     y_true: list[str] = []
     y_pred: list[str] = []
     failures = 0
     extract = _TASK_EXTRACT[task]
     for i, item in enumerate(items, 1):
-        result = results.get(item["text"]) if results is not None else None
+        text = item["text"]
+        result = results.get(text) if results is not None else None
+        if result is None and cache is not None:
+            result = cache.get(text)
         if result is None:
-            result = classifier.classify(item["text"])
+            result = classifier.classify(text)
             if results is not None:
-                results[item["text"]] = result
+                results[text] = result
+            if cache is not None:
+                cache.put(text, result)
         expected = item["label"]
         predicted = extract(result)
         y_true.append(expected)
         y_pred.append(predicted)
         if predicted != expected:
             print(f"    [{i}/{len(items)}] MISMATCH expected={expected!r} "
-                  f"got={predicted!r} | {item['text'][:70]}")
+                  f"got={predicted!r} | {text[:70]}")
         if result.confidence == 0.0:
             failures += 1
     metrics = compute_metrics(y_true, y_pred)
@@ -106,6 +176,13 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
     if store is not None:
         await store.open()
 
+    cache: ResultCache | None = None
+    if path in ("llm", "hybrid") and not dry_run:
+        cache = ResultCache(f"{model_version}|{eval_set}")
+        if len(cache):
+            print(f"[+] resume cache: {len(cache)} prior successful "
+                  f"classifications loaded (retry only re-pays failed calls)")
+
     try:
         datasets = [ds for ds in datasets if not task or ds["task"] == task]
         all_metrics: list[tuple[str, dict]] = []
@@ -118,14 +195,15 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
                 items = _items(ds, limit)
                 print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} "
                       f"({len(items)} items, shared single-pass calls)")
-                metrics = _score_task(classifier, items, ds["task"], results=results)
+                metrics = _score_task(classifier, items, ds["task"],
+                                      results=results, cache=cache)
                 print_report(f"  {ds['name']} ({ds['task']})", metrics)
                 all_metrics.append((ds["name"], metrics))
         else:
             for ds in datasets:
                 items = _items(ds, limit)
                 print(f"\n[+] Task {ds['task']!r} - dataset {ds['name']} ({len(items)} items)")
-                metrics = _score_task(classifier, items, ds["task"])
+                metrics = _score_task(classifier, items, ds["task"], cache=cache)
                 print_report(f"  {ds['name']} ({ds['task']})", metrics)
                 all_metrics.append((ds["name"], metrics))
 
@@ -156,6 +234,9 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
                         "confusion": metrics["confusion"]},
             )
             print(f"[+] eval_runs logged for {name} ({model_version}): {ok}")
+        if cache is not None:
+            cache.clear()
+            print("[+] resume cache cleared - the scorecard now reflects this run only")
     finally:
         if store is not None:
             await store.close()
