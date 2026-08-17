@@ -105,8 +105,8 @@ STRESS_EN = {
     "fare": 1, "tolls": 1, "taxes": 2, "problems": 1, "complaints": 1,
     "wait times": 1, "frustrate": 2, "frustrating": 2, "traffic": 1,
     "salik": 2, "charges": 1, "evictions": 2, "eviction": 2, "bounced": 2,
-    "slower payments": 2, "rejection rate": 2, "lower pay": 2,
-    "utility bills": 2, "processing times": 2,
+    "slower payments": 2, "rejection rate": 2,    "lower pay": 2, "utility bills": 2, "processing times": 2,
+    "costs jump": 2, "delay launches": 2, "nightmare": 2, "delivery fee": 2,
 }
 STRESS_AR = {
     "جنوني": 2, "غلاء": 2, "أزمة": 2, "ركود": 2, "تسريح": 2,
@@ -137,7 +137,7 @@ CLOSURE_EN = {
 }
 CLOSURE_AR = {
     "إفلاس": 2, "أفلس": 2, "أفلست": 2, "أغلقت": 2, "أغلق": 2, "إغلاق": 2,
-    "توقفت": 2, "توقف": 2, "تصفية": 2,
+    "تصفية": 2,
 }
 CLOSURE_ARZ = {
     "7alat": 2, "sakkar": 2, "sakkaret": 2, "masakt": 2, "masaket": 2,
@@ -155,10 +155,10 @@ OPP_EN = {
     "direct flights": 2, "direct flight": 2, "partnership": 2,
     "funding": 2, "all-time high": 2, "reductions": 2, "extends": 2,
     "logistics hub": 2, "scholarship": 2, "doubled": 2, "free": 1,
-    "new": 1, "growth": 1, "grow": 1, "grows": 1, "growing": 1,
-    "investment": 1, "invest": 1, "boost": 1, "opportunity": 1,
-    "opportunities": 1, "affordable": 1, "discount": 1, "improved": 1,
-    "profit": 1, "profits": 1, "surge": 1, "surged": 1, "announces": 1,
+    "growth": 1, "grow": 1, "grows": 1, "growing": 1, "investment": 1,
+    "invest": 1, "boost": 1, "opportunity": 1, "opportunities": 1,
+    "affordable": 1, "discount": 1, "improved": 1, "profit": 1,
+    "profits": 1, "surge": 1, "surged": 1, "announces": 1,
     "announced": 1, "announce": 1, "welcomes": 1, "signs": 1, "deal": 1,
     "talent": 1,
 }
@@ -166,8 +166,8 @@ OPP_AR = {
     "افتتاح": 2, "افتتح": 2, "افتتحت": 2, "أطلقت": 2, "إطلاق": 2,
     "توظيف": 2, "تعيين": 2, "منح": 2, "قياسيا": 2, "قياسي": 2,
     "مبادرة": 2, "مجانا": 2, "فرص": 2, "استثمار": 2, "استثمارا": 2,
-    "إقبالا": 2, "إقبال": 2, "ينمو": 2, "نموا": 2, "نمو": 2,
-    "تزايد": 2, "يتزايد": 2, "ازدهار": 2, "تزدهر": 2, "تفتح": 2,
+    "ينمو": 2, "نموا": 2, "نمو": 2, "تزايد": 2, "يتزايد": 2,
+    "ازدهار": 2, "تزدهر": 2, "تفتح": 2,
     "تخفيضات": 2, "خفض": 2, "أرباحا": 2, "أرباح": 2, "تمويل": 2,
     "تستضيف": 2, "يجذب": 2, "يستقبل": 2, "تطلق": 2, "أرخص": 2,
     "دعم": 2, "سيستقبل": 2, "جديدة": 1, "جديد": 1, "تعلن": 1,

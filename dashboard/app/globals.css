@@ -1,0 +1,45 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  color-scheme: light;
+}
+
+body {
+  -webkit-font-smoothing: antialiased;
+}
+
+/* Sentiment + signal color helpers (kept in sync with the Badge component). */
+.sent-pos {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.sent-neg {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+.sent-neu {
+  background-color: #f4f4f5;
+  color: #52525b;
+}
+.sent-mix {
+  background-color: #fef3c7;
+  color: #92400e;
+}
+.sig-stress {
+  background-color: #fee2e2;
+  color: #991b1b;
+}
+.sig-closure {
+  background-color: #ede9fe;
+  color: #5b21b6;
+}
+.sig-opportunity {
+  background-color: #d1fae5;
+  color: #065f46;
+}
+.sig-neutral {
+  background-color: #f4f4f5;
+  color: #52525b;
+}

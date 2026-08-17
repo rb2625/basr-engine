@@ -248,6 +248,19 @@ universities) that enrich every doc with zero tokens. The eval set grew
 it: signal acc 0.888 / F1 0.881 with zero false signal routes (every remaining
 miss is a deliberate deferral the LLM catches); sentiment acc 0.834. Scores
 persisted to eval_runs (lexicon-v1). All 310 raw docs enriched in Supabase.
+Fourth build: the **eval set hit the 500-item DoD** (ar 185 / en 186 / arz
+129, covering MSA + Gulf + Egyptian + Levantine, Arabizi variants, sarcasm,
+and the filtering traps). Lexicon re-measured on the full set - the growth
+surfaced real false routes (إقبالا/توقف/new matched too broadly, salary-rise
+disambiguation) that were fixed at the root: signal acc 0.700 / macro-F1
+0.776 / macro-P 0.860 with ZERO false signal alarms; sentiment 0.656 (forced
+answers; the neutral traps defer). Production routing on 500: 240/500 (48%)
+handled by the lexicon at 95.0% accuracy (signal) for free, 52% deferred to
+the LLM. Scores persisted to eval_runs (lexicon-v1). Fifth build: **Phase 3 dashboard v1** (A9) - built clean and verified serving real
+Supabase data. Note: the full LLM-path hybrid eval is still pending - the
+Groq daily budget had NOT reset when attempted (it re-burned the last tokens
+on the first real call), so the run aborted honestly and its polluted row was
+deleted. It runs once the daily budget resets.
 
 ## 14. Working rules
 
@@ -333,6 +346,19 @@ insert when the A6 UNIQUE constraint is missing (42P10) instead of failing -
 safe for the single-process cron; re-running schema.sql is still the permanent
 fix and adds the constraint.
 
+**A9 (2026-08-16): public dashboard (Phase 3 v1).** `dashboard/` - Next.js 14
+(App Router) + Tailwind + Leaflet + Recharts, deployed to Vercel (root dir
+`dashboard`). Five views: Overview (KPIs, signal mix, top topics, 30-day
+volume/sentiment, recent stress), Map (entity sentiment map, gazetteer
+coords, OpenStreetMap tiles), Trends (daily volume + sentiment + stress by
+topic), Topics (14-topic cards), Feed (latest classified docs with badges).
+Data flows through one API route (`/api/data?view=...`) that aggregates the
+small Supabase tables server-side with the service-role key - the key never
+reaches the browser. Verified live: `npm run build` green, production server
+serving real Supabase data (282 docs, 47 classified, geocoded map), data
+layer smoke test (`scripts/smoke.ts`) against the live DB. Recharts/Leaflet
+kept client-side; pages are thin shells so the build never needs the DB.
+
 **A8 (2026-08-16): topics + entity geocoding, zero tokens.** `basr/nlp/topics.py`
 assigns up to 3 of 14 topics per doc (rent-housing, jobs-labor, prices-inflation,
 business-closures, transport, government-services, education, healthcare,
@@ -351,4 +377,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 187 + lexicon fast path + topics + entity geocoding all live-verified); Amendments A1-A8 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding).*
+*Last amended: 2026-08-16 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 DoD + lexicon + topics + geocoding all live-verified) - Phase 3 in progress (dashboard v1 built + verified); Amendments A1-A9 recorded (A4 fasttext deferral, A5 Groq 100k/day budget, A6 classifications UNIQUE, A7 lexicon fast path, A8 topics + geocoding, A9 dashboard).*
