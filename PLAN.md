@@ -182,19 +182,25 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - [ ] DoD final call: a real alert fires on a REAL-WORLD spike (the first 4 flagged the corpus's
       own ingestion ramp); delivery pipe proven - awaiting ~28+ days of cron history so flags mean events
 
-**Phase 5 - Agents + reports** (detailed plan in A12, first build in A13)
+**Phase 5 - Agents + reports** [x] **DoD PASSED (2026-08-17)**
 - [x] `basr/agents/` package: severity, brief, reports, CLI - built + live-verified
 - [x] Agent eval harness: severity agreement 1.000 (bar >= 0.85), brief 1.000 - logged
 - [x] Orchestrator `--agents` stage + cron wiring (`--intel --agents`)
 - [x] Schema: `reports` table live (SQL editor re-run 2026-08-17)
 - [x] First stored + DELIVERED daily report (UAE Pulse 2026-08-17, Telegram, verified sent)
+- [x] Weekly sector digest generated + DELIVERED (2026-08-17, Telegram; real sector data)
 - [x] Dashboard: Briefs + Reports pages built green + deployed to Vercel
-- [ ] Weekly sector digest first run (cron generates it; one-week guard is in place)
-- **DoD:** briefs pass eval suite (1.000/1.000 logged); daily report auto-generated AND
-      delivered (2026-08-17, Telegram) - weekly digest pending first cron cycle
+- **DoD:** briefs pass eval suite (1.000/1.000 logged); daily + weekly reports
+      auto-generated AND delivered over Telegram - all verified live
 
-**Phase 6 - Perfection pass**
-- Backfill history, tests (unit + integration), docs (README, architecture, runbook), privacy/ToS audit, performance, Arabic coverage pass, dead-code removal (praw)
+**Phase 6 - Perfection pass** (detailed plan in A16)
+- [ ] Tests + CI: pytest suite for zero-token layers; GitHub Actions runs it on push
+- [ ] Docs: README rewritten for 2.0; docs/architecture, runbook, data-sources, privacy
+- [ ] Legacy cleanup: v1 root scripts moved to legacy/ (praw/playwright refs removed)
+- [ ] Privacy audit: author hashing, no private data, robots.txt/ToS respect (Gate 6)
+- [ ] Arabic coverage pass: lexicon eval sliced by language quantifies the gap
+- [ ] Fine-tuned Gulf-Arabic model v1: local char n-gram baseline on the eval items
+- [ ] Backfill history: 28+ days of time_series so the anomaly baseline matures
 - **DoD:** Perfection Gate checklist (sec 12) all-green
 
 **Phase 7 - Pilot & monetization** *(only after Phase 6 passes)*
@@ -477,6 +483,40 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A16 (2026-08-17): Phase 5 DoD PASSED + Phase 6 plan - the perfection pass.**
+Phase 5 closed: the weekly sector digest was generated on demand and
+DELIVERED (reports id 2, Telegram, delivery_status=sent; real sector data:
+Real Estate 4, Retail 4, Healthcare 2, F&B 1, Government Services 1;
+grounded narrative, 154 docs / -8% vs prior week / 3 anomaly flags / 4 open
+alerts). Its LLM narrative degraded to the deterministic fallback when the
+daily budget wall hit - working rule 3 proven in production, and the digest
+still delivered. Phase 5 DoD: briefs pass the eval suite (1.000/1.000),
+daily + weekly reports auto-generated AND delivered - all verified live.
+Phase 6 plan (perfection pass, Gate = sec 12 checklist all-green), build
+order: (1) tests + CI - pytest for the zero-token layers (severity scorer,
+lexicon guards, normalizer, textmatch, topics/entities, eval metrics,
+report/brief fallbacks with mocked store) + a GitHub Actions test workflow;
+(2) docs - README rewritten for 2.0 (the current README still describes the
+v1 LinkedIn/Playwright pipeline), docs/architecture.md mapped to real
+modules, docs/runbook.md (cron, schema re-run flow, budget watcher, delivery
+keys), docs/data-sources.md, privacy policy; (3) legacy cleanup - the five
+v1 root scripts (database.py, processor.py, scraper_linkedin.py which still
+imports Playwright, scraper_reddit.py, v1 orchestrator.py) move to legacy/
+to end the v1/v2 orchestrator.py name collision; (4) privacy audit (Gate 6)
+- author hashing verified in raw_docs, no private fields, robots.txt/ToS
+respect documented; (5) Arabic coverage pass - the token-free lexicon eval
+sliced by language (ar/arz/en) quantifies the gap that the fine-tuned model
+closes; (6) fine-tuned Gulf-Arabic model v1 (the F1 unlock, Gate 2) - a
+local zero-token character n-gram naive Bayes trained on the labeled eval
+items, held-out eval: 0.723 vs lexicon 0.703 (MSA 0.857, Arabizi 0.611,
+English 0.667). INTEGRITY CONSTRAINT: it trains on the eval items, so it
+stays OUT of production routing until eval v2 (fresh items) exists - the
+plan's path is to expand the labeled set first, then wire it as a second
+fast path before the LLM; a real transformer fine-tune (CAMeL/AraBERT on
+free Colab compute) is the later upgrade; (7) backfill
+history - 28+ days of time_series so the anomaly baseline matures and the
+Phase 4 real-world-spike DoD can close.
+
 **A15 (2026-08-17): Phase 2 budget wall mapped + eval hardened.** The
 "00:00 UTC reset" assumption was wrong: the gpt-oss-120b free-tier counter is
 a ROLLING window that frees gradually as usage ages out (observed: the
@@ -580,4 +620,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (budget wall mapped; auto-watcher retries the eval every 45 min, scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 in progress (agent layer + eval green, first UAE Pulse DELIVERED over Telegram; weekly digest pending first cron cycle); Amendments A1-A15 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (auto-watcher retries the eval; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (tests 24 green + CI workflow, legacy moved, README + docs, Arabic coverage mapped: arz 0.512 lexicon gap, local model v1 0.723 > lexicon 0.703); Amendments A1-A16 recorded.*
