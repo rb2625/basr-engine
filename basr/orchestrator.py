@@ -14,6 +14,7 @@ Usage:
     python -m basr.orchestrator --dry-run  # fetch only, no DB writes
     python -m basr.orchestrator --limit 50 # cap docs per source
     python -m basr.orchestrator --nlp      # run the NLP classification stage after ingestion
+    python -m basr.orchestrator --intel    # run the Phase 4 early-warning stage
 """
 
 from __future__ import annotations
@@ -118,7 +119,8 @@ async def _run_one(name: str, adapter: object, kwargs: dict, timeout: float, off
 
 
 async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
-                       nlp: bool = False, nlp_limit: int | None = None) -> int:
+                       nlp: bool = False, nlp_limit: int | None = None,
+                       intel: bool = False) -> int:
     """Run the full ingestion pipeline. Returns the process exit code."""
     t0 = time.monotonic()
     started_at = datetime.now(timezone.utc)
@@ -188,6 +190,15 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
         except Exception as exc:
             print(f"[-] NLP stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
 
+    # --- 4b. Early-warning stage (Phase 4) -----------------------------------
+    if intel and not store_error:
+        from .intel.__main__ import run_intel  # lazy import, zero LLM cost
+        try:
+            await run_intel(aggregate=True, detect=True, deliver=True,
+                            dry_run=dry_run)
+        except Exception as exc:
+            print(f"[-] Intel stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
+
     # --- 5. Summary ---------------------------------------------------------------------
     elapsed = time.monotonic() - t0
     finished_at = datetime.now(timezone.utc)
@@ -229,9 +240,12 @@ def main() -> None:
     parser.add_argument("--dry-run", action="store_true", help="fetch only, no DB writes")
     parser.add_argument("--nlp", action="store_true", help="run NLP classification after ingestion")
     parser.add_argument("--nlp-limit", type=int, default=None, help="max docs to classify")
+    parser.add_argument("--intel", action="store_true",
+                        help="run the Phase 4 early-warning stage after ingestion")
     args = parser.parse_args()
     raise SystemExit(asyncio.run(run_pipeline(limit=args.limit, dry_run=args.dry_run,
-                                              nlp=args.nlp, nlp_limit=args.nlp_limit)))
+                                              nlp=args.nlp, nlp_limit=args.nlp_limit,
+                                              intel=args.intel)))
 
 
 if __name__ == "__main__":

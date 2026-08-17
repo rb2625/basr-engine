@@ -8,6 +8,8 @@
 
 import { getClient } from "./supabase";
 import type {
+  AlertItem,
+  AlertsData,
   Classification,
   DayPoint,
   DocEntity,
@@ -351,6 +353,54 @@ export async function buildFeed(limit = 30): Promise<FeedData> {
     items: buildFeedItems(rawDocs, classifications, docTopics, topicById,
       entities, docEntities, limit, null),
     totalClassified: classifications.length,
+  };
+}
+
+export async function buildAlerts(): Promise<AlertsData> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("alerts")
+    .select("id,title,severity,status,evidence,created_at,time_series_id")
+    .order("created_at", { ascending: false })
+    .limit(40);
+  if (error) throw error;
+  const rows = (data || []) as {
+    id: number;
+    title: string;
+    severity: "low" | "medium" | "high" | "critical";
+    status: string;
+    evidence: { id: number; title: string; source: string; url?: string }[];
+    created_at: string | null;
+    time_series_id: number | null;
+  }[];
+
+  // Map bucket starts for evidence context (the anomaly scan dates).
+  const tsIds = [...new Set(rows.map((r) => r.time_series_id).filter(Boolean))];
+  const tsBy = new Map<number, string>();
+  if (tsIds.length) {
+    const { data: ts } = await client
+      .from("time_series")
+      .select("id,bucket_start")
+      .in("id", tsIds);
+    if (!ts) throw new Error("time_series lookup failed");
+    for (const t of ts as { id: number; bucket_start: string }[]) {
+      tsBy.set(t.id, t.bucket_start);
+    }
+  }
+
+  const alerts: AlertItem[] = rows.map((r) => ({
+    id: r.id,
+    title: r.title,
+    severity: r.severity,
+    status: r.status,
+    bucketStart: r.time_series_id != null ? tsBy.get(r.time_series_id) || null : null,
+    evidence: (r.evidence || []).slice(0, 3),
+    createdAt: r.created_at,
+  }));
+  return {
+    alerts,
+    open: alerts.filter((a) => a.status === "open").length,
+    critical: alerts.filter((a) => a.severity === "critical").length,
   };
 }
 

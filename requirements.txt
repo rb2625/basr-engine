@@ -5,6 +5,7 @@ groq
 supabase
 fpdf2
 python-dotenv
+statsmodels   # Phase 4 anomaly detection (STL decomposition)
 
 # v1 pipeline only (frozen until Phase 6 cleanup): praw, playwright are no
 # longer used by the new pipeline and are intentionally NOT installed.

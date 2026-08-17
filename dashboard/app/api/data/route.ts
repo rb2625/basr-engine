@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
+  buildAlerts,
   buildFeed,
   buildMap,
   buildOverview,
@@ -25,6 +26,8 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(await buildTopics());
       case "feed":
         return NextResponse.json(await buildFeed(limit));
+      case "alerts":
+        return NextResponse.json(await buildAlerts());
       case "overview":
       default:
         return NextResponse.json(await buildOverview());

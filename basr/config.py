@@ -91,6 +91,12 @@ class Settings:
     supabase_url: str | None = field(default=None)
     supabase_service_role_key: str | None = field(default=None)
     youtube_api_key: str | None = field(default=None)
+    # Phase 4 alert channels (optional - delivery skips gracefully when unset)
+    telegram_bot_token: str | None = field(default=None)
+    telegram_chat_id: str | None = field(default=None)
+    resend_api_key: str | None = field(default=None)
+    alert_email_from: str | None = field(default=None)
+    alert_email_to: str | None = field(default=None)
 
     user_agent: str = field(
         default="BASR-Intelligence/2.0 (UAE public sentiment intelligence platform; contact: owner@basr.ae)"
@@ -104,4 +110,9 @@ def get_settings() -> Settings:
         supabase_service_role_key=os.environ.get("SUPABASE_SERVICE_ROLE_KEY"),
         youtube_api_key=os.environ.get("YOUTUBE_API_KEY")
         or os.environ.get("GOOGLE_YOUTUBE_API_KEY"),
+        telegram_bot_token=os.environ.get("TELEGRAM_BOT_TOKEN"),
+        telegram_chat_id=os.environ.get("TELEGRAM_CHAT_ID"),
+        resend_api_key=os.environ.get("RESEND_API_KEY"),
+        alert_email_from=os.environ.get("ALERT_EMAIL_FROM"),
+        alert_email_to=os.environ.get("ALERT_EMAIL_TO"),
     )

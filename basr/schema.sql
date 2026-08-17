@@ -160,7 +160,10 @@ CREATE TABLE IF NOT EXISTS time_series (
     bucket_end      TIMESTAMPTZ NOT NULL,
     granularity     TEXT NOT NULL,          -- 'hour' | 'day'
     dimension_type  TEXT NOT NULL,          -- 'entity' | 'topic' | 'sector' | 'emirate' | 'global'
-    dimension_id    BIGINT,                 -- entities.id / topics.id / NULL for global
+    dimension_id    BIGINT NOT NULL DEFAULT 0,  -- entities.id / topics.id / 0 = global
+                                    -- (0 sentinel, NOT NULL: Postgres UNIQUE
+                                    -- treats NULLs as distinct, so NULL would
+                                    -- never dedupe global rows on upsert)
     volume          INTEGER NOT NULL DEFAULT 0,
     sentiment_avg   NUMERIC(6,4),
     sentiment_std   NUMERIC(6,4),
@@ -184,6 +187,23 @@ CREATE TABLE IF NOT EXISTS alerts (
 );
 
 CREATE INDEX IF NOT EXISTS idx_alerts_status ON alerts (status, created_at DESC);
+
+-- Delivery tracking (Phase 4, Amendment A11): which channel an alert was
+-- sent on and whether delivery succeeded. Idempotent for re-runs.
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM information_schema.columns
+        WHERE table_name = 'alerts' AND column_name = 'channel'
+    ) THEN
+        ALTER TABLE alerts
+            ADD COLUMN channel TEXT,
+            ADD COLUMN delivery_status TEXT NOT NULL DEFAULT 'pending'
+                CHECK (delivery_status IN ('pending', 'sent', 'failed', 'skipped')),
+            ADD COLUMN delivered_at TIMESTAMPTZ;
+    END IF;
+END
+$$;
 
 -- ============================================================================
 -- 4. DECISION SUPPORT (AGENTS)

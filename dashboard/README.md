@@ -14,6 +14,8 @@ through a single API route backed by Supabase.
 - **Topics** - the 14-topic taxonomy with doc counts, sentiment, signal mix
 - **Feed** - latest classified docs with badges (sentiment, signal, sector,
   sarcasm, topics, locations)
+- **Early warning** - anomaly alerts from the Phase 4 ensemble (rolling
+  z-score + STL seasonality) with severity and evidence
 
 ## Run locally
 

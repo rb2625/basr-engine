@@ -273,8 +273,21 @@ scaffold look into a custom dark signal-room theme (UAE-gold accents, Arabic
 wordmark, Space Grotesk + JetBrains Mono, count-up KPIs, staggered reveals,
 pulsing map markers, dark charts, skeleton loaders, prefers-reduced-motion
 respected). Verified on all five views locally and live, then deployed to
-Vercel. Search and the anomaly feed are deferred: the anomaly feed belongs to
-Phase 4 (it owns the anomaly engine) and search is dashboard v2.
+Vercel. Search is dashboard v2.
+Eighth build: **Phase 4 first pass (A11)** - the early-warning backend and
+dashboard view are live: time-series aggregation (daily + hourly, five
+dimensions: global/topic/sector/emirate), the anomaly ensemble (rolling
+z-score + statsmodels STL, volume floor, conservative thresholds), alerts
+with severity + lifecycle + evidence, and Telegram/Resend delivery that
+degrades gracefully when no channel keys are configured. Live-verified on
+real data: 4 spikes flagged (3 critical) - honestly, these first spikes
+reflect the corpus's own ingestion ramp; as daily cron runs accumulate, the
+baseline stabilizes and flags mean real-world surges. Delivery columns
+(channel/delivery_status/delivered_at) and the global dimension_id sentinel
+(0, NOT NULL - NULL never dedupes under Postgres UNIQUE) are in schema.sql;
+re-running it enables delivery tracking. The Phase 4 DoD (a real alert
+fired AND delivered) needs one channel key - Telegram is a 2-minute
+BotFather setup, see basr/intel/alerts.py.
 
 ## 14. Working rules
 
@@ -398,6 +411,27 @@ gpt-oss-20b trails. Three engineering findings absorbed:
    eval share the daily budget only when run manually; run the eval before
    any manual `basr.orchestrator --nlp` backlog drain.
 
+**A11 (2026-08-17): Phase 4 first pass - early warning.** `basr/intel/`
+(aggregate.py, anomaly.py, alerts.py, __main__.py): rebuilds the
+``time_series`` table (daily 45d + hourly 48h; global/topic/sector/emirate
+dimensions - sectors backed by entity rows of type 'sector'), runs the
+anomaly ensemble (trailing 14-day z-score + statsmodels STL period 7 once
+28 days of history exist, volume floor 5, threshold 2.5, severity
+low/medium/high/critical), and creates + delivers alerts (Telegram bot +
+Resend email via httpx, lifecycle open -> acknowledged/dismissed/promoted;
+delivery is strictly additive and degrades when keys or the A11 columns are
+missing). Wired as the orchestrator's ``--intel`` stage (zero LLM tokens).
+Two live-testing fixes absorbed: (1) ``dimension_id`` must be a 0 sentinel
+for global rows, NOT NULL - Postgres UNIQUE treats NULLs as distinct, so
+NULL global rows duplicated on every upsert (246 buggy rows cleaned live);
+(2) the delivery columns (channel/delivery_status/delivered_at, added
+idempotently to schema.sql) do not exist until the SQL editor is re-run, so
+delivery probes for them and falls back to delivering open alerts without
+tracking. Dashboard gained an Early warning view (``/alerts``: severity
+badges, status dots, evidence docs) + ``view=alerts`` API, deployed live.
+Phase 4 DoD remaining: one delivery channel key (Telegram recommended) so
+an alert is actually delivered, not just detected.
+
 **A9 (2026-08-16): public dashboard (Phase 3 v1).** `dashboard/` - Next.js 14
 (App Router) + Tailwind + Leaflet + Recharts, deployed to Vercel (root dir
 `dashboard`). Five views: Overview (KPIs, signal mix, top topics, 30-day
@@ -429,4 +463,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (NLP layer + eval set 500 + lexicon + topics + geocoding live-verified; hybrid eval ready after budget reset) - Phase 3 [x] DoD passed (dashboard live + redesigned); Amendments A1-A10 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (hybrid eval ready after budget reset) - Phase 3 [x] DoD passed - Phase 4 in progress (first pass live: aggregation + anomaly + alerts + dashboard view); Amendments A1-A11 recorded.*

@@ -132,3 +132,19 @@ export interface FeedData {
   items: FeedItem[];
   totalClassified: number;
 }
+
+export interface AlertItem {
+  id: number;
+  title: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: string;
+  bucketStart: string | null;
+  evidence: { id: number; title: string; source: string; url?: string }[];
+  createdAt: string | null;
+}
+
+export interface AlertsData {
+  alerts: AlertItem[];
+  open: number;
+  critical: number;
+}
