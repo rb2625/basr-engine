@@ -1,9 +1,11 @@
 import { NextRequest, NextResponse } from "next/server";
 import {
   buildAlerts,
+  buildBriefs,
   buildFeed,
   buildMap,
   buildOverview,
+  buildReports,
   buildTopics,
   buildTrends,
 } from "@/lib/aggregate";
@@ -28,6 +30,10 @@ export async function GET(request: NextRequest) {
         return NextResponse.json(await buildFeed(limit));
       case "alerts":
         return NextResponse.json(await buildAlerts());
+      case "briefs":
+        return NextResponse.json(await buildBriefs());
+      case "reports":
+        return NextResponse.json(await buildReports());
       case "overview":
       default:
         return NextResponse.json(await buildOverview());

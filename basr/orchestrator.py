@@ -120,7 +120,7 @@ async def _run_one(name: str, adapter: object, kwargs: dict, timeout: float, off
 
 async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
                        nlp: bool = False, nlp_limit: int | None = None,
-                       intel: bool = False) -> int:
+                       intel: bool = False, agents: bool = False) -> int:
     """Run the full ingestion pipeline. Returns the process exit code."""
     t0 = time.monotonic()
     started_at = datetime.now(timezone.utc)
@@ -199,6 +199,30 @@ async def run_pipeline(*, limit: int | None = None, dry_run: bool = False,
         except Exception as exc:
             print(f"[-] Intel stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
 
+    # --- 4c. Agents stage (Phase 5): scheduled reports ------------------------
+    if agents and not store_error:
+        from .agents.reports import build_report, deliver_reports
+        try:
+            # Daily report every run; weekly only when none exists for the
+            # current week yet (the cron runs twice a day, so this is the
+            # idempotence guard).
+            await build_report(store, "daily", dry_run=dry_run)
+            weekly_done = False
+            if not dry_run:
+                from datetime import timedelta
+                today = datetime.now(timezone.utc).date()
+                week_ago = (today - timedelta(days=7)).isoformat()
+                resp = await store._with_retry(
+                    lambda: store._client.table("reports")
+                    .select("id").eq("kind", "weekly")
+                    .gte("period_end", week_ago).limit(1).execute())
+                weekly_done = bool((resp.data or []))
+            if not weekly_done:
+                await build_report(store, "weekly", dry_run=dry_run)
+            await deliver_reports(store)
+        except Exception as exc:
+            print(f"[-] Agents stage failed: {exc.__class__.__name__}: {str(exc)[:120]}")
+
     # --- 5. Summary ---------------------------------------------------------------------
     elapsed = time.monotonic() - t0
     finished_at = datetime.now(timezone.utc)
@@ -242,10 +266,12 @@ def main() -> None:
     parser.add_argument("--nlp-limit", type=int, default=None, help="max docs to classify")
     parser.add_argument("--intel", action="store_true",
                         help="run the Phase 4 early-warning stage after ingestion")
+    parser.add_argument("--agents", action="store_true",
+                        help="run the Phase 5 agents stage (scheduled reports) after ingestion")
     args = parser.parse_args()
     raise SystemExit(asyncio.run(run_pipeline(limit=args.limit, dry_run=args.dry_run,
                                               nlp=args.nlp, nlp_limit=args.nlp_limit,
-                                              intel=args.intel)))
+                                              intel=args.intel, agents=args.agents)))
 
 
 if __name__ == "__main__":

@@ -226,6 +226,25 @@ CREATE TABLE IF NOT EXISTS briefs (
 
 CREATE INDEX IF NOT EXISTS idx_briefs_org ON briefs (org_id, created_at DESC);
 
+CREATE TABLE IF NOT EXISTS reports (
+    id               BIGINT GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    kind             TEXT NOT NULL CHECK (kind IN ('daily', 'weekly', 'org')),
+    org_id           BIGINT,                      -- orgs.id (nullable = public reports)
+    period_start     DATE NOT NULL,
+    period_end       DATE NOT NULL,
+    title            TEXT NOT NULL,
+    body             JSONB NOT NULL DEFAULT '{}'::jsonb,   -- {sections: [...]}
+    pdf_url          TEXT,
+    model_version    TEXT NOT NULL,
+    delivery_status  TEXT NOT NULL DEFAULT 'pending'
+                     CHECK (delivery_status IN ('pending', 'sent', 'failed', 'skipped')),
+    channel          TEXT,
+    delivered_at     TIMESTAMPTZ,
+    created_at       TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_reports_kind ON reports (kind, period_end DESC);
+
 -- ============================================================================
 -- 5. MONETIZATION / ORGS
 -- ============================================================================

@@ -5,6 +5,8 @@
 //   set -a; . ../.env; set +a; npx tsx scripts/smoke.ts
 
 import {
+  buildAlerts,
+  buildBriefs,
   buildFeed,
   buildMap,
   buildOverview,
@@ -47,6 +49,17 @@ async function main() {
   feed.items.slice(0, 3).forEach((f) =>
     console.log(`  [${f.signal_type}/${f.sentiment_label}] ${f.title.slice(0, 60)}`)
   );
+
+  const alerts = await buildAlerts();
+  console.log("\n== alerts ==");
+  console.log("alerts:", alerts.alerts.length, "| open:", alerts.open, "| critical:", alerts.critical);
+
+  const briefs = await buildBriefs();
+  console.log("\n== briefs ==");
+  console.log("briefs:", briefs.briefs.length, "| published:", briefs.published, "| critical:", briefs.critical);
+  if (briefs.briefs[0]) {
+    console.log("  first:", briefs.briefs[0].title.slice(0, 70), "|", briefs.briefs[0].severity);
+  }
   console.log("\nSMOKE OK");
 }
 

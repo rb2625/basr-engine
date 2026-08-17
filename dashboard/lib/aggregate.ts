@@ -10,6 +10,8 @@ import { getClient } from "./supabase";
 import type {
   AlertItem,
   AlertsData,
+  BriefItem,
+  BriefsData,
   Classification,
   DayPoint,
   DocEntity,
@@ -20,6 +22,8 @@ import type {
   MapData,
   OverviewData,
   RawDoc,
+  ReportItem,
+  ReportsData,
   SignalMix,
   TopicRow,
   TopicStat,
@@ -343,6 +347,89 @@ export async function buildTopics(): Promise<TopicsData> {
     })
     .sort((a, b) => b.docs - a.docs);
   return { topics: result };
+}
+
+export async function buildBriefs(): Promise<BriefsData> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("briefs")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(30);
+  if (error) throw error;
+  const briefs = ((data || []) as BriefRow[]).map((b) => ({
+    id: b.id,
+    alertId: b.alert_id,
+    title: b.title,
+    summary: b.summary,
+    severity: b.severity,
+    status: b.status,
+    recommendedResponse: (b.recommended_response || []) as BriefItem["recommendedResponse"],
+    evidence: (b.evidence || []) as BriefItem["evidence"],
+    modelVersion: b.model_version,
+    createdAt: b.created_at,
+  }));
+  return {
+    briefs,
+    published: briefs.filter((b) => b.status === "published").length,
+    critical: briefs.filter((b) => b.severity === "critical").length,
+  };
+}
+
+interface BriefRow {
+  id: number;
+  alert_id: number | null;
+  title: string;
+  summary: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: string;
+  recommended_response: unknown;
+  evidence: unknown;
+  model_version: string;
+  created_at: string | null;
+}
+
+export async function buildReports(): Promise<ReportsData> {
+  const client = getClient();
+  const { data, error } = await client
+    .from("reports")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(20);
+  if (error) throw error;
+  const reports = ((data || []) as ReportRow[]).map((r) => {
+    const body = (r.body || {}) as {
+      narrative?: string;
+      headlines?: string[];
+      stats?: ReportItem["stats"];
+    };
+    return {
+      id: r.id,
+      kind: r.kind,
+      title: r.title,
+      periodStart: r.period_start,
+      periodEnd: r.period_end,
+      narrative: body.narrative || "",
+      headlines: body.headlines || [],
+      stats: body.stats || {},
+      deliveryStatus: r.delivery_status,
+      channel: r.channel,
+      createdAt: r.created_at,
+    };
+  });
+  return { reports };
+}
+
+interface ReportRow {
+  id: number;
+  kind: "daily" | "weekly" | "org";
+  title: string;
+  period_start: string | null;
+  period_end: string | null;
+  body: unknown;
+  delivery_status: string;
+  channel: string | null;
+  created_at: string | null;
 }
 
 export async function buildFeed(limit = 30): Promise<FeedData> {

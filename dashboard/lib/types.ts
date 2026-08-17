@@ -148,3 +148,56 @@ export interface AlertsData {
   open: number;
   critical: number;
 }
+
+export interface BriefItem {
+  id: number;
+  alertId: number | null;
+  title: string;
+  summary: string;
+  severity: "low" | "medium" | "high" | "critical";
+  status: string;
+  recommendedResponse: { action: string; owner: string; rationale: string }[];
+  evidence: {
+    title?: string;
+    url?: string;
+    source?: string;
+    severity_justification?: string;
+    severity_score?: number;
+    trajectory?: { date: string; volume: number; flag: boolean }[];
+  }[];
+  modelVersion: string;
+  createdAt: string | null;
+}
+
+export interface BriefsData {
+  briefs: BriefItem[];
+  published: number;
+  critical: number;
+}
+
+export interface ReportItem {
+  id: number;
+  kind: "daily" | "weekly" | "org";
+  title: string;
+  periodStart: string | null;
+  periodEnd: string | null;
+  narrative: string;
+  headlines: string[];
+  stats: {
+    current_volume?: number;
+    prior_volume?: number;
+    volume_delta_pct?: number | null;
+    sentiment_avg?: number | null;
+    open_alerts?: number;
+    top_topics?: { topic: string; volume: number }[];
+    top_emirates?: { emirate: string; volume: number }[];
+    top_sectors?: { sector: string; volume: number }[];
+  };
+  deliveryStatus: string;
+  channel: string | null;
+  createdAt: string | null;
+}
+
+export interface ReportsData {
+  reports: ReportItem[];
+}

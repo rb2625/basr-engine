@@ -9,6 +9,8 @@ const LINKS = [
   { href: "/trends", label: "Trends" },
   { href: "/topics", label: "Topics" },
   { href: "/alerts", label: "Early warning" },
+  { href: "/briefs", label: "Briefs" },
+  { href: "/reports", label: "Reports" },
   { href: "/feed", label: "Feed" },
 ];
 

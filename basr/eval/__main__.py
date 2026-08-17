@@ -157,9 +157,14 @@ def main() -> None:
     parser.add_argument("--limit", type=int, default=None, help="max items per task")
     parser.add_argument("--task", choices=("sentiment", "signal"), default=None)
     parser.add_argument("--dry-run", action="store_true", help="score only, no DB writes")
+    parser.add_argument("--agents", action="store_true",
+                        help="score the Phase 5 agents (severity + brief)")
     parser.add_argument("--path", choices=("llm", "lexicon", "hybrid"),
                         default="llm", help="classifier to score")
     args = parser.parse_args()
+    if args.agents:
+        from .agents import run_agents_eval
+        raise SystemExit(asyncio.run(run_agents_eval(dry_run=args.dry_run)))
     raise SystemExit(asyncio.run(run_eval_cli(
         limit=args.limit, task=args.task, dry_run=args.dry_run, path=args.path)))
 
