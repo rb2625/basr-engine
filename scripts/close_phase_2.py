@@ -46,6 +46,11 @@ def probe_budget() -> bool:
 
 async def latest_hybrid_scores() -> list[dict]:
     async with SupabaseStore() as store:
+        ds = await store._with_retry(
+            lambda: store._client.table("eval_datasets")
+            .select("id,name,task").execute()
+        )
+        name_by_id = {d["id"]: d for d in (ds.data or [])}
         resp = await store._with_retry(
             lambda: store._client.table("eval_runs")
             .select("dataset_id,model_version,accuracy,recall,f1,detail,created_at")
@@ -54,6 +59,10 @@ async def latest_hybrid_scores() -> list[dict]:
             .limit(4)
             .execute()
         )
+        for r in (resp.data or []):
+            info = name_by_id.get(r.get("dataset_id")) or {}
+            r["dataset_name"] = info.get("name", f"ds={r.get('dataset_id')}")
+            r["task"] = info.get("task", "")
         return resp.data or []
 
 
@@ -71,7 +80,7 @@ async def main() -> int:
     print("\n[+] Budget available. Running the canonical eval (~40 min)...")
     # Run in-process (a nested subprocess breaks on Windows - WinError 10106
     # on asyncio's _overlapped import) and it shares the probe's client anyway.
-    code = await run_eval_cli(path="hybrid")
+    code = await run_eval_cli(path="hybrid", eval_set="v2")
     if code != 0:
         print("[-] eval did not complete cleanly (incomplete runs are never")
         print("    logged - retry when the budget has more headroom)")
@@ -82,18 +91,18 @@ async def main() -> int:
         print("[-] no hybrid eval_runs found after the run")
         return 1
 
-    print("\nPhase 2 DoD check (sentiment macro-F1 >= 0.88):")
+    print("\nPhase 2 DoD check (sentiment macro-F1 >= 0.88 on eval v2):")
     verdict = True
     for r in rows:
-        ds = "sentiment" if r.get("dataset_id") == 1 else (
-            "signal" if r.get("dataset_id") == 2 else f"ds={r.get('dataset_id')}")
+        name = r.get("dataset_name", "")
+        task = r.get("task", "")
         f1 = float(r.get("f1") or 0.0)
         acc = float(r.get("accuracy") or 0.0)
-        passed = ds == "sentiment" and f1 >= 0.88
-        if ds == "sentiment":
+        passed = task == "sentiment" and f1 >= 0.88
+        if task == "sentiment":
             verdict = passed
-        print(f"  {ds:9s} acc={acc:.4f} macro-F1={f1:.4f} "
-              f"{'PASS' if passed else ('' if ds != 'sentiment' else 'BELOW BAR')}")
+        print(f"  {name:16s} acc={acc:.4f} macro-F1={f1:.4f} "
+              f"{'PASS' if passed else ('' if task != 'sentiment' else 'BELOW BAR')}")
         print(f"    {str(r.get('created_at'))[:16]}  {r.get('model_version')}")
 
     if verdict:

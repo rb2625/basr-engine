@@ -193,13 +193,16 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
 - **DoD:** briefs pass eval suite (1.000/1.000 logged); daily + weekly reports
       auto-generated AND delivered over Telegram - all verified live
 
-**Phase 6 - Perfection pass** (detailed plan in A16)
-- [ ] Tests + CI: pytest suite for zero-token layers; GitHub Actions runs it on push
-- [ ] Docs: README rewritten for 2.0; docs/architecture, runbook, data-sources, privacy
-- [ ] Legacy cleanup: v1 root scripts moved to legacy/ (praw/playwright refs removed)
-- [ ] Privacy audit: author hashing, no private data, robots.txt/ToS respect (Gate 6)
-- [ ] Arabic coverage pass: lexicon eval sliced by language quantifies the gap
-- [ ] Fine-tuned Gulf-Arabic model v1: local char n-gram baseline on the eval items
+**Phase 6 - Perfection pass** (detailed plan in A16, build in A17)
+- [x] Tests + CI: 29 pytest tests for zero-token layers; GitHub Actions runs them on push
+- [x] Docs: README rewritten for 2.0; docs/architecture, runbook, data-sources
+- [x] Legacy cleanup: v1 root scripts moved to legacy/
+- [x] Privacy audit (Gate 6): all 5 adapters hash authors (sha256 prefix); RawDoc has no
+      personal fields; documented in docs/runbook + data-sources
+- [x] Arabic coverage mapped: lexicon ar 0.771 / arz 0.512 / en 0.623 (arz is the gap)
+- [x] Fine-tuned Gulf-Arabic model v1: local char n-gram NB, both tasks, wired into the
+      hybrid as a fast path (lexicon -> local -> LLM); v2: sentiment 0.817, signal 0.658
+- [ ] Eval v2 canonical hybrid run (needs the rolling budget window - watcher retries)
 - [ ] Backfill history: 28+ days of time_series so the anomaly baseline matures
 - **DoD:** Perfection Gate checklist (sec 12) all-green
 
@@ -483,6 +486,30 @@ SQL editor to enable report persistence + delivery. Dashboard gained Briefs
 Vercel deploy). Phase 5 DoD remaining: re-run schema.sql, then the first
 stored + DELIVERED daily report, then dashboard deploy.
 
+**A17 (2026-08-17): Phase 6 build - privacy audit, eval v2, local model wired.**
+(1) Privacy audit (Gate 6): verified in code - all 5 author-bearing adapters
+(reddit, apple reviews, youtube, bluesky, news/feed_common) hash authors via
+``hash_author`` (sha256 hexdigest[:16], never a raw username; reddit skips
+[deleted]); the RawDoc contract carries no emails, phones, or addresses;
+robots.txt/ToS stance documented in docs/data-sources.md + runbook. (2) Eval
+v2 (Gate 2): 120 fresh labeled items (40 ar / 40 en / 40 arz, both labels)
+built in ``basr/eval/datasets_v2.py``, weighted toward Arabizi and the hard
+filtering traps; a regression test asserts ZERO exact overlap with v1 (the
+local model trains on v1, so any overlap would make the eval train-on-test).
+First draft had 5 accidental Arabizi duplicates - found by the check and
+rephrased. (3) Local model: ``local_model.py`` now trains BOTH tasks and
+``LocalModelClassifier`` returns both labels with the weaker task margin as
+confidence; wired into the hybrid routing (lexicon -> local -> LLM,
+LOCAL_CONFIDENCE 0.70) and the NLP batch path, so the backlog drain spends
+less of the daily budget. Measured on the fresh v2 set (zero tokens):
+sentiment local 0.817 vs lexicon 0.367 (ar 0.725 / arz 0.885 / en 0.852),
+signal local 0.658 vs lexicon 0.242. Honest caveat: v2 exposes the lexicon's
+real weaknesses (it reads "rents at record high" as positive), the local
+model generalizes far better, but the F1 bar is measured on the FULL hybrid
+(LLM included) - which needs the rolling budget window; the watcher now runs
+``--path hybrid --set v2`` and close_phase_2.py resolves dataset names for
+the verdict.
+
 **A16 (2026-08-17): Phase 5 DoD PASSED + Phase 6 plan - the perfection pass.**
 Phase 5 closed: the weekly sector digest was generated on demand and
 DELIVERED (reports id 2, Telegram, delivery_status=sent; real sector data:
@@ -620,4 +647,4 @@ links, 120 entity links, zero tokens).
 
 ---
 
-*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (auto-watcher retries the eval; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (tests 24 green + CI workflow, legacy moved, README + docs, Arabic coverage mapped: arz 0.512 lexicon gap, local model v1 0.723 > lexicon 0.703); Amendments A1-A16 recorded.*
+*Last amended: 2026-08-17 - Phase 0 [x]  -  Phase 1 [x]  -  Phase 2 in progress (v2 watcher retries the hybrid eval; scorecard guarded) - Phase 3 [x] DoD passed - Phase 4 in progress (delivery PROVEN; DoD final call waits on real-world spike history) - Phase 5 [x] DoD PASSED - Phase 6 in progress (29 tests + CI, privacy audit green, eval v2 built with zero-overlap guard, local model wired into the hybrid: v2 sentiment 0.817 vs lexicon 0.367); Amendments A1-A17 recorded.*

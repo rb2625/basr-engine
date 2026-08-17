@@ -19,7 +19,7 @@ attempt=0
 while true; do
   attempt=$((attempt + 1))
   echo "--- attempt $attempt at $(date -u) ---"
-  PYTHONIOENCODING=utf-8 "$PY" -u -m basr.eval --path hybrid
+  PYTHONIOENCODING=utf-8 "$PY" -u -m basr.eval --path hybrid --set v2
   code=$?
   echo "--- attempt $attempt exit=$code at $(date -u) ---"
   if [ "$code" -eq 0 ]; then

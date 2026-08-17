@@ -38,6 +38,10 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False,
     print("=" * 60)
 
     classifier = GroqClassifier()
+    # Phase 6 (A17): the local n-gram model is a zero-token fast path between
+    # the lexicon and the LLM - it trains in ~1s on the v1 eval items.
+    from .local_model import LocalModelClassifier
+    local = LocalModelClassifier()
     async with SupabaseStore() as store:
         # Enrichment-only mode: topics + entities backfill, zero tokens, no
         # Groq key needed at all.
@@ -73,7 +77,7 @@ async def run_nlp(*, limit: int = DEFAULT_LIMIT, dry_run: bool = False,
         n_lexicon = n_llm = 0
         for start in range(0, len(docs), FLUSH_EVERY):
             slice_docs = docs[start : start + FLUSH_EVERY]
-            slice_results = await classify_docs(slice_docs, classifier)
+            slice_results = await classify_docs(slice_docs, classifier, local=local)
             all_results.extend(slice_results)
             n_lexicon += sum(1 for r in slice_results if r[3] == "lexicon")
             n_llm += sum(1 for r in slice_results if r[3] == "llm")

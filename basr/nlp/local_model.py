@@ -27,8 +27,11 @@ import math
 import random
 from collections import Counter, defaultdict
 
+from .classifier import ClassifyResult
 from .langid import detect_language
 from .normalizer import clean_text
+
+LOCAL_VERSION = "basr-local-ngram-v1"
 
 # ---------------------------------------------------------------------------
 # Features
@@ -125,46 +128,86 @@ def _split(items: list[dict], seed: int = 7) -> tuple[list, list]:
     return train, test
 
 
-def evaluate() -> dict:
+def train_local() -> tuple[CharNgramNB, CharNgramNB]:
+    """Train the sentiment + signal models on the FULL v1 eval items.
+
+    This is the production model used by LocalModelClassifier. It trains on
+    the v1 set; its honest measurement is eval v2 (fresh items).
+    """
     from ..eval.datasets import items_for_task
 
-    items = items_for_task("sentiment")
-    train, test = _split(items)
-    model = CharNgramNB()
-    model.fit([(it["text"], it["label"]) for it in train])
+    sent_model = CharNgramNB()
+    sent_model.fit([(it["text"], it["label"]) for it in items_for_task("sentiment")])
+    sig_model = CharNgramNB()
+    sig_model.fit([(it["text"], it["label"]) for it in items_for_task("signal")])
+    return sent_model, sig_model
 
-    overall = {"n": 0, "ok": 0}
-    per_lang: dict[str, dict] = {}
-    for it in test:
-        pred, conf = model.predict(it["text"])
-        lang = detect_language(it["text"])
-        acc = per_lang.setdefault(lang, {"n": 0, "ok": 0})
-        acc["n"] += 1
-        overall["n"] += 1
-        if pred == it["label"]:
-            acc["ok"] += 1
-            overall["ok"] += 1
 
-    print("local model v1 (char n-gram NB) - held-out 20%:")
-    print(f"  overall: {overall['ok']}/{overall['n']} "
-          f"= {overall['ok'] / overall['n']:.3f}")
-    for lang in ("ar", "arz", "en"):
-        a = per_lang.get(lang)
-        if a and a["n"]:
-            print(f"  {lang}: {a['ok']}/{a['n']} = {a['ok'] / a['n']:.3f}")
+class LocalModelClassifier:
+    """Production wrapper: sentiment + signal from the local models.
 
-    # Compare with the lexicon on the same test items.
+    classify() returns a ClassifyResult with both labels and a confidence of
+    the weaker of the two task margins, so the hybrid router can decide
+    whether this result is trustworthy. Zero tokens, zero network.
+    """
+
+    def __init__(self, models: tuple[CharNgramNB, CharNgramNB] | None = None) -> None:
+        self._sent, self._sig = models if models is not None else train_local()
+
+    def classify(
+        self, text: str, *, title: str | None = None, lang: str | None = None
+    ) -> ClassifyResult:
+        sent_label, sent_conf = self._sent.predict(text)
+        sig_label, sig_conf = self._sig.predict(text)
+        confidence = min(sent_conf, sig_conf)
+        return ClassifyResult(
+            sentiment_label=sent_label,
+            signal_type=sig_label,
+            confidence=confidence,
+            detected_language=lang or detect_language(text),
+            raw={"path": "local", "sentiment_conf": sent_conf,
+                 "signal_conf": sig_conf},
+            model_version=LOCAL_VERSION,
+        )
+
+
+def evaluate() -> dict:
+    """Train on v1, measure on v2 (fresh items) - both tasks."""
+    from ..eval.datasets_v2 import items_for_task_v2
     from .lexicon import LexiconClassifier
+
+    sent_model, sig_model = train_local()
+    local = LocalModelClassifier((sent_model, sig_model))
     lx = LexiconClassifier()
-    lex_ok = sum(
-        1 for it in test
-        if lx.classify(it["text"], lang=detect_language(it["text"])).sentiment_label
-        == it["label"]
-    )
-    print(f"  lexicon on same split: {lex_ok}/{len(test)} "
-          f"= {lex_ok / len(test):.3f}")
-    return {"overall": overall["ok"] / overall["n"] if overall["n"] else 0.0,
-            "lexicon": lex_ok / len(test) if test else 0.0}
+
+    for task in ("sentiment", "signal"):
+        items = items_for_task_v2(task)
+        local_ok = 0
+        lex_ok = 0
+        per_lang: dict[str, dict] = {}
+        for it in items:
+            lang = detect_language(it["text"])
+            r = local.classify(it["text"], lang=lang)
+            pred = r.sentiment_label if task == "sentiment" else r.signal_type
+            if pred == it["label"]:
+                local_ok += 1
+            acc = per_lang.setdefault(lang, {"n": 0, "ok": 0})
+            acc["n"] += 1
+            if pred == it["label"]:
+                acc["ok"] += 1
+            lr = lx.classify(it["text"], lang=lang)
+            lex_pred = lr.sentiment_label if task == "sentiment" else lr.signal_type
+            if lex_pred == it["label"]:
+                lex_ok += 1
+
+        print(f"eval v2 - {task} ({len(items)} fresh items):")
+        print(f"  local: {local_ok}/{len(items)} = {local_ok / len(items):.3f}")
+        print(f"  lexicon: {lex_ok}/{len(items)} = {lex_ok / len(items):.3f}")
+        for lang in ("ar", "arz", "en"):
+            a = per_lang.get(lang)
+            if a and a["n"]:
+                print(f"    {lang}: {a['ok']}/{a['n']} = {a['ok'] / a['n']:.3f}")
+    return {}
 
 
 if __name__ == "__main__":

@@ -33,6 +33,7 @@ from ..nlp.lexicon import LexiconClassifier, LEXICON_VERSION
 from ..nlp.pipeline import HybridClassifier
 from ..store import SupabaseStore
 from .datasets import DATASETS
+from .datasets_v2 import DATASETS_V2
 from .harness import compute_metrics, confusion, print_report
 
 _TASK_EXTRACT = {
@@ -90,12 +91,14 @@ def _items(ds: dict, limit: int | None) -> list[dict]:
 
 
 async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
-                       dry_run: bool = False, path: str = "llm") -> int:
+                       dry_run: bool = False, path: str = "llm",
+                       eval_set: str = "v2") -> int:
     t0 = time.monotonic()
+    datasets = DATASETS_V2 if eval_set == "v2" else DATASETS
     print("=" * 60)
     print("  BASR eval harness - classifier scorecard")
     print(f"  {datetime.now(timezone.utc):%Y-%m-%d %H:%M:%S} UTC   "
-          f"dry_run={dry_run} path={path}")
+          f"dry_run={dry_run} path={path} set={eval_set}")
     print("=" * 60)
 
     classifier, model_version = _make_classifier(path)
@@ -104,7 +107,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
         await store.open()
 
     try:
-        datasets = [ds for ds in DATASETS if not task or ds["task"] == task]
+        datasets = [ds for ds in datasets if not task or ds["task"] == task]
         all_metrics: list[tuple[str, dict]] = []
 
         if len(datasets) > 1 and path != "lexicon":
@@ -133,7 +136,7 @@ async def run_eval_cli(*, limit: int | None = None, task: str | None = None,
         # failed calls (confidence 0 - usually the daily budget wall) is
         # INCOMPLETE and must never be published as a scorecard: log nothing
         # so a retry later produces the one true measurement.
-        for ds in DATASETS:
+        for ds in datasets:
             await store.upsert_eval_dataset(ds["name"], ds["lang"], ds["task"], ds["items"])
         incomplete = any(m["failures"] > 0 for _, m in all_metrics)
         if incomplete:
@@ -170,12 +173,15 @@ def main() -> None:
                         help="score the Phase 5 agents (severity + brief)")
     parser.add_argument("--path", choices=("llm", "lexicon", "hybrid"),
                         default="llm", help="classifier to score")
+    parser.add_argument("--set", choices=("v1", "v2"), default="v2",
+                        help="eval set: v2 is the fresh Gate-2 set (default)")
     args = parser.parse_args()
     if args.agents:
         from .agents import run_agents_eval
         raise SystemExit(asyncio.run(run_agents_eval(dry_run=args.dry_run)))
     raise SystemExit(asyncio.run(run_eval_cli(
-        limit=args.limit, task=args.task, dry_run=args.dry_run, path=args.path)))
+        limit=args.limit, task=args.task, dry_run=args.dry_run,
+        path=args.path, eval_set=args.set)))
 
 
 if __name__ == "__main__":

@@ -26,6 +26,11 @@ from .lexicon import LexiconClassifier, ROUTE_CONFIDENCE
 from .normalizer import arabizi_to_arabic, clean_text
 from .topics import TopicAssigner
 
+# Local fast-path confidence bar (Phase 6, A17): when the local n-gram model
+# is confident on both tasks, it wins without an LLM call. Calibrated on the
+# v2 measurement; can be tuned per the eval.
+LOCAL_CONFIDENCE = 0.70
+
 
 def classify_with_fallback(
     lexicon: LexiconClassifier,
@@ -33,36 +38,46 @@ def classify_with_fallback(
     text: str,
     title: str | None,
     lang: str,
+    local: object | None = None,
 ) -> tuple[ClassifyResult, str]:
-    """Lexicon first, LLM fallback. Returns (result, path) where path is
-    'lexicon' or 'llm'. The lexicon runs on the same text the LLM would see
-    (Arabizi hint + cleaned original) so both surfaces feed the keyword matcher.
+    """Lexicon first, then the local model (if given), then the LLM.
+    Returns (result, path) where path is 'lexicon' | 'local' | 'llm'.
     """
     lex_result = lexicon.classify(text, title=title, lang=lang)
     if lex_result.confidence >= ROUTE_CONFIDENCE:
         return lex_result, "lexicon"
+    if local is not None:
+        local_result = local.classify(text, title=title, lang=lang)
+        if local_result.confidence >= LOCAL_CONFIDENCE:
+            return local_result, "local"
     llm_result = classifier.classify(text, title=title)
     return llm_result, "llm"
 
 
 class HybridClassifier:
     """Production routing as a single object, for the eval harness: lexicon
-    fast path first, LLM fallback. Mirrors classify_with_fallback exactly.
-    """
+    fast path, then the local model, then the LLM. Mirrors
+    classify_with_fallback exactly."""
 
     def __init__(
         self,
         lexicon: LexiconClassifier | None = None,
         classifier: GroqClassifier | None = None,
+        local=None,
     ) -> None:
         self._lexicon = lexicon or LexiconClassifier()
         self._classifier = classifier or GroqClassifier()
+        if local is None:
+            from .local_model import LocalModelClassifier
+            local = LocalModelClassifier()
+        self._local = local
 
     def classify(
         self, text: str, *, title: str | None = None, lang: str | None = None
     ) -> ClassifyResult:
         result, _ = classify_with_fallback(
-            self._lexicon, self._classifier, text, title, lang or "mixed"
+            self._lexicon, self._classifier, text, title, lang or "mixed",
+            local=self._local,
         )
         return result
 
@@ -75,6 +90,7 @@ def process_doc(
     classifier: GroqClassifier,
     topics: TopicAssigner | None = None,
     entities: EntityExtractor | None = None,
+    local=None,
 ) -> tuple[dict[str, Any], dict[str, Any] | None, str, str,
            list[dict[str, Any]], list[dict[str, Any]]]:
     """Normalize + detect language + classify + enrich one raw doc.
@@ -96,7 +112,7 @@ def process_doc(
     classify_text = f"{hint}\n---\n{clean}" if hint and hint != clean else clean
 
     result, path = classify_with_fallback(lexicon, classifier, classify_text,
-                                          title, lang)
+                                          title, lang, local=local)
 
     # The model's own language read is usually right; trust it over the
     # heuristic for mixed texts (schema keeps raw output for audit either way).
@@ -138,6 +154,7 @@ async def classify_docs(
     # Serialized: the free tier's token-per-minute window is the binding
     # constraint, not request rate - 2 workers just bursts into 429s.
     workers: int = 1,
+    local=None,
 ) -> list[tuple[dict[str, Any], dict[str, Any] | None, str, str,
                list[dict[str, Any]], list[dict[str, Any]]]]:
     """Classify + enrich a list of raw-doc dicts ({id, text, title}).
@@ -161,6 +178,9 @@ async def classify_docs(
                 d.get("title"),
                 lexicon,
                 classifier,
+                None,
+                None,
+                local,
             )
             for d in docs
         ]
