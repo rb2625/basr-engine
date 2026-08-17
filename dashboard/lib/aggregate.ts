@@ -356,7 +356,7 @@ export async function buildBriefs(): Promise<BriefsData> {
     .select("*")
     .order("created_at", { ascending: false })
     .limit(30);
-  if (error) throw error;
+  if (error) throw new Error(error.message || "briefs query failed");
   const briefs = ((data || []) as BriefRow[]).map((b) => ({
     id: b.id,
     alertId: b.alert_id,
@@ -396,7 +396,7 @@ export async function buildReports(): Promise<ReportsData> {
     .select("*")
     .order("created_at", { ascending: false })
     .limit(20);
-  if (error) throw error;
+  if (error) throw new Error(error.message || "reports query failed");
   const reports = ((data || []) as ReportRow[]).map((r) => {
     const body = (r.body || {}) as {
       narrative?: string;
@@ -450,7 +450,7 @@ export async function buildAlerts(): Promise<AlertsData> {
     .select("id,title,severity,status,evidence,created_at,time_series_id")
     .order("created_at", { ascending: false })
     .limit(40);
-  if (error) throw error;
+  if (error) throw new Error(error.message || "alerts query failed");
   const rows = (data || []) as {
     id: number;
     title: string;
