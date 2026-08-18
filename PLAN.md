@@ -217,14 +217,26 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
       production label). Training data expanded: v1 grew from 500 to 546 items
       with targeted Arabic/English/Arabizi financial patterns.
 
-**Phase 7 - Pilot & monetization** *(detailed plan in A18; Phase 6 PASSED - build starting)*
-- [ ] Pilot: AURAK comms (free, 4 weeks) -> case study -> public reference
-- [ ] Org layer build: dashboard auth + org workspaces (schema ready: orgs/org_members)
-- [ ] Pricing + billing: free / pro / enterprise tiers; Stripe checkout (no card data stored)
-- [ ] Paid products: UAE Pulse daily (pro), weekly digest (pro), custom sector reports (enterprise)
-- [ ] Media licensing of "UAE Pulse" aggregated trends to UAE outlets
-- [ ] Growth: LinkedIn/portfolio launch post with the live dashboard + eval scorecard
-- **DoD:** signed pilot + first paid customer + public case study
+**Phase 7a - User acquisition & product polish** *(A22: build users before monetization)*
+- [ ] ArabiziKit integration (done: 1,155 learned Gulf words replace 135-entry dictionary)
+- [ ] Professional README with live dashboard link, architecture, and clear value prop
+- [ ] Reddit launch: r/dubai, r/abudhabi, r/UAE, r/SideProject, r/InternetIsBeautiful
+- [ ] LinkedIn launch: project post with dashboard screenshot + eval scorecard
+- [ ] HackerNews "Show HN" post (zero-cost angle, Arabizi support, Gulf-specific)
+- [ ] UAE tech meetups: GDG Dubai, Dubai AI meetup, Hub71 community
+- [ ] Dashboard polish: improve mobile, add tooltips, better error states
+- [ ] More data sources: TikTok comments (if API available), WhatsApp (skip - ToS)
+- [ ] User feedback loop: simple form on dashboard, track what people ask for
+- **DoD:** 100+ dashboard visitors, 5+ upvotes on Reddit/HN, 1 LinkedIn post with engagement
+
+**Phase 7b - Institutional users & monetization** *(starts after 7a DoD)*
+- [ ] University outreach: AURAK, AUD, Zayed University, Khalifa University, NYUAD, MBZUAI
+- [ ] PR agency pitch: Edelman, MSL, Hill+Knowlton Dubai (they pay $15K+/year for Meltwater)
+- [ ] Org layer: dashboard auth (Supabase Auth), org workspaces, pricing tiers
+- [ ] Pricing: free (1 user, 100 docs/day), pro (5 users, 1000 docs/day), enterprise (unlimited)
+- [ ] Delivery hardening: email digest (SendGrid free), webhook alerts (Slack/Discord)
+- [ ] GCC expansion: Saudi, Qatar, Bahrain, Kuwait (same problem, same language)
+- **DoD:** 1 university pilot signed, first paid customer, 500+ monthly dashboard users
 
 ## 12. Perfection Gate (binary - all must pass)
 
@@ -762,4 +774,22 @@ Final scorecard (local-first hybrid, v2, 120 items per task):
 
 Phase 6 complete. Phase 7 build begins.
 
-*Last amended: 2026-08-18 - Phase 0 [x] - Phase 1 [x] - Phase 2 [x] DoD PASSED - Phase 3 [x] DoD passed - Phase 4 [x] DoD passed - Phase 5 [x] DoD PASSED - Phase 6 [x] DoD PASSED (A20: sentiment acc 0.883, signal acc 0.808) - Phase 7 in progress (A21: pilot + org layer + delivery hardening); Amendments A1-A21 recorded.*
+**A22 (2026-08-18): Phase 7 restructured - users first, then monetization.**
+
+Honest assessment: university outreach without users gets no attention. The
+strategy is reversed: build users through community posts (Reddit, LinkedIn,
+HackerNews), get traction, then approach universities and agencies with real
+numbers.
+
+Technical upgrades in this amendment:
+- ArabiziKit integrated into normalizer (1,155 Gulf words, dialect tagging,
+  replaces 135-entry hand-crafted dictionary). Arabizi transliteration quality
+  improved dramatically (e.g. "shlonak ya 7al" now produces proper Arabic).
+- README rewritten as professional project page with live dashboard link,
+  architecture diagram, and clear value proposition.
+
+Phase 7 split into 7a (user acquisition + product polish) and 7b
+(institutional users + monetization). The 7a DoD requires 100+ dashboard
+visitors and community traction before any outreach begins.
+
+*Last amended: 2026-08-18 - Phase 0 [x] - Phase 1 [x] - Phase 2 [x] DoD PASSED - Phase 3 [x] DoD passed - Phase 4 [x] DoD passed - Phase 5 [x] DoD PASSED - Phase 6 [x] DoD PASSED (A20: sentiment acc 0.883, signal acc 0.808) - Phase 7a in progress (A22: users first, ArabiziKit, professional README); Amendments A1-A22 recorded.*

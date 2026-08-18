@@ -1,22 +1,24 @@
-"""Text normalization for the BASR NLP pipeline (pure Python, no deps).
+"""Text normalization for the BASR NLP pipeline.
 
 Pipeline order (matches PLAN.md sec 6.1):
 
 1. ``clean_text`` - HTML unescape + tag strip, URL/email removal, emoji and
    non-word symbol removal, whitespace collapse. This is the canonical
    ``clean_text`` stored in ``normalized_docs``.
-2. ``arabizi_to_arabic`` - best-effort transliteration of Arabizi (Arabic
-   written in Latin letters, e.g. ``3ashan``, ``wallah``) into Arabic script.
-   High-frequency Gulf words are in a dictionary; anything else with Arabizi
-   marker characters goes through a conservative character map. The output is
-   a *hint* for the classifier, never a replacement - the cleaned original is
-   always kept (the v1 LLM understands Arabizi natively).
+2. ``arabizi_to_arabic`` - transliteration of Arabizi (Arabic written in
+   Latin letters, e.g. ``3ashan``, ``wallah``) into Arabic script. Uses
+   ArabiziKit (published library, 1,155 learned word readings, Gulf dialect
+   support) when available; falls back to a built-in dictionary (135 entries)
+   when ArabiziKit is not installed.
 """
 
 from __future__ import annotations
 
 import html
 import re
+import logging
+
+_log = logging.getLogger(__name__)
 
 # ---------------------------------------------------------------------------
 # Cleaning
@@ -63,83 +65,157 @@ def clean_text(text: str | None) -> str:
 # Arabizi -> Arabic
 # ---------------------------------------------------------------------------
 
+# Try importing ArabiziKit (published library, v1.0.0, 1,155 learned words,
+# Gulf dialect support, dialect tagging, ranked candidates).
+_ARABIZIKIT = None
+try:
+    from arabizikit import transliterate as _ak_transliterate
+
+    _ARABIZIKIT = _ak_transliterate
+    _log.debug("ArabiziKit loaded: Gulf Arabizi transliteration available")
+except ImportError:
+    _log.debug(
+        "ArabiziKit not installed; falling back to built-in dictionary "
+        "(pip install arabizikit for full Gulf dialect support)"
+    )
+
+
+def arabizi_to_arabic(text: str) -> str:
+    """Transliterate Arabizi text to Arabic script.
+
+    Uses ArabiziKit when available (1,155 learned words, Gulf dialect tagging,
+    ranked candidates with confidence scores). Falls back to a built-in
+    dictionary of 135 high-frequency Gulf words and a character-level map.
+
+    Returns the input unchanged when no Arabizi markers are present.
+    """
+    if not text:
+        return ""
+
+    if _ARABIZIKIT is not None:
+        return _arabizikit_transliterate(text)
+
+    return _builtin_transliterate(text)
+
+
+def _arabizikit_transliterate(text: str) -> str:
+    """Transliterate using ArabiziKit with Gulf dialect hint."""
+    try:
+        res = _ARABIZIKIT(text, dialect_hint="gulf")
+        return res.text if res and res.text else text
+    except Exception:
+        # If ArabiziKit fails on this input, return the original text
+        # rather than crashing the pipeline.
+        return text
+
+
+# ---------------------------------------------------------------------------
+# Built-in fallback (135-word dictionary + character map)
+# ---------------------------------------------------------------------------
+
 # High-frequency Gulf Arabizi words (the ones that carry real meaning in a
 # sentiment context). Keyed by the most common spellings seen in the wild.
 ARABIZI_MAP: dict[str, str] = {
     # particles / connectors
-    "3ashan": "عشان", "3shan": "عشان", "3ashaan": "عشان", "ashan": "عشان",
-    "3ala": "على", "3alayh": "عليه", "3an": "عن", "3and": "عند", "3ind": "عند",
-    "3adi": "عادي", "3ajab": "عجب", "3ibara": "عبارة",
-    "ma3a": "مع", "ma3": "مع", "min": "من", "il": "إلى", "fi": "في",
-    "wala": "ولا", "aw": "أو", "bas": "بس", "bass": "بس",
+    "3ashan": "\u0639\u0634\u0627\u0646", "3shan": "\u0639\u0634\u0627\u0646",
+    "3ashaan": "\u0639\u0634\u0627\u0646", "ashan": "\u0639\u0634\u0627\u0646",
+    "3ala": "\u0639\u0644\u0649", "3alayh": "\u0639\u0644\u064a\u0647",
+    "3an": "\u0639\u0646", "3and": "\u0639\u0646\u062f", "3ind": "\u0639\u0646\u062f",
+    "3adi": "\u0639\u0627\u062f\u064a", "3ajab": "\u0639\u062c\u0628",
+    "3ibara": "\u0639\u0628\u0627\u0631\u0629",
+    "ma3a": "\u0645\u0639", "ma3": "\u0645\u0639", "min": "\u0645\u0646",
+    "il": "\u0625\u0644\u0649", "fi": "\u0641\u064a",
+    "wala": "\u0648\u0644\u0627", "aw": "\u0623\u0648", "bas": "\u0628\u0633",
+    "bass": "\u0628\u0633",
     # affirmations / fillers
-    "wallah": "والله", "wallahi": "والله", "walah": "والله",
-    "inshallah": "إن شاء الله", "inshaallah": "إن شاء الله", "insha'allah": "إن شاء الله",
-    "yalla": "يلا", "yallah": "يلا",
-    "khalas": "خلاص", "khalaas": "خلاص", "khelas": "خلاص",
-    "shukran": "شكرا", "shokran": "شكرا", "thx": "شكرا",
-    "afwan": "عفوا", "mabrouk": "مبروك", "mubarak": "مبارك",
-    "allah": "الله", "ya": "يا",
+    "wallah": "\u0648\u0627\u0644\u0644\u0647", "wallahi": "\u0648\u0627\u0644\u0644\u0647",
+    "walah": "\u0648\u0627\u0644\u0644\u0647",
+    "inshallah": "\u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647",
+    "inshaallah": "\u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647",
+    "insha'allah": "\u0625\u0646 \u0634\u0627\u0621 \u0627\u0644\u0644\u0647",
+    "yalla": "\u064a\u0644\u0627", "yallah": "\u064a\u0644\u0627",
+    "khalas": "\u062e\u0644\u0627\u0635", "khalaas": "\u062e\u0644\u0627\u0635",
+    "khelas": "\u062e\u0644\u0627\u0635",
+    "shukran": "\u0634\u0643\u0631\u0627", "shokran": "\u0634\u0643\u0631\u0627",
+    "thx": "\u0634\u0643\u0631\u0627",
+    "afwan": "\u0639\u0641\u0648\u0627\u0646", "mabrouk": "\u0645\u0628\u0631\u0648\u0643",
+    "mubarak": "\u0645\u0628\u0627\u0631\u0643",
+    "allah": "\u0627\u0644\u0644\u0647", "ya": "\u064a\u0627",
     # everyday verbs / adjectives
-    "mafi": "مافي", "mafee": "مافي", "mafish": "مافيش",
-    "lazem": "لازم", "lazim": "لازم", "lazm": "لازم",
-    "zain": "زين", "zein": "زين", "zayn": "زين",
-    "7elou": "حلو", "7elo": "حلو", "7elwa": "حلوة", "7ilw": "حلو",
-    "7aram": "حرام", "7alal": "حلال",
-    "khara": "خرا", "5ara": "خرا",
-    "yani": "يعني", "ya3ni": "يعني", "yaani": "يعني",
-    "shinu": "شو", "shu": "شو", "shino": "شو",
-    "wain": "وين", "ween": "وين",
-    "hal": "هذا", "hatha": "هذا", "haza": "هذا",
-    "shlon": "شلون", "shlonk": "شلونك",
-    "akid": "أكيد", "akked": "أكيد", "akeed": "أكيد",
-    "mumkin": "ممكن", "momken": "ممكن",
-    "zaid": "زيادة", "zayid": "زيادة", "zyada": "زيادة",
-    "wa7ed": "واحد", "wahed": "واحد", "7ad": "حد",
-    "kill": "كل", "kull": "كل",
-    "arid": "أريد", "ared": "أريد", "abga": "أبي", "abigha": "أبي",
-    "aywa": "أيوه", "na3am": "نعم", "la": "لا",
-    "habibi": "حبيبي", "7abibi": "حبيبي", "habib": "حبيب",
-    "baba": "بابا", "mama": "ماما", "ukhti": "أختي", "akhi": "أخي",
-    "kelma": "كلمة", "kalam": "كلام",
-    "mashkila": "مشكلة", "moshkila": "مشكلة",
-    "ta3al": "تعال", "taal": "تعال", "ruh": "روح",
-    "7aga": "حاجة", "haga": "حاجة",
-    "kwayes": "كويس", "kuwayyis": "كويس", "kwayis": "كويس",
-    "mish": "مش", "maish": "مش",
-    "b3d": "بعد", "ba3d": "بعد",
-    "7atta": "حتى", "hatta": "حتى",
-    "meshwar": "مشوار", "mashwar": "مشوار",
-    "3umr": "عمر", "3omr": "عمر",
-    "wajid": "واجد", "wayid": "وايد", "kathir": "كثير",
-    "gher": "غير", "ghair": "غير",
-    "shway": "شوي", "shwaya": "شوية",
-    "3esh": "عيش", "3aysh": "عايش",
-    "wala shay": "ولا شيء", "wala shi": "ولا شي",
-    "7ayati": "حياتي", "7ayat": "حياة",
-    "mabrook": "مبروك",
-    "ya3ni": "يعني",
-    "3asr": "عصر", "3asab": "عصب",
+    "mafi": "\u0645\u0627\u0641\u064a", "mafee": "\u0645\u0627\u0641\u064a",
+    "mafish": "\u0645\u0627\u0641\u064a\u0634",
+    "lazem": "\u0644\u0627\u0632\u0645", "lazim": "\u0644\u0627\u0632\u0645",
+    "lazm": "\u0644\u0627\u0632\u0645",
+    "zain": "\u0632\u064a\u0646", "zein": "\u0632\u064a\u0646", "zayn": "\u0632\u064a\u0646",
+    "7elou": "\u062d\u0644\u0648", "7elo": "\u062d\u0644\u0648",
+    "7elwa": "\u062d\u0644\u0648\u0629", "7ilw": "\u062d\u0644\u0648",
+    "7aram": "\u062d\u0631\u0627\u0645", "7alal": "\u062d\u0644\u0627\u0644",
+    "khara": "\u062e\u0631\u0627", "5ara": "\u062e\u0631\u0627",
+    "yani": "\u064a\u0639\u0646\u064a", "ya3ni": "\u064a\u0639\u0646\u064a",
+    "yaani": "\u064a\u0639\u0646\u064a",
+    "shinu": "\u0634\u0648", "shu": "\u0634\u0648", "shino": "\u0634\u0648",
+    "wain": "\u0648\u064a\u0646", "ween": "\u0648\u064a\u0646",
+    "hal": "\u0647\u0630\u0627", "hatha": "\u0647\u0630\u0627", "haza": "\u0647\u0630\u0627",
+    "shlon": "\u0634\u0644\u0648\u0646", "shlonk": "\u0634\u0644\u0648\u0646\u0643",
+    "akid": "\u0623\u0643\u064a\u062f", "akked": "\u0623\u0643\u064a\u062f",
+    "akeed": "\u0623\u0643\u064a\u062f",
+    "mumkin": "\u0645\u0645\u0643\u0646", "momken": "\u0645\u0645\u0643\u0646",
+    "zaid": "\u0632\u064a\u0627\u062f\u0629", "zayid": "\u0632\u064a\u0627\u062f\u0629",
+    "zyada": "\u0632\u064a\u0627\u062f\u0629",
+    "wa7ed": "\u0648\u0627\u062d\u062f", "wahed": "\u0648\u0627\u062d\u062f",
+    "7ad": "\u062d\u062f",
+    "kill": "\u0643\u0644", "kull": "\u0643\u0644",
+    "arid": "\u0623\u0631\u064a\u062f", "ared": "\u0623\u0631\u064a\u062f",
+    "abga": "\u0623\u0628\u064a", "abigha": "\u0623\u0628\u064a",
+    "aywa": "\u0623\u064a\u0648\u0647", "na3am": "\u0646\u0639\u0645",
+    "la": "\u0644\u0627",
+    "habibi": "\u062d\u0628\u064a\u0628\u064a", "7abibi": "\u062d\u0628\u064a\u0628\u064a",
+    "habib": "\u062d\u0628\u064a\u0628",
+    "baba": "\u0628\u0627\u0628\u0627", "mama": "\u0645\u0627\u0645\u0627",
+    "ukhti": "\u0623\u062e\u062a\u064a", "akhi": "\u0623\u062e\u064a",
+    "kelma": "\u0643\u0644\u0645\u0629", "kalam": "\u0643\u0644\u0627\u0645",
+    "mashkila": "\u0645\u0634\u0643\u0644\u0629", "moshkila": "\u0645\u0634\u0643\u0644\u0629",
+    "ta3al": "\u062a\u0639\u0627\u0644", "taal": "\u062a\u0639\u0627\u0644",
+    "ruh": "\u0631\u0648\u062d",
+    "7aga": "\u062d\u0627\u062c\u0629", "haga": "\u062d\u0627\u062c\u0629",
+    "kwayes": "\u0643\u0648\u064a\u0633", "kuwayyis": "\u0643\u0648\u064a\u0633",
+    "kwayis": "\u0643\u0648\u064a\u0633",
+    "mish": "\u0645\u0634", "maish": "\u0645\u0634",
+    "b3d": "\u0628\u0639\u062f", "ba3d": "\u0628\u0639\u062f",
+    "7atta": "\u062d\u062a\u0649", "hatta": "\u062d\u062a\u0649",
+    "meshwar": "\u0645\u0634\u0648\u0627\u0631", "mashwar": "\u0645\u0634\u0648\u0627\u0631",
+    "3umr": "\u0639\u0645\u0631", "3omr": "\u0639\u0645\u0631",
+    "wajid": "\u0648\u0627\u062c\u062f", "wayid": "\u0648\u0627\u064a\u062f",
+    "kathir": "\u0643\u062b\u064a\u0631",
+    "gher": "\u063a\u064a\u0631", "ghair": "\u063a\u064a\u0631",
+    "shway": "\u0634\u0648\u064a", "shwaya": "\u0634\u0648\u064a\u0629",
+    "3esh": "\u0639\u064a\u0634", "3aysh": "\u0639\u0627\u0626\u0634",
+    "wala shay": "\u0648\u0644\u0627 \u0634\u064a\u0621",
+    "wala shi": "\u0648\u0644\u0627 \u0634\u064a",
+    "7ayati": "\u062d\u064a\u0627\u062a\u064a", "7ayat": "\u062d\u064a\u0627\u0629",
+    "mabrook": "\u0645\u0628\u0631\u0648\u0643",
+    "3asr": "\u0639\u0635\u0631", "3asab": "\u0639\u0635\u0628",
 }
 
 # Character-level fallback: Arabizi marker digits -> Arabic letters, applied
 # only to words that contain markers (so English words are never touched).
 _CHAR_MAP = {
-    "2": "أ",  # also used for ء/إ - 'أ' is the safest common form
-    "3": "ع",
-    "5": "خ",
-    "6": "ط",
-    "7": "ح",
-    "8": "ق",  # Egyptian usage; rare in Gulf but seen
-    "9": "ق",
-    "'": "ء",
-    "`": "ء",
+    "2": "\u0623",  # also used for hamza/alef - the safest common form
+    "3": "\u0639",
+    "5": "\u062e",
+    "6": "\u0637",
+    "7": "\u062d",
+    "8": "\u0642",  # Egyptian usage; rare in Gulf but seen
+    "9": "\u0642",
+    "'": "\u0621",
+    "`": "\u0621",
 }
 
 # Digraphs are matched before single chars, longest first.
 _DIGRAPH_MAP = {
-    "kh": "خ", "sh": "ش", "th": "ث", "dh": "ذ", "gh": "غ",
-    "aa": "ا", "ee": "ي", "oo": "و", "ei": "ي", "ou": "و", "ay": "ي",
+    "kh": "\u062e", "sh": "\u0634", "th": "\u062b", "dh": "\u0630", "gh": "\u063a",
+    "aa": "\u0627", "ee": "\u064a", "oo": "\u0648", "ei": "\u064a", "ou": "\u0648",
+    "ay": "\u064a",
 }
 
 _MARKER_RE = re.compile(r"[2356789'`]")
@@ -176,18 +252,11 @@ def _transliterate_word(word: str) -> str:
     return "".join(out)
 
 
-_EDGE_PUNCT = ". ,!?;:\"'()[]"
+_EDGE_PUNCT = " . ,!?;:\"'()[]"
 
 
-def arabizi_to_arabic(text: str) -> str:
-    """Transliterate Arabizi text to Arabic script (best effort).
-
-    Returns the input unchanged when no Arabizi markers are present. When a
-    text is fully Arabizi the result is a readable Arabic hint; for mixed text
-    only the Arabizi words are rewritten.
-    """
-    if not text:
-        return ""
+def _builtin_transliterate(text: str) -> str:
+    """Built-in fallback transliteration using the hand-crafted dictionary."""
     words = text.split()
     out = []
     for word in words:
@@ -195,8 +264,6 @@ def arabizi_to_arabic(text: str) -> str:
         if not stripped:
             out.append(word)
             continue
-        # Leading and trailing punctuation are computed independently so a
-        # word like "kteer," keeps its comma exactly once.
         head_len = len(word) - len(word.lstrip(_EDGE_PUNCT))
         tail_len = len(word) - len(word.rstrip(_EDGE_PUNCT))
         head = word[:head_len]

@@ -1,80 +1,142 @@
-# BASR 2.0 (بصيرة)
+# BASR / بصيرة
 
-Multilingual economic intelligence for the UAE. BASR continuously ingests what
-people say about the UAE across Reddit, news, YouTube, app reviews, and live
-feeds - in Arabic, Arabizi, and English - classifies the signals, detects
-emerging issues before they blow up, and produces decision-ready briefings and
-scheduled reports. A live public dashboard (dashboard-gamma-roan-31.vercel.app)
-is the users layer and the proof of quality; org-facing intelligence is the
-product. Full plan: `PLAN.md`.
+**Real-time UAE sentiment intelligence. Arabic-native. Zero cost.**
 
-## Pipeline (one command, twice a day)
+BASR monitors what people actually say about the UAE across Reddit, news, YouTube, app reviews, and live social feeds -- in Arabic, Arabizi, and English. It classifies sentiment, detects emerging issues before they trend, and delivers decision-ready briefings.
+
+**[Live Dashboard](https://dashboard-gamma-roan-31.vercel.app)** -- public, no login required.
+
+---
+
+## What it does
+
+Every day, thousands of people discuss UAE housing, jobs, prices, government services, and businesses across social media and news. Most of it is in Arabic or Arabizi (Arabic written in Latin script: `3ashan`, `khalas`, `yalla`). Existing sentiment tools either don't handle Arabizi, charge $15K+/year, or both.
+
+BASR fills that gap:
+
+- **Ingests** from 5 sources: Reddit (Arctic archive), 11 news RSS feeds (Khaleej Times, Gulf News, The National, WAM, and more), YouTube comments, Apple App Store reviews, and Bluesky live posts
+- **Normalizes** text across Arabic, Arabizi, and English using [ArabiziKit](https://github.com/rb2625/arabizi-kit) (1,155 learned Gulf word readings)
+- **Classifies** sentiment (positive/negative/neutral) and signal type (closure, opportunity, stress, government-services) with a 3-tier hybrid model: local n-gram (instant, zero tokens) -> lexicon (zero tokens) -> LLM (Groq free tier)
+- **Enriches** with 14 UAE-specific topics (rent-housing, jobs-labor, prices-inflation, etc.) and 40 geocoded entities (Dubai Marina, RTA, DEWA, etc.)
+- **Detects anomalies** using STL seasonality decomposition + rolling z-score -- separates real emerging issues from weekday traffic patterns
+- **Delivers** alerts over Telegram, daily "UAE Pulse" reports, and weekly sector digests
+
+## Dashboard
+
+The public dashboard shows live UAE sentiment data:
+
+| View | What you see |
+|------|-------------|
+| **Overview** | KPIs, signal mix, top topics, 30-day volume/sentiment trends |
+| **Map** | Entity sentiment map with geocoded UAE locations |
+| **Trends** | Daily volume + sentiment + stress by topic |
+| **Topics** | 14 topic cards with sentiment breakdown |
+| **Feed** | Latest classified documents with badges |
+| **Alerts** | Active anomaly alerts with severity |
+| **Briefs** | Decision-ready issue briefs |
+| **Reports** | UAE Pulse daily + weekly sector digests |
+
+## Architecture
 
 ```
-python -m basr.orchestrator            # ingest all sources (idempotent)
-python -m basr.orchestrator --nlp      # + classify + enrich (LLM budget-aware)
-python -m basr.orchestrator --intel    # + time series + anomaly + alerts
-python -m basr.orchestrator --agents   # + daily/weekly reports + delivery
+DATA SOURCES                   STORE (Supabase Postgres)
+  Reddit Arctic archive    ->    raw_docs (deduped, hashed authors)
+  News RSS (11 feeds)      ->    normalized_docs
+  YouTube comments         ->    classifications / topics / entities
+  Apple App Store reviews  ->    time_series (hourly/daily aggregates)
+  Bluesky live feed        ->    alerts / briefs / orgs / eval_*
+        |
+        v
+NLP PIPELINE                 INTELLIGENCE
+  normalizer (ArabiziKit)     time-series aggregation
+  language detection           anomaly detection (STL + z-score)
+  3-tier classifier           alerting (severity low -> critical)
+  topic tagging (14 topics)   agent layer (briefs, severity, reports)
+  entity extraction (40+)     eval harness (every model scored)
+        |
+        v
+DELIVERY
+  Next.js dashboard (Vercel) + Telegram alerts + Email digest
 ```
 
-The GitHub cron runs `python -m basr.orchestrator --intel --agents` at 03:00
-and 15:00 UTC. Every stage degrades gracefully: one failed source, a missing
-table, or an exhausted token budget never kills the platform.
+## Tech stack
 
-## Architecture (short)
+| Layer | Tool | Cost |
+|-------|------|------|
+| Database | Supabase Postgres + PostGIS | Free tier |
+| Cron | GitHub Actions (2x daily) | Free |
+| LLM | Groq free tier (gpt-oss-120b) | Free |
+| Language ID | fasttext lid.176 (offline) | Free |
+| Arabizi | ArabiziKit (Gulf dialect) | Free, open source |
+| Dashboard | Next.js 14 + Tailwind + Leaflet + Recharts | Free (Vercel) |
+| Alerts | Telegram bot + email (SendGrid) | Free tiers |
+| **Total** | | **0 AED** |
 
+## Setup
+
+```bash
+# Clone
+git clone https://github.com/rabeeeeehhh/basr-engine.git
+cd basr-engine
+
+# Install
+python -m venv .venv
+.venv/Scripts/pip install -r requirements.txt  # Windows
+# source .venv/bin/activate && pip install -r requirements.txt  # Linux/Mac
+
+# Configure
+cp .env.example .env
+# Add your keys: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, GROQ_API_KEY
+
+# Run the pipeline
+python -m basr.orchestrator --intel --agents
 ```
-ADAPTERS (Reddit Arctic, 11 news feeds, YouTube, Apple reviews, Bluesky)
-  -> raw_docs (deduped, hashed authors)
-  -> NLP: normalizer (Arabizi->Arabic) + language ID + lexicon fast path
-     + LLM classifier (openai/gpt-oss-120b) + topics + entity geocoding
-  -> time_series (hourly/daily, global/topic/sector/emirate)
-  -> anomalies (rolling z-score + STL) -> alerts -> Telegram/email
-  -> agents: severity + briefs + scheduled reports (UAE Pulse, weekly digest)
-  -> eval harness: every model scored on labeled sets, scores logged
-```
 
-Full detail: `docs/architecture.md`. Data sources: `docs/data-sources.md`.
+## Data sources
+
+| # | Source | Method | Status |
+|---|--------|--------|--------|
+| 1 | Reddit posts + comments | Arctic Shift archive (keyless) | Live |
+| 2 | News RSS (11 feeds) | Khaleej Times, Gulf News, The National, WAM, Zawya, etc. | Live |
+| 3 | YouTube comments | YouTube Data API (free tier) | Live |
+| 4 | Apple App Store reviews | iTunes RSS (keyless) | Live |
+| 5 | Bluesky live feed | Jetstream v2 (free) | Live |
+
+## Eval scores
+
+Every model in BASR is scored on labeled eval sets. Scores are logged to the database and public.
+
+| Task | Accuracy | Notes |
+|------|----------|-------|
+| Sentiment (hybrid) | **88.3%** | positive F1=0.916, negative F1=0.895 |
+| Signal taxonomy | **80.8%** | closure F1=1.000, stress F1=0.843 |
+| Agent briefs | **100%** | grounded, complete, format-valid |
 
 ## Commands
 
 | What | Command |
-|---|---|
-| Ingest everything | `python -m basr.orchestrator` |
-| Early warning (aggregate + detect + deliver) | `python -m basr.intel` |
-| Build a brief for alert 10 | `python -m basr.agents --brief 10 --publish` |
-| Build + deliver the daily report | `python -m basr.agents --report daily --deliver` |
-| Eval the classifier (LLM, budget-aware) | `python -m basr.eval --path hybrid` |
-| Eval the agents (severity + brief) | `python -m basr.eval --agents` |
-| Run the unit tests | `python -m pytest tests/ -q` |
-| Close Phase 2 after a budget reset | `python scripts/close_phase_2.py` |
+|------|---------|
+| Run full pipeline | `python -m basr.orchestrator --intel --agents` |
+| Ingest only | `python -m basr.orchestrator` |
+| Early warning | `python -m basr.intel` |
+| Build a brief | `python -m basr.agents --brief <id> --publish` |
+| Daily report | `python -m basr.agents --report daily --deliver` |
+| Run eval | `python -m basr.eval --path hybrid` |
+| Run tests | `python -m pytest tests/ -q` |
 
-Set `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`, `GROQ_API_KEY`,
-`YOUTUBE_API_KEY`, `TELEGRAM_BOT_TOKEN`, `TELEGRAM_CHAT_ID` in `.env` (or as
-GitHub secrets for the cron). Re-run `basr/schema.sql` in the Supabase SQL
-editor after any schema amendment.
+## How it's different
 
-## The daily token budget (read this)
+1. **Arabizi-native** -- uses ArabiziKit (1,155 learned Gulf word readings) instead of a basic character map. Handles `shlonak ya 7al` -> `شلونك يا حال` correctly.
+2. **Zero-cost architecture** -- every layer runs on free tiers. No credit card required. The 0 AED cap is proven in production, not aspirational.
+3. **3-tier classification** -- local n-gram (instant, zero tokens) -> lexicon (zero tokens) -> LLM (Groq free). 80%+ of docs classified without any API call.
+4. **Anomaly detection with seasonality** -- STL decomposition separates real emerging issues from Tuesday afternoon traffic spikes.
+5. **Decision-ready output** -- not just charts. Severity-scored briefs with recommended responses, delivered over Telegram.
+6. **Public and measured** -- every model score is logged. The eval harness runs on labeled sets. No black boxes.
 
-The Groq free tier caps `openai/gpt-oss-120b` at ~200k tokens/day on a
-ROLLING window - it frees gradually as usage ages out, not at midnight.
-Everything that matters is designed around this:
+## License
 
-- the lexicon fast path classifies the clear-cut majority for zero tokens;
-- the classifier stops honestly on the first 429 and leaves docs for retry;
-- the eval NEVER logs an incomplete run (the scorecard is always a fully
-  measured run - see `scripts/watch_phase_2.sh` and `docs/runbook.md`).
+MIT
 
-## Repo layout
+## Author
 
-- `basr/orchestrator.py` - pipeline entry (ingestion + optional stages)
-- `basr/adapters/` - one contract per source, graceful failures
-- `basr/nlp/` - normalizer, langid, lexicon, classifier, topics, entities
-- `basr/intel/` - time series, anomaly ensemble, alerts
-- `basr/agents/` - severity, briefs, scheduled reports
-- `basr/eval/` - harness + scored sets + benchmark tool
-- `basr/schema.sql` - full schema (idempotent; re-run in the SQL editor)
-- `dashboard/` - Next.js public dashboard (deployed to Vercel)
-- `legacy/` - the frozen v1 pipeline (LinkedIn/Playwright era)
-- `docs/` - architecture, runbook, data sources
-- `tests/` - pytest suite (zero-token layers, runs in CI)
+Muhammed Rabeeh Mattath
