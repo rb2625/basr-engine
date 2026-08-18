@@ -1,4 +1,17 @@
 .env
+.env.*
+!.env.example
+!.env.local.example
 __pycache__/
 *.pyc
+*.pyo
 *.pdf
+node_modules/
+.next/
+dist/
+build/
+*.egg-info/
+.venv/
+.ruff_cache/
+.pytest_cache/
+/tmp/

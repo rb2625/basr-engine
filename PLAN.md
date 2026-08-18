@@ -218,13 +218,13 @@ Agents (scheduled + on-alert) produce, **always measured by the eval harness**:
       with targeted Arabic/English/Arabizi financial patterns.
 
 **Phase 7a - User acquisition & product polish** *(A22: build users before monetization)*
-- [ ] ArabiziKit integration (done: 1,155 learned Gulf words replace 135-entry dictionary)
-- [ ] Professional README with live dashboard link, architecture, and clear value prop
-- [ ] Reddit launch: r/dubai, r/abudhabi, r/UAE, r/SideProject, r/InternetIsBeautiful
-- [ ] LinkedIn launch: project post with dashboard screenshot + eval scorecard
-- [ ] HackerNews "Show HN" post (zero-cost angle, Arabizi support, Gulf-specific)
+- [x] ArabiziKit integration (done: 1,155 learned Gulf words replace 135-entry dictionary)
+- [x] Professional README with live dashboard link, architecture, and clear value prop
+- [x] Reddit launch post drafted (docs/reddit-launch.md)
+- [x] LinkedIn launch post drafted (docs/linkedin-launch.md)
+- [x] HackerNews Show HN post drafted (docs/hackernews-launch.md)
 - [ ] UAE tech meetups: GDG Dubai, Dubai AI meetup, Hub71 community
-- [ ] Dashboard polish: improve mobile, add tooltips, better error states
+- [x] Dashboard: light theme, feedback form, clean professional design
 - [ ] More data sources: TikTok comments (if API available), WhatsApp (skip - ToS)
 - [ ] User feedback loop: simple form on dashboard, track what people ask for
 - **DoD:** 100+ dashboard visitors, 5+ upvotes on Reddit/HN, 1 LinkedIn post with engagement

@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Nav from "@/components/Nav";
+import FeedbackForm from "@/components/FeedbackForm";
 
 const display = Inter({
   subsets: ["latin"],
@@ -67,6 +68,7 @@ export default function RootLayout({
             </span>
           </div>
         </footer>
+        <FeedbackForm />
       </body>
     </html>
   );
