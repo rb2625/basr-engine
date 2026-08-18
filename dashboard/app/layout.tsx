@@ -63,6 +63,7 @@ export default function RootLayout({
         <footer className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 pt-4">
           <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[11px] text-mute">
             <span className="font-medium">BASR <span className="font-mono text-mute">(بصر)</span></span>
+            <a href="/privacy" className="hover:text-accent transition">Privacy</a>
             <span className="font-mono">
               88.3% sentiment accuracy | data from public sources
             </span>
