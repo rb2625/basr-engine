@@ -1,0 +1,11 @@
+\resumeProjectHeading
+          {\textbf{BASR (بصر)} $|$ \emph{Python, NLP, LLM, Next.js, Supabase, GitHub Actions}}{2026}
+          \resumeItemListStart
+            \resumeItem{Built a real-time UAE sentiment intelligence platform ingesting from 5 sources (Reddit, 11 news RSS feeds, YouTube, App Store reviews, Bluesky) with deduplication, batching, and retry/backoff across 550+ documents.}
+            \resumeItem{Designed a 3-tier hybrid classifier (local char n-gram $\rightarrow$ lexicon $\rightarrow$ Groq LLM) that handles Arabic, Arabizi, and English with 88.3\% sentiment accuracy, classifying 80\%+ of documents without any API call.}
+            \resumeItem{Integrated ArabiziKit (1,155 learned Gulf word readings) for transliterating how millions of Gulf residents actually type, outperforming existing Arabic NLP tools on informal dialect.}
+            \resumeItem{Implemented STL seasonality decomposition + rolling z-score anomaly detection to separate real emerging issues from weekday traffic patterns, with automated Telegram alerts.}
+            \resumeItem{Built a public Next.js dashboard with 8 views (Overview, Map, Trends, Topics, Feed, Alerts, Briefs, Reports), 14 UAE-specific topics, and 40 geocoded entities.}
+            \resumeItem{Runs on zero budget: GitHub Actions cron (2x daily), Groq free tier, Supabase free tier, Vercel free tier. Eval harness scores every model on labeled datasets.}
+          \resumeItemListEnd
+          \vspace{5pt}
