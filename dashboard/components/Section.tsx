@@ -21,15 +21,15 @@ export default function Section({
       style={delay ? { animationDelay: `${delay}ms` } : undefined}
     >
       {(kicker || title) && (
-        <header className="mb-4 flex items-start justify-between gap-3">
+        <header className="mb-5 flex items-start justify-between gap-3">
           <div>
             {kicker && (
-              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
+              <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
                 {kicker}
               </div>
             )}
             {title && (
-              <h2 className="mt-1 text-[15px] font-semibold text-text1">
+              <h2 className="mt-1.5 text-[15px] font-semibold text-ink">
                 {title}
               </h2>
             )}

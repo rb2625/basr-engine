@@ -4,7 +4,7 @@ export function SentimentBadge({ label }: { label: string | null }) {
   return (
     <span
       className={
-        "inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-wide " +
+        "inline-flex items-center rounded-lg px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider " +
         cls
       }
     >
@@ -19,7 +19,7 @@ export function SignalBadge({ signal }: { signal: string | null }) {
   return (
     <span
       className={
-        "inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10.5px] font-medium uppercase tracking-wide " +
+        "inline-flex items-center rounded-lg px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider " +
         cls
       }
     >

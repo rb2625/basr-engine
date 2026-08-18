@@ -17,8 +17,8 @@ const LINKS = [
 export default function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="sticky top-[52px] z-20 border-b border-line bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl gap-0.5 overflow-x-auto px-4 sm:px-6 py-1.5">
+    <nav className="sticky top-[56px] z-20 border-b border-line bg-white/90 backdrop-blur-xl">
+      <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 sm:px-6 py-2">
         {LINKS.map((l) => {
           const active =
             l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
@@ -27,13 +27,16 @@ export default function Nav() {
               key={l.href}
               href={l.href}
               className={
-                "rounded-md px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors duration-150 " +
+                "relative rounded-lg px-3.5 py-2 text-[13px] font-medium whitespace-nowrap transition-all duration-200 " +
                 (active
-                  ? "bg-accent/10 text-accent"
-                  : "text-mute hover:bg-panel2 hover:text-text1")
+                  ? "bg-accent/10 text-accent shadow-sm"
+                  : "text-mute hover:bg-panel2 hover:text-ink")
               }
             >
               {l.label}
+              {active && (
+                <span className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full bg-accent" />
+              )}
             </Link>
           );
         })}
