@@ -4,7 +4,7 @@
 
 BASR monitors what people actually say about the UAE across Reddit, news, YouTube, app reviews, and live social feeds -- in Arabic, Arabizi, and English. It classifies sentiment, detects emerging issues before they trend, and delivers decision-ready briefings.
 
-**[Live Dashboard](https://dashboard-gamma-roan-31.vercel.app){target="_blank"}** -- public, no login required.
+**<a href="https://dashboard-gamma-roan-31.vercel.app" target="_blank" rel="noopener noreferrer">Live Dashboard</a>** -- public, no login required.
 
 ---
 
@@ -15,7 +15,7 @@ Every day, thousands of people discuss UAE housing, jobs, prices, government ser
 BASR fills that gap:
 
 - **Ingests** from 5 sources: Reddit (Arctic archive), 11 news RSS feeds (Khaleej Times, Gulf News, The National, WAM, and more), YouTube comments, Apple App Store reviews, and Bluesky live posts
-- **Normalizes** text across Arabic, Arabizi, and English using [ArabiziKit](https://github.com/rb2625/arabizi-kit){target="_blank"} (1,155 learned Gulf word readings)
+- **Normalizes** text across Arabic, Arabizi, and English using <a href="https://github.com/rb2625/arabizi-kit" target="_blank" rel="noopener noreferrer">ArabiziKit</a> (1,155 learned Gulf word readings)
 - **Classifies** sentiment (positive/negative/neutral) and signal type (closure, opportunity, stress, government-services) with a 3-tier hybrid model: local n-gram (instant, zero tokens) -> lexicon (zero tokens) -> LLM (Groq free tier)
 - **Enriches** with 14 UAE-specific topics (rent-housing, jobs-labor, prices-inflation, etc.) and 40 geocoded entities (Dubai Marina, RTA, DEWA, etc.)
 - **Detects anomalies** using STL seasonality decomposition + rolling z-score -- separates real emerging issues from weekday traffic patterns
