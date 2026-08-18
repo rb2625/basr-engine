@@ -18,7 +18,7 @@ export default function Clock() {
     : null;
   return (
     <span className="hidden items-baseline gap-1.5 font-mono text-[11px] tracking-widest text-mute md:flex">
-      <span className="text-golddim">DXB</span>
+      <span className="text-accent-dim">DXB</span>
       <span className="tabular-nums text-text1">
         {dubai ? fmt(dubai) : "--:--:--"}
       </span>
