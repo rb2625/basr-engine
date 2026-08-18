@@ -711,6 +711,38 @@ links, 120 entity links, zero tokens).
 ---
 
 
+
+**A21 (2026-08-18): Phase 7 plan - pilot + monetization build.**
+
+Phase 7 has three workstreams running in parallel:
+
+1. **Pilot (AURAK)**
+   - Contact AURAK innovation lab for a free 4-week pilot
+   - Deliverables: live dashboard access, weekly Telegram reports, anomaly alerts
+   - Goal: 1 case study with real usage data + testimonial
+   - Timeline: weeks 1-4
+
+2. **Org layer + auth**
+   - Dashboard login (Supabase Auth, magic link)
+   - Org workspaces: one org has many users, each sees only their data
+   - Schema ready: orgs, org_members tables exist
+   - Pricing tiers: free (1 user, 100 docs/day), pro (5 users, 1000 docs/day),
+     enterprise (unlimited)
+   - Timeline: weeks 1-2
+
+3. **Delivery hardening**
+   - Telegram bot: daily briefs + weekly reports (already proven)
+   - Email digest: weekly sector summary (SendGrid free tier, 100/day)
+   - Webhook alerts: anomaly spikes to Slack/Discord (free)
+   - Timeline: weeks 2-3
+
+Phase 7 DoD:
+- [ ] AURAK pilot agreement signed
+- [ ] Dashboard auth working (login + org scoping)
+- [ ] 3 delivery channels proven (Telegram + email + webhook)
+- [ ] First weekly report delivered to real user
+- [ ] Case study draft written
+
 **A20 (2026-08-18): Phase 6 DoD PASSED - training data expansion + clean eval.**
 
 Expanding v1 training data with targeted items that closed the biggest gaps:
@@ -730,4 +762,4 @@ Final scorecard (local-first hybrid, v2, 120 items per task):
 
 Phase 6 complete. Phase 7 build begins.
 
-*Last amended: 2026-08-18 - Phase 0 [x] - Phase 1 [x] - Phase 2 [x] DoD PASSED - Phase 3 [x] DoD passed - Phase 4 [x] DoD passed - Phase 5 [x] DoD PASSED - Phase 6 [x] DoD PASSED (A20: sentiment acc 0.883, signal acc 0.808) - Phase 7 in progress (pilot + monetization build starting); Amendments A1-A20 recorded.*
+*Last amended: 2026-08-18 - Phase 0 [x] - Phase 1 [x] - Phase 2 [x] DoD PASSED - Phase 3 [x] DoD passed - Phase 4 [x] DoD passed - Phase 5 [x] DoD PASSED - Phase 6 [x] DoD PASSED (A20: sentiment acc 0.883, signal acc 0.808) - Phase 7 in progress (A21: pilot + org layer + delivery hardening); Amendments A1-A21 recorded.*
