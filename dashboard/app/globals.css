@@ -3,193 +3,141 @@
 @tailwind utilities;
 
 :root {
-  color-scheme: dark;
+  color-scheme: light;
 }
 
 html {
-  scrollbar-color: #2a3546 #0a0e14;
+  scrollbar-color: #CBD5E1 #F8FAFC;
 }
 
 body {
   -webkit-font-smoothing: antialiased;
-  background-color: #0a0e14;
-  color: #e6edf3;
-  font-family: var(--font-display), system-ui, sans-serif;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #F8FAFC;
+  color: #0F172A;
+  font-family: var(--font-display), system-ui, -apple-system, sans-serif;
 }
 
-.bg-ambient {
-  background-image:
-}
-
-/* ---- Motion ---- */
 @keyframes fadeUp {
-  from {
-    opacity: 0;
-    transform: translateY(14px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
 }
 
 @keyframes shimmer {
-  0% {
-    background-position: -400px 0;
-  }
-  100% {
-    background-position: 400px 0;
-  }
-}
-
-@keyframes mapPulse {
-  0%,
-  100% {
-    opacity: 0.95;
-  }
-  50% {
-    opacity: 0.5;
-  }
+  0% { background-position: -400px 0; }
+  100% { background-position: 400px 0; }
 }
 
 @keyframes barGrow {
-  from {
-    transform: scaleX(0);
-  }
-  to {
-    transform: scaleX(1);
-  }
+  from { transform: scaleX(0); }
+  to { transform: scaleX(1); }
 }
 
 .anim-reveal {
   opacity: 0;
-  animation: fadeUp 0.65s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: fadeUp 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 .skeleton {
-  background: linear-gradient(90deg, #131b27 25%, #1a2433 50%, #131b27 75%);
+  background: linear-gradient(90deg, #E2E8F0 25%, #F1F5F9 50%, #E2E8F0 75%);
   background-size: 800px 100%;
   animation: shimmer 1.4s infinite linear;
-}
-
-.map-marker {
-  animation: mapPulse 2.6s ease-in-out infinite;
+  border-radius: 6px;
 }
 
 .bar-grow {
   transform-origin: left center;
-  animation: barGrow 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation: barGrow 0.8s cubic-bezier(0.22, 1, 0.36, 1) forwards;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .anim-reveal,
-  .map-marker,
-  .bar-grow,
-  .skeleton {
+  .anim-reveal, .bar-grow, .skeleton {
     animation: none;
     opacity: 1;
   }
 }
 
-/* ---- Cards ---- */
 .card {
-  background: linear-gradient(180deg, #121a26 0%, #10161f 100%);
-  border: 1px solid rgba(148, 163, 184, 0.14);
-  border-radius: 0.9rem;
-  transition:
-    border-color 0.25s ease,
-    transform 0.25s ease,
-    box-shadow 0.25s ease;
+  background: #FFFFFF;
+  border: 1px solid #E2E8F0;
+  border-radius: 12px;
+  transition: box-shadow 0.2s ease, border-color 0.2s ease;
 }
 
 .card:hover {
-  border-color: rgba(231, 184, 78, 0.35);
-  box-shadow: 0 12px 32px -12px rgba(0, 0, 0, 0.6);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08), 0 2px 4px -2px rgba(0, 0, 0, 0.04);
+  border-color: #CBD5E1;
 }
 
 .card-hoverable:hover {
-  transform: translateY(-2px);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.08);
 }
 
-/* ---- Sentiment + signal badges (dark) ---- */
-.sent-pos {
-  background: rgba(61, 214, 140, 0.12);
-  color: #5ee6a4;
-  border: 1px solid rgba(61, 214, 140, 0.3);
-}
-.sent-neg {
-  background: rgba(244, 101, 107, 0.12);
-  color: #f98b90;
-  border: 1px solid rgba(244, 101, 107, 0.3);
-}
-.sent-neu {
-  background: rgba(91, 107, 126, 0.18);
-  color: #a7b4c3;
-  border: 1px solid rgba(91, 107, 126, 0.35);
-}
-.sent-mix {
-  background: rgba(231, 184, 78, 0.12);
-  color: #f0cd7d;
-  border: 1px solid rgba(231, 184, 78, 0.3);
-}
-.sig-stress {
-  background: rgba(244, 101, 107, 0.14);
-  color: #f98b90;
-  border: 1px solid rgba(244, 101, 107, 0.32);
-}
-.sig-closure {
-  background: rgba(167, 139, 250, 0.14);
-  color: #c4b5fd;
-  border: 1px solid rgba(167, 139, 250, 0.32);
-}
-.sig-opportunity {
-  background: rgba(61, 214, 140, 0.14);
-  color: #5ee6a4;
-  border: 1px solid rgba(61, 214, 140, 0.32);
-}
-.sig-neutral {
-  background: rgba(91, 107, 126, 0.18);
-  color: #a7b4c3;
-  border: 1px solid rgba(91, 107, 126, 0.35);
-}
+.sent-pos { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+.sent-neg { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.sent-neu { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
+.sent-mix { background: #FFFBEB; color: #D97706; border: 1px solid #FDE68A; }
+.sig-stress { background: #FEF2F2; color: #DC2626; border: 1px solid #FECACA; }
+.sig-closure { background: #F5F3FF; color: #7C3AED; border: 1px solid #DDD6FE; }
+.sig-opportunity { background: #F0FDF4; color: #16A34A; border: 1px solid #BBF7D0; }
+.sig-neutral { background: #F1F5F9; color: #64748B; border: 1px solid #E2E8F0; }
 
-/* Recharts dark theme helpers */
 .recharts-cartesian-axis-tick text {
-  fill: #8b98a9;
+  fill: #94A3B8;
   font-family: var(--font-mono), monospace;
   font-size: 10.5px;
 }
 .recharts-legend-item-text {
-  color: #a7b4c3 !important;
+  color: #64748B !important;
   font-size: 12px;
 }
+.recharts-cartesian-grid line {
+  stroke: #F1F5F9;
+}
 
-/* Leaflet dark popup chrome */
 .leaflet-container {
-  background: #0a0e14;
+  background: #F8FAFC;
   font-family: var(--font-display), system-ui, sans-serif;
 }
-.leaflet-popup-content-wrapper,
-.leaflet-popup-tip {
-  background: #151d29;
-  color: #e6edf3;
-  box-shadow: 0 12px 40px -8px rgba(0, 0, 0, 0.8);
+.leaflet-popup-content-wrapper, .leaflet-popup-tip {
+  background: #FFFFFF;
+  color: #0F172A;
+  box-shadow: 0 4px 16px -4px rgba(0, 0, 0, 0.12);
+  border: 1px solid #E2E8F0;
 }
-.leaflet-popup-content-wrapper {
-  border: 1px solid rgba(148, 163, 184, 0.2);
+.leaflet-container a.leaflet-popup-close-button { color: #94A3B8; }
+.leaflet-control-attribution { background: rgba(248, 250, 252, 0.9) !important; color: #94A3B8 !important; }
+.leaflet-control-attribution a { color: #64748B !important; }
+.leaflet-control-zoom a { background: #FFFFFF !important; color: #0F172A !important; border-color: #E2E8F0 !important; }
+
+.tooltip-wrapper { position: relative; }
+.tooltip-wrapper .tooltip-content {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 6px 10px;
+  font-size: 11px;
+  font-family: var(--font-mono), monospace;
+  background: #0F172A;
+  color: #F8FAFC;
+  border-radius: 6px;
+  pointer-events: none;
+  transition: opacity 0.15s ease, visibility 0.15s ease;
+  z-index: 50;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
-.leaflet-container a.leaflet-popup-close-button {
-  color: #8b98a9;
+.tooltip-wrapper .tooltip-content::after {
+  content: "";
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border: 5px solid transparent;
+  border-top-color: #0F172A;
 }
-.leaflet-control-attribution {
-  background: rgba(10, 14, 20, 0.7) !important;
-  color: #5b6b7e !important;
-}
-.leaflet-control-attribution a {
-  color: #8b98a9 !important;
-}
-.leaflet-control-zoom a {
-  background: #151d29 !important;
-  color: #a7b4c3 !important;
-  border-color: rgba(148, 163, 184, 0.2) !important;
-}
+.tooltip-wrapper:hover .tooltip-content { visibility: visible; opacity: 1; }
