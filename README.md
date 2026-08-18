@@ -76,7 +76,7 @@ DELIVERY
 
 ```bash
 # Clone
-git clone https://github.com/rabeeeeehhh/basr-engine.git
+git clone https://github.com/rb2625/basr-engine.git
 cd basr-engine
 
 # Install
