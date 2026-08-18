@@ -11,16 +11,12 @@ import type { OverviewData } from "@/lib/types";
 
 function PageHeader() {
   return (
-    <div className="mb-7">
-      <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
-        Signal room / overview
-      </div>
-      <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
-        UAE market pulse
+    <div className="mb-6">
+      <h1 className="text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
+        UAE Market Pulse
       </h1>
-      <p className="mt-2 max-w-2xl text-sm leading-relaxed text-mute">
-        Aggregated public sentiment across housing, jobs, prices, and more -
-        classified by the BASR hybrid model, scored on a 500-item eval set.
+      <p className="mt-1.5 max-w-2xl text-sm text-mute">
+        Public sentiment across housing, jobs, prices, and more. Classified by the BASR hybrid model.
       </p>
     </div>
   );
@@ -32,14 +28,14 @@ function Loading() {
       <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         {[0, 1, 2, 3].map((i) => (
           <div key={i} className="card p-5">
-            <div className="skeleton h-3 w-16 rounded" />
-            <div className="skeleton mt-3 h-8 w-24 rounded" />
-            <div className="skeleton mt-2 h-3 w-28 rounded" />
+            <div className="skeleton h-3 w-16" />
+            <div className="skeleton mt-3 h-7 w-24" />
+            <div className="skeleton mt-2 h-3 w-28" />
           </div>
         ))}
       </div>
       <div className="card p-6">
-        <div className="skeleton h-64 w-full rounded" />
+        <div className="skeleton h-64 w-full" />
       </div>
     </div>
   );
@@ -60,9 +56,9 @@ export default function OverviewPage() {
     return (
       <div>
         <PageHeader />
-        <div className="card max-w-xl border-neg/30 p-6 text-sm text-neg">
+        <div className="card max-w-xl border-neg/30 bg-neg-light p-6 text-sm text-neg">
           <div className="font-semibold">Could not load data</div>
-          <div className="mt-1 break-all font-mono text-xs">{error || "No data returned"}</div>
+          <div className="mt-1 break-all font-mono text-xs opacity-70">{error || "No data returned"}</div>
         </div>
       </div>
     );
@@ -82,6 +78,17 @@ export default function OverviewPage() {
               label={k.label}
               value={k.value}
               sub={k.sub}
+              tooltip={
+                k.label === "Total docs"
+                  ? "Raw documents ingested from all 5 sources"
+                  : k.label === "Classified"
+                  ? "Documents with sentiment + signal labels"
+                  : k.label === "Topics"
+                  ? "14 UAE-specific topic categories"
+                  : k.label === "Alerts"
+                  ? "Active anomaly alerts requiring attention"
+                  : undefined
+              }
               delay={60 * i}
             />
           ))}
@@ -92,7 +99,7 @@ export default function OverviewPage() {
         <Reveal delay={90} className="lg:col-span-2">
           <Section
             kicker="Classification"
-            title="Signal mix - all classified docs"
+            title="Signal mix"
             delay={90}
           >
             <MixBar mix={data.mix} />
@@ -100,16 +107,16 @@ export default function OverviewPage() {
         </Reveal>
 
         <Reveal delay={160} className="lg:col-span-3">
-          <Section kicker="Volume" title="Top topics by coverage" delay={160}>
-            <div className="space-y-3">
+          <Section kicker="Topics" title="Coverage by topic" delay={160}>
+            <div className="space-y-2.5">
               {data.topTopics.map((t) => (
                 <div key={t.key} className="group flex items-center gap-3">
-                  <div className="w-40 shrink-0 truncate text-[13px] text-text1">
+                  <div className="w-36 shrink-0 truncate text-[13px] text-text1">
                     {t.labelEn}
                   </div>
-                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-ink/60 ring-1 ring-line">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-panel2">
                     <div
-                      className="bar-grow h-full rounded-full bg-gradient-to-r from-golddim to-gold"
+                      className="bar-grow h-full rounded-full bg-accent"
                       style={{ width: `${(100 * t.docs) / maxTopic}%` }}
                     />
                   </div>
@@ -125,7 +132,7 @@ export default function OverviewPage() {
                           ? "text-pos"
                           : t.avgSentiment <= -0.15
                             ? "text-neg"
-                            : "text-gold")
+                            : "text-neu")
                     }
                   >
                     {t.avgSentiment == null ? "n/a" : t.avgSentiment.toFixed(2)}
@@ -138,7 +145,7 @@ export default function OverviewPage() {
       </div>
 
       <Reveal delay={120}>
-        <Section kicker="30-day window" title="Volume and average sentiment">
+        <Section kicker="Trends" title="Volume and sentiment (30 days)">
           <SentimentSeries series={data.series} />
         </Section>
       </Reveal>
@@ -150,7 +157,7 @@ export default function OverviewPage() {
           ) : (
             <ul className="divide-y divide-line">
               {data.recentStress.map((f) => (
-                <li key={f.id} className="group flex items-start justify-between gap-4 py-3.5">
+                <li key={f.id} className="group flex items-start justify-between gap-4 py-3">
                   <div>
                     <div className="text-sm font-medium text-text1">
                       {f.title}
@@ -160,7 +167,7 @@ export default function OverviewPage() {
                         </span>
                       )}
                     </div>
-                    <div className="mt-1 font-mono text-[11px] text-mute">
+                    <div className="mt-0.5 font-mono text-[11px] text-mute">
                       {f.source} / {f.published_at ? f.published_at.slice(0, 10) : "unknown"}
                     </div>
                   </div>

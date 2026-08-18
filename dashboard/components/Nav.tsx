@@ -8,7 +8,7 @@ const LINKS = [
   { href: "/map", label: "Map" },
   { href: "/trends", label: "Trends" },
   { href: "/topics", label: "Topics" },
-  { href: "/alerts", label: "Early warning" },
+  { href: "/alerts", label: "Alerts" },
   { href: "/briefs", label: "Briefs" },
   { href: "/reports", label: "Reports" },
   { href: "/feed", label: "Feed" },
@@ -17,8 +17,8 @@ const LINKS = [
 export default function Nav() {
   const pathname = usePathname();
   return (
-    <nav className="sticky top-0 z-10 border-b border-line bg-ink/70 backdrop-blur-md">
-      <div className="mx-auto flex max-w-6xl gap-1 overflow-x-auto px-4 py-2">
+    <nav className="sticky top-[52px] z-20 border-b border-line bg-white/80 backdrop-blur-md">
+      <div className="mx-auto flex max-w-6xl gap-0.5 overflow-x-auto px-4 sm:px-6 py-1.5">
         {LINKS.map((l) => {
           const active =
             l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
@@ -27,9 +27,9 @@ export default function Nav() {
               key={l.href}
               href={l.href}
               className={
-                "rounded-lg px-3.5 py-1.5 text-[13px] font-medium transition-all duration-200 " +
+                "rounded-md px-3 py-1.5 text-[13px] font-medium whitespace-nowrap transition-colors duration-150 " +
                 (active
-                  ? "bg-gold/15 text-gold shadow-[inset_0_0_0_1px_rgba(231,184,78,0.35)]"
+                  ? "bg-accent/10 text-accent"
                   : "text-mute hover:bg-panel2 hover:text-text1")
               }
             >

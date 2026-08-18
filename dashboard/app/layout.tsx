@@ -1,11 +1,9 @@
 import type { Metadata } from "next";
-import { JetBrains_Mono, Space_Grotesk } from "next/font/google";
+import { Inter, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import Logo from "@/components/Logo";
-import Clock from "@/components/Clock";
 import Nav from "@/components/Nav";
 
-const display = Space_Grotesk({
+const display = Inter({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   variable: "--font-display",
@@ -20,9 +18,9 @@ const mono = JetBrains_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "BASR بصيرة - UAE Economic Sentiment Intelligence",
+  title: "BASR - UAE Sentiment Intelligence",
   description:
-    "Live public sentiment intelligence for the UAE market: entity map, topic trends, and early-warning feed. Measured, not vibes.",
+    "Real-time public sentiment intelligence for the UAE. Arabic, Arabizi, and English. Free, open, measured.",
 };
 
 export default function RootLayout({
@@ -32,42 +30,40 @@ export default function RootLayout({
 }) {
   return (
     <html lang="en" className={`${display.variable} ${mono.variable}`}>
-      <body className="bg-ambient min-h-screen antialiased">
-        <header className="relative z-20 border-b border-line bg-ink/80 backdrop-blur-md">
-          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3.5">
-            <a href="/" className="group flex items-center gap-3">
-              <Logo />
-              <span className="flex flex-col leading-none">
-                <span className="flex items-baseline gap-2">
-                  <span className="text-lg font-bold tracking-[0.18em] text-text1">
-                    BASR
-                  </span>
-                  <span className="font-mono text-[11px] tracking-widest text-gold">
-                    بصيرة
-                  </span>
+      <body className="min-h-screen antialiased">
+        <header className="sticky top-0 z-30 border-b border-line bg-white/80 backdrop-blur-md">
+          <div className="mx-auto flex max-w-6xl items-center justify-between px-4 sm:px-6 py-3">
+            <a href="/" className="flex items-center gap-2.5">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-accent text-[13px] font-bold text-white">
+                B
+              </div>
+              <div className="flex flex-col">
+                <span className="text-[15px] font-semibold tracking-tight text-text1">
+                  BASR
                 </span>
-                <span className="mt-1 hidden text-[10.5px] uppercase tracking-[0.22em] text-mute sm:block">
-                  UAE Economic Sentiment Intelligence
+                <span className="hidden font-mono text-[10px] tracking-wider text-mute sm:block">
+                  UAE SENTIMENT
                 </span>
-              </span>
+              </div>
             </a>
-            <div className="flex items-center gap-4">
-              <Clock />
-              <span className="inline-flex items-center gap-2 rounded-full border border-pos/30 bg-pos/10 px-3 py-1 text-[11px] font-medium tracking-wide text-pos">
+            <div className="flex items-center gap-3">
+              <span className="hidden sm:inline-flex items-center gap-1.5 rounded-full border border-line bg-panel2 px-2.5 py-1 font-mono text-[10px] text-mute">
+                5 sources / 550+ docs
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-pos/30 bg-pos-light px-2.5 py-1 text-[11px] font-medium text-pos">
                 <span className="h-1.5 w-1.5 animate-pulse-dot rounded-full bg-pos" />
-                LIVE
+                Live
               </span>
             </div>
           </div>
         </header>
         <Nav />
-        <main className="mx-auto max-w-6xl px-4 py-8">{children}</main>
-        <footer className="mx-auto max-w-6xl px-4 pb-12 pt-4">
-          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 font-mono text-[11px] text-mute">
-            <span>BASR 2.0 / بصيرة - measured, not vibes</span>
-            <span>
-              classifiers scored on a 500-item eval set | data refreshes
-              continuously from public sources
+        <main className="mx-auto max-w-6xl px-4 sm:px-6 py-6 sm:py-8">{children}</main>
+        <footer className="mx-auto max-w-6xl px-4 sm:px-6 pb-12 pt-4">
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t border-line pt-5 text-[11px] text-mute">
+            <span className="font-medium">BASR / <span className="font-mono">بصيرة</span></span>
+            <span className="font-mono">
+              88.3% sentiment accuracy | data from public sources
             </span>
           </div>
         </footer>

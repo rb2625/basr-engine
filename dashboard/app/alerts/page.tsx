@@ -8,13 +8,13 @@ import type { AlertsData, AlertItem } from "@/lib/types";
 const SEV_STYLE: Record<AlertItem["severity"], string> = {
   critical: "bg-neg/15 text-neg border-neg/40",
   high: "bg-orange-400/15 text-orange-300 border-orange-400/40",
-  medium: "bg-gold/15 text-gold border-gold/40",
+  medium: "bg-accent/10 text-accent border-accent/30",
   low: "bg-neu/20 text-mute border-line",
 };
 
 const STATUS_DOT: Record<string, string> = {
   open: "bg-pos",
-  acknowledged: "bg-gold",
+  acknowledged: "bg-accent",
   dismissed: "bg-neu",
   promoted: "bg-vio",
 };
@@ -34,7 +34,7 @@ export default function AlertsPage() {
   return (
     <div className="space-y-6">
       <div className="mb-7">
-        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Early warning / anomalies
         </div>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">

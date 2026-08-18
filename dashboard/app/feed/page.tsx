@@ -23,7 +23,7 @@ export default function FeedPage() {
   return (
     <div className="space-y-6">
       <div className="mb-7">
-        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Stream / classified docs
         </div>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
@@ -73,7 +73,7 @@ export default function FeedPage() {
                           <span className="uppercase tracking-wide">{f.source}</span>
                           <span className="tabular-nums">{timeAgo(f.published_at)}</span>
                           {f.sector && (
-                            <span className="text-golddim">{f.sector}</span>
+                            <span className="text-accentdim">{f.sector}</span>
                           )}
                           {f.sarcasm && (
                             <span className="font-semibold text-vio">sarcasm</span>
@@ -92,7 +92,7 @@ export default function FeedPage() {
                             {f.locations.map((l) => (
                               <span
                                 key={l}
-                                className="rounded-md border border-gold/25 bg-gold/10 px-1.5 py-0.5 font-mono text-[10px] capitalize text-gold"
+                                className="rounded-md border border-accent/20 bg-accent/10 px-1.5 py-0.5 font-mono text-[10px] capitalize text-accent"
                               >
                                 {l}
                               </span>

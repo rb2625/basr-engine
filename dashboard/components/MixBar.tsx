@@ -1,10 +1,10 @@
 import type { SignalMix } from "@/lib/types";
 
 const COLORS: Record<keyof SignalMix, string> = {
-  stress: "#F4656B",
-  closure: "#A78BFA",
-  opportunity: "#3DD68C",
-  neutral: "#3A4758",
+  stress: "#DC2626",
+  closure: "#7C3AED",
+  opportunity: "#16A34A",
+  neutral: "#94A3B8",
 };
 
 const LABELS: Record<keyof SignalMix, string> = {
@@ -31,7 +31,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
 
   return (
     <div>
-      <div className="flex h-3 w-full overflow-hidden rounded-full bg-ink/60 ring-1 ring-line">
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-panel2">
         {segs.map((s, i) => (
           <div
             key={s.k}
@@ -44,7 +44,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
           />
         ))}
       </div>
-      <div className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[11px] text-mute">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[11px] text-mute">
         {ORDER.map((k) => (
           <span key={k} className="inline-flex items-center gap-1.5 tabular-nums">
             <span

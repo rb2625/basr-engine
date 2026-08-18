@@ -24,7 +24,7 @@ export default function Section({
         <header className="mb-4 flex items-start justify-between gap-3">
           <div>
             {kicker && (
-              <div className="font-mono text-[10px] uppercase tracking-[0.22em] text-gold">
+              <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-accent">
                 {kicker}
               </div>
             )}

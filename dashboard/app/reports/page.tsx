@@ -6,13 +6,13 @@ import { useApi } from "@/components/useApi";
 import type { ReportItem, ReportsData } from "@/lib/types";
 
 const KIND_STYLE: Record<ReportItem["kind"], string> = {
-  daily: "bg-gold/15 text-gold border-gold/40",
+  daily: "bg-accent/10 text-accent border-accent/30",
   weekly: "bg-vio/15 text-vio border-vio/40",
   org: "bg-pos/15 text-pos border-pos/40",
 };
 
 const DELIVERY_DOT: Record<string, string> = {
-  pending: "bg-gold",
+  pending: "bg-accent",
   sent: "bg-pos",
   failed: "bg-neg",
   skipped: "bg-neu",
@@ -33,7 +33,7 @@ export default function ReportsPage() {
   return (
     <div className="space-y-6">
       <div className="mb-7">
-        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Agents / scheduled reports
         </div>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
@@ -116,7 +116,7 @@ export default function ReportsPage() {
                           key={i}
                           className="flex gap-2 text-[12.5px] text-mute"
                         >
-                          <span className="font-mono text-[11px] text-gold">
+                          <span className="font-mono text-[11px] text-accent">
                             &gt;
                           </span>
                           {h}
@@ -168,7 +168,7 @@ export default function ReportsPage() {
                     <span>
                       volume {r.stats.current_volume ?? "n/a"}
                       {r.stats.volume_delta_pct != null && (
-                        <span className="text-gold">
+                        <span className="text-accent">
                           {" "}
                           ({r.stats.volume_delta_pct > 0 ? "+" : ""}
                           {r.stats.volume_delta_pct}% vs prior)

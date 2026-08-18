@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import type { DayPoint } from "@/lib/types";
 
-const GRID = "rgba(148, 163, 184, 0.12)";
+const GRID = "#F1F5F9";
 
 interface TooltipRow {
   dataKey?: string | number;
@@ -35,7 +35,7 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-line bg-panel2 px-3 py-2 font-mono text-[11px] shadow-lift">
+    <div className="rounded-lg border border-line bg-white px-3 py-2 font-mono text-[11px] shadow-lift">
       <div className="mb-1 text-mute">{label}</div>
       {payload.map((p) => (
         <div key={String(p.dataKey)} className="flex items-center justify-between gap-4 tabular-nums">
@@ -68,14 +68,14 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
       <ComposedChart data={series} margin={{ top: 8, right: 8, bottom: 0, left: -14 }}>
         <defs>
           <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#E7B84E" stopOpacity={0.28} />
-            <stop offset="100%" stopColor="#E7B84E" stopOpacity={0.02} />
+            <stop offset="0%" stopColor="#6366F1" stopOpacity={0.15} />
+            <stop offset="100%" stopColor="#6366F1" stopOpacity={0.01} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: "#8B98A9", fontSize: 10.5 }}
+          tick={{ fill: "#94A3B8", fontSize: 10.5 }}
           interval="preserveStartEnd"
           minTickGap={32}
           axisLine={{ stroke: GRID }}
@@ -83,7 +83,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
         />
         <YAxis
           yAxisId="vol"
-          tick={{ fill: "#8B98A9", fontSize: 10.5 }}
+          tick={{ fill: "#94A3B8", fontSize: 10.5 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
@@ -92,7 +92,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           yAxisId="sent"
           orientation="right"
           domain={[-1, 1]}
-          tick={{ fill: "#8B98A9", fontSize: 10.5 }}
+          tick={{ fill: "#94A3B8", fontSize: 10.5 }}
           axisLine={false}
           tickLine={false}
           ticks={[-1, -0.5, 0, 0.5, 1]}
@@ -104,7 +104,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           type="monotone"
           dataKey="volume"
           name="Docs"
-          stroke="#E7B84E"
+          stroke="#6366F1"
           strokeWidth={1.8}
           fill="url(#volFill)"
           animationDuration={1100}
@@ -114,7 +114,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           type="monotone"
           dataKey="avgSentiment"
           name="Avg sentiment"
-          stroke="#3DD68C"
+          stroke="#16A34A"
           strokeWidth={2}
           dot={false}
           animationDuration={1100}
@@ -124,7 +124,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
   );
 }
 
-const TOPIC_COLORS = ["#F4656B", "#A78BFA", "#E7B84E", "#38BDF8", "#3DD68C"];
+const TOPIC_COLORS = ["#DC2626", "#7C3AED", "#D97706", "#0284C7", "#16A34A"];
 
 export function StressStack({ series, topics }: { series: DayPoint[]; topics: string[] }) {
   if (!series.length)
@@ -139,14 +139,14 @@ export function StressStack({ series, topics }: { series: DayPoint[]; topics: st
         <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: "#8B98A9", fontSize: 10.5 }}
+          tick={{ fill: "#94A3B8", fontSize: 10.5 }}
           interval="preserveStartEnd"
           minTickGap={32}
           axisLine={{ stroke: GRID }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#8B98A9", fontSize: 10.5 }}
+          tick={{ fill: "#94A3B8", fontSize: 10.5 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
@@ -156,8 +156,8 @@ export function StressStack({ series, topics }: { series: DayPoint[]; topics: st
         <Bar
           dataKey="stress"
           name="Stress (all)"
-          fill="#F4656B"
-          fillOpacity={0.85}
+          fill="#DC2626"
+          fillOpacity={0.8}
           radius={[3, 3, 0, 0]}
           animationDuration={1100}
         />
@@ -168,7 +168,7 @@ export function StressStack({ series, topics }: { series: DayPoint[]; topics: st
             name={t.replace(/-/g, " ")}
             stackId="topic"
             fill={TOPIC_COLORS[i % TOPIC_COLORS.length]}
-            fillOpacity={0.75}
+            fillOpacity={0.7}
             radius={i === topics.length - 1 ? [3, 3, 0, 0] : 0}
             animationDuration={1100}
           />

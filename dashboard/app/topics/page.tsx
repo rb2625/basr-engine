@@ -10,7 +10,7 @@ export default function TopicsPage() {
   return (
     <div className="space-y-6">
       <div className="mb-7">
-        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Taxonomy / coverage
         </div>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
@@ -60,7 +60,7 @@ export default function TopicsPage() {
                           ? "text-pos"
                           : t.avgSentiment <= -0.15
                             ? "text-neg"
-                            : "text-gold")
+                            : "text-accent")
                     }
                   >
                     {t.avgSentiment == null ? "n/a" : t.avgSentiment.toFixed(2)}

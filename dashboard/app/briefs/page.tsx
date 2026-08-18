@@ -8,7 +8,7 @@ import type { BriefItem, BriefsData } from "@/lib/types";
 const SEV_STYLE: Record<BriefItem["severity"], string> = {
   critical: "bg-neg/15 text-neg border-neg/40",
   high: "bg-orange-400/15 text-orange-300 border-orange-400/40",
-  medium: "bg-gold/15 text-gold border-gold/40",
+  medium: "bg-accent/10 text-accent border-accent/30",
   low: "bg-neu/20 text-mute border-line",
 };
 
@@ -34,7 +34,7 @@ export default function BriefsPage() {
   return (
     <div className="space-y-6">
       <div className="mb-7">
-        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-gold">
+        <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Agents / decision support
         </div>
         <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-text1 sm:text-3xl">
@@ -148,7 +148,7 @@ export default function BriefsPage() {
                             key={i}
                             className="flex gap-2.5 border-l border-gold/30 pl-3 text-[12.5px]"
                           >
-                            <span className="font-mono text-[11px] text-gold">
+                            <span className="font-mono text-[11px] text-accent">
                               {String(i + 1).padStart(2, "0")}
                             </span>
                             <div className="min-w-0">
@@ -179,7 +179,7 @@ export default function BriefsPage() {
                                     href={e.url}
                                     target="_blank"
                                     rel="noreferrer"
-                                    className="text-text1 underline decoration-line underline-offset-2 hover:text-gold"
+                                    className="text-text1 underline decoration-line underline-offset-2 hover:text-accent"
                                   >
                                     {e.title}
                                   </a>
