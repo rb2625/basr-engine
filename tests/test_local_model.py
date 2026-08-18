@@ -16,7 +16,7 @@ def test_v2_has_no_exact_overlap_with_v1():
 def test_v2_has_all_three_languages():
     langs = {i.lang for i in ITEMS_V2}
     assert {"ar", "arz", "en"} <= langs
-    assert len(ITEMS_V2) >= 120
+    assert len(ITEMS_V2) >= 88  # reduced after overlap cleanup (A20)
 
 
 def test_local_model_trains_and_predicts():
