@@ -135,7 +135,7 @@ Every model in BASR is scored on labeled eval sets. Scores are logged to the dat
 
 ## License
 
-MIT
+Apache 2.0
 
 ## Author
 
