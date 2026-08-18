@@ -6,7 +6,7 @@
 
 Hey r/dubai. I've been working on something and wanted to share it with the community.
 
-**BASR** (بصيرة, Arabic for "insight") is a free, real-time sentiment intelligence platform for the UAE. It monitors what people say about the UAE across Reddit, news outlets, YouTube, app reviews, and live social feeds -- in Arabic, Arabizi, and English -- and classifies the sentiment, detects emerging issues, and produces briefings.
+**BASR** (بصر, Arabic for "insight") is a free, real-time sentiment intelligence platform for the UAE. It monitors what people say about the UAE across Reddit, news outlets, YouTube, app reviews, and live social feeds -- in Arabic, Arabizi, and English -- and classifies the sentiment, detects emerging issues, and produces briefings.
 
 **Live dashboard:** https://dashboard-gamma-roan-31.vercel.app
 

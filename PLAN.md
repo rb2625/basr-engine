@@ -8,7 +8,7 @@
 > its Definition of Done passes. No scope drift, no version churn. Changes to this plan
 > require an explicit amendment (marked here).
 
-**Name:** BASR (بصيرة - "insight")
+**Name:** BASR (بصر - "insight")
 **One-liner:** *UAE public sentiment intelligence and decision support - real-time, Arabic-native, early-warning, measured.*
 
 ---

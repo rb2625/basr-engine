@@ -1,4 +1,4 @@
-# BASR / بصيرة
+# BASR (بصر, pronounced "baseer")
 
 **Real-time UAE sentiment intelligence. Arabic-native. Zero cost.**
 

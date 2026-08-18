@@ -1,7 +1,7 @@
 """
 BASR Intelligence Engine - UAE public sentiment intelligence and decision support.
 
-BASR (بصيرة, "insight") continuously ingests public discourse about the UAE across
+BASR (بصر, "insight") continuously ingests public discourse about the UAE across
 Reddit, news, YouTube, reviews, and live feeds - in Arabic, Arabizi, and English -
 classifies signals, detects emerging issues, and produces decision-ready briefings.
 
