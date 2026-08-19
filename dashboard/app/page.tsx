@@ -16,8 +16,8 @@ export default function OverviewPage() {
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="font-display-xl text-ink glow-text">UAE Market Pulse</h1>
-          <p className="mt-1 font-body-lg text-ink-3">Public sentiment across housing, jobs, prices.</p>
+          <h1 className="font-display-xl glow-text">UAE Market Pulse</h1>
+          <p className="mt-1 font-body-lg text-ink-3">Real-time sentiment intelligence.</p>
         </div>
         <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
           {[0, 1, 2, 3].map((i) => (
@@ -28,9 +28,7 @@ export default function OverviewPage() {
             </div>
           ))}
         </div>
-        <div className="card p-4">
-          <div className="skeleton h-52 w-full" />
-        </div>
+        <div className="card p-4"><div className="skeleton h-52 w-full" /></div>
       </div>
     );
   }
@@ -39,12 +37,12 @@ export default function OverviewPage() {
     return (
       <div className="space-y-5">
         <div>
-          <h1 className="font-display-xl text-ink glow-text">UAE Market Pulse</h1>
-          <p className="mt-1 font-body-lg text-ink-3">Public sentiment across housing, jobs, prices.</p>
+          <h1 className="font-display-xl glow-text">UAE Market Pulse</h1>
+          <p className="mt-1 font-body-lg text-ink-3">Real-time sentiment intelligence.</p>
         </div>
-        <div className="card max-w-md border-negative/20 bg-negative/5 p-4 text-body-sm text-negative">
+        <div className="card max-w-md border-rose/20 bg-rose/5 p-4 text-body-sm text-rose">
           <div className="font-semibold">Could not load data</div>
-          <div className="mt-1 break-all font-mono text-[10px] opacity-70">{error || "No data returned"}</div>
+          <div className="mt-1 break-all font-mono text-[10px] opacity-70">{error || "No data"}</div>
         </div>
       </div>
     );
@@ -55,7 +53,7 @@ export default function OverviewPage() {
   return (
     <div className="space-y-5">
       <div>
-        <h1 className="font-display-xl text-ink glow-text">UAE Market Pulse</h1>
+        <h1 className="font-display-xl glow-text">UAE Market Pulse</h1>
         <p className="mt-1 font-body-lg text-ink-3">
           Public sentiment across housing, jobs, prices, and more.
         </p>
@@ -69,15 +67,6 @@ export default function OverviewPage() {
               label={k.label}
               value={k.value}
               sub={k.sub}
-              tooltip={
-                k.label === "Total docs"
-                  ? "Raw documents from all 5 sources"
-                  : k.label === "Classified"
-                    ? "With sentiment + signal labels"
-                    : k.label === "Stress signals"
-                      ? "Flagged as economic stress"
-                      : undefined
-              }
               delay={60 * i}
             />
           ))}
@@ -94,36 +83,40 @@ export default function OverviewPage() {
         <Reveal delay={120} className="lg:col-span-3">
           <Section kicker="Topics" title="Coverage by topic">
             <div className="space-y-2.5">
-              {data.topTopics.map((t) => (
-                <div key={t.key} className="group flex items-center gap-3">
-                  <div className="w-32 shrink-0 truncate text-[11px] font-medium text-ink-2">
-                    {t.labelEn}
-                  </div>
-                  <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.04]">
+              {data.topTopics.map((t, i) => {
+                const colors = ["#818CF8", "#C084FC", "#FBBF24", "#34D399", "#22D3EE", "#FB7185", "#F472B6", "#A78BFA"];
+                const c = colors[i % colors.length];
+                return (
+                  <div key={t.key} className="group flex items-center gap-3">
+                    <div className="w-32 shrink-0 truncate text-[11px] font-medium text-ink-2">
+                      {t.labelEn}
+                    </div>
+                    <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-white/[0.04]">
+                      <div
+                        className="bar-grow h-full rounded-full"
+                        style={{ width: `${(100 * t.docs) / maxTopic}%`, backgroundColor: c }}
+                      />
+                    </div>
+                    <div className="w-7 text-right font-mono text-[9px] tabular-nums text-ink-3">
+                      {t.docs}
+                    </div>
                     <div
-                      className="bar-grow h-full rounded-full bg-accent"
-                      style={{ width: `${(100 * t.docs) / maxTopic}%` }}
-                    />
+                      className={
+                        "w-12 text-right font-mono text-[9px] tabular-nums font-medium " +
+                        (t.avgSentiment == null
+                          ? "text-ink-3"
+                          : t.avgSentiment >= 0.15
+                            ? "text-positive"
+                            : t.avgSentiment <= -0.15
+                              ? "text-negative"
+                              : "text-neutral")
+                      }
+                    >
+                      {t.avgSentiment == null ? "n/a" : t.avgSentiment.toFixed(2)}
+                    </div>
                   </div>
-                  <div className="w-7 text-right font-mono text-[9px] tabular-nums text-ink-3">
-                    {t.docs}
-                  </div>
-                  <div
-                    className={
-                      "w-12 text-right font-mono text-[9px] tabular-nums font-medium " +
-                      (t.avgSentiment == null
-                        ? "text-ink-3"
-                        : t.avgSentiment >= 0.15
-                          ? "text-positive"
-                          : t.avgSentiment <= -0.15
-                            ? "text-negative"
-                            : "text-neutral")
-                    }
-                  >
-                    {t.avgSentiment == null ? "n/a" : t.avgSentiment.toFixed(2)}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </Section>
         </Reveal>
@@ -138,7 +131,7 @@ export default function OverviewPage() {
       <Reveal delay={140}>
         <Section kicker="Early warning" title="Recent stress signals">
           {data.recentStress.length === 0 ? (
-            <div className="font-mono text-[10px] text-ink-3">No stress signals classified yet</div>
+            <div className="font-mono text-[10px] text-ink-3">No stress signals yet</div>
           ) : (
             <div className="divide-y divide-white/5">
               {data.recentStress.map((f) => (

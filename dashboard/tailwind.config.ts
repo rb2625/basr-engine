@@ -9,18 +9,21 @@ const config: Config = {
   theme: {
     extend: {
       colors: {
-        accent: "#F59E0B",
-        "accent-dim": "#D97706",
-        "accent-glow": "rgba(245, 158, 11, 0.15)",
+        // Primary accents
+        indigo: "#818CF8",
+        amber: "#FBBF24",
+        emerald: "#34D399",
+        rose: "#FB7185",
+        violet: "#C084FC",
+        cyan: "#22D3EE",
+        // Semantic
         positive: "#4ADE80",
         negative: "#F87171",
         neutral: "#94A3B8",
-        violet: "#A855F7",
-        surface: "rgba(255, 255, 255, 0.03)",
-        "surface-hover": "rgba(255, 255, 255, 0.06)",
-        ink: "#F5F5F4",
-        "ink-2": "#A8A29E",
-        "ink-3": "#78716C",
+        // Surfaces
+        ink: "#FAFAF9",
+        "ink-2": "#A1A1AA",
+        "ink-3": "#737373",
         "ink-faint": "#525252",
       },
       fontFamily: {
@@ -43,9 +46,10 @@ const config: Config = {
         "caption": ["0.6875rem", { lineHeight: "1.4", fontWeight: "500" }],
       },
       boxShadow: {
-        glow: "0 0 20px -4px rgba(245, 158, 11, 0.15)",
-        "glow-lg": "0 0 40px -8px rgba(245, 158, 11, 0.2)",
-        "card-glow": "0 0 20px -4px rgba(245, 158, 11, 0.08), 0 8px 32px -8px rgba(0, 0, 0, 0.4)",
+        glow: "0 0 20px -4px rgba(129, 140, 248, 0.2)",
+        "glow-lg": "0 0 40px -8px rgba(129, 140, 248, 0.3)",
+        "glow-amber": "0 0 20px -4px rgba(251, 191, 36, 0.2)",
+        "glow-emerald": "0 0 20px -4px rgba(52, 211, 153, 0.2)",
       },
       borderRadius: {
         sm: "6px",
@@ -74,8 +78,8 @@ const config: Config = {
           to: { transform: "scaleX(1)" },
         },
         pulseDot: {
-          "0%, 100%": { opacity: "1", boxShadow: "0 0 0 0 rgba(74, 222, 128, 0.4)" },
-          "50%": { opacity: "0.7", boxShadow: "0 0 0 4px rgba(74, 222, 128, 0)" },
+          "0%, 100%": { opacity: "1", boxShadow: "0 0 0 0 rgba(52, 211, 153, 0.4)" },
+          "50%": { opacity: "0.7", boxShadow: "0 0 0 4px rgba(52, 211, 153, 0)" },
         },
       },
     },
