@@ -5,10 +5,12 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/auth-context";
 
 export default function UserMenu() {
-  const { user, loading, signOut } = useAuth();
+  const { user, loading, signOut, available } = useAuth();
   const [open, setOpen] = useState(false);
   const router = useRouter();
 
+  // Auth not configured - hide the button entirely
+  if (!available) return null;
   if (loading) return null;
 
   if (!user) {
