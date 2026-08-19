@@ -545,3 +545,17 @@ function buildFeedItems(
   items.sort((a, b) => (b.published_at || "").localeCompare(a.published_at || ""));
   return items.slice(0, limit);
 }
+
+// ---------------------------------------------------------------------------
+// Feedback
+// ---------------------------------------------------------------------------
+export async function buildFeedback() {
+  const client = getClient();
+  const { data, error } = await client
+    .from("feedback")
+    .select("*")
+    .order("created_at", { ascending: false })
+    .limit(100);
+  if (error) throw error;
+  return { items: data || [], total: data?.length || 0 };
+}
