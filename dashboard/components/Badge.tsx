@@ -1,12 +1,16 @@
 export function SentimentBadge({ label }: { label: string | null }) {
   if (!label) return null;
-  const cls = "sent-" + label;
+  const cls =
+    label === "positive"
+      ? "badge-positive"
+      : label === "negative"
+        ? "badge-negative"
+        : label === "mixed"
+          ? "badge-mixed"
+          : "badge-neutral";
   return (
     <span
-      className={
-        "inline-flex items-center rounded-lg px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider " +
-        cls
-      }
+      className={`${cls} inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide`}
     >
       {label}
     </span>
@@ -15,13 +19,17 @@ export function SentimentBadge({ label }: { label: string | null }) {
 
 export function SignalBadge({ signal }: { signal: string | null }) {
   if (!signal) return null;
-  const cls = "sig-" + signal;
+  const cls =
+    signal === "stress"
+      ? "sig-stress"
+      : signal === "closure"
+        ? "sig-closure"
+        : signal === "opportunity"
+          ? "sig-opportunity"
+          : "sig-neutral";
   return (
     <span
-      className={
-        "inline-flex items-center rounded-lg px-2.5 py-1 font-mono text-[10.5px] font-semibold uppercase tracking-wider " +
-        cls
-      }
+      className={`${cls} inline-flex items-center rounded-md px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide`}
     >
       {signal}
     </span>

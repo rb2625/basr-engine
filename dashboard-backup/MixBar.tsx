@@ -1,10 +1,10 @@
 import type { SignalMix } from "@/lib/types";
 
 const COLORS: Record<keyof SignalMix, string> = {
-  stress: "#991B1B",
-  closure: "#6D28D9",
-  opportunity: "#166534",
-  neutral: "#A8A29E",
+  stress: "#DC2626",
+  closure: "#7C3AED",
+  opportunity: "#16A34A",
+  neutral: "#94A3B8",
 };
 
 const LABELS: Record<keyof SignalMix, string> = {
@@ -19,7 +19,7 @@ const ORDER: (keyof SignalMix)[] = ["stress", "closure", "opportunity", "neutral
 export default function MixBar({ mix }: { mix: SignalMix }) {
   const total = mix.stress + mix.closure + mix.opportunity + mix.neutral;
   if (!total)
-    return <div className="font-mono text-[11px] text-ink-faint">No classified docs yet</div>;
+    return <div className="font-mono text-xs text-mute">No classified docs yet</div>;
 
   let acc = 0;
   const segs = ORDER.map((k) => {
@@ -31,7 +31,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
 
   return (
     <div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-alt">
+      <div className="flex h-2.5 w-full overflow-hidden rounded-full bg-panel2">
         {segs.map((s, i) => (
           <div
             key={s.k}
@@ -39,20 +39,20 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
             style={{
               width: `${s.pct}%`,
               backgroundColor: COLORS[s.k],
-              animationDelay: `${i * 80}ms`,
+              animationDelay: `${i * 90}ms`,
             }}
           />
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[10px] text-ink-tertiary">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[11px] text-mute">
         {ORDER.map((k) => (
           <span key={k} className="inline-flex items-center gap-1.5 tabular-nums">
             <span
-              className="inline-block h-1.5 w-1.5 rounded-full"
+              className="inline-block h-2 w-2 rounded-full"
               style={{ backgroundColor: COLORS[k] }}
             />
             {LABELS[k]}
-            <span className="text-ink-secondary">{mix[k]}</span>
+            <span className="text-text1">{mix[k]}</span>
           </span>
         ))}
       </div>

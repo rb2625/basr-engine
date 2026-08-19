@@ -1,43 +1,28 @@
-import type { ReactNode } from "react";
-
 export default function Section({
   kicker,
   title,
   right,
   children,
-  className = "",
-  delay = 0,
 }: {
   kicker?: string;
-  title?: string;
-  right?: ReactNode;
-  children: ReactNode;
-  className?: string;
-  delay?: number;
+  title: string;
+  right?: React.ReactNode;
+  children: React.ReactNode;
 }) {
   return (
-    <section
-      className={`card p-5 sm:p-6 ${className}`}
-      style={delay ? { animationDelay: `${delay}ms` } : undefined}
-    >
-      {(kicker || title) && (
-        <header className="mb-5 flex items-start justify-between gap-3">
-          <div>
-            {kicker && (
-              <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-accent">
-                {kicker}
-              </div>
-            )}
-            {title && (
-              <h2 className="mt-1.5 text-[15px] font-semibold text-ink">
-                {title}
-              </h2>
-            )}
-          </div>
-          {right}
-        </header>
-      )}
-      {children}
-    </section>
+    <div className="card p-5">
+      <div className="flex items-start justify-between gap-4">
+        <div>
+          {kicker && (
+            <div className="font-label-sm uppercase tracking-widest text-accent mb-2">
+              {kicker}
+            </div>
+          )}
+          <h3 className="font-display-sm text-ink">{title}</h3>
+        </div>
+        {right && <div className="shrink-0">{right}</div>}
+      </div>
+      <div className="mt-4">{children}</div>
+    </div>
   );
 }

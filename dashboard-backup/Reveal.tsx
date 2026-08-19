@@ -13,10 +13,9 @@ export default function Reveal({
 }) {
   const style: CSSProperties = {
     animationDelay: `${delay}ms`,
-    opacity: 0,
   };
   return (
-    <div className={`animate-slide-up ${className}`} style={style}>
+    <div className={`anim-reveal ${className}`} style={style}>
       {children}
     </div>
   );

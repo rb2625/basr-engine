@@ -26,27 +26,27 @@ export default function KpiCard({
   const { num, decimals, suffix } = parseValue(value);
   return (
     <div
-      className="card card-interactive p-4"
+      className="card card-hoverable p-5 sm:p-6"
       style={{ animationDelay: `${delay}ms` }}
     >
-      <div className="flex items-center gap-1.5">
-        <span className="font-label-sm uppercase tracking-widest text-ink-faint">
+      <div className="flex items-center gap-2">
+        <div className="font-mono text-[11px] uppercase tracking-[0.18em] text-mute">
           {label}
-        </span>
+        </div>
         {tooltip && (
-          <span className="tooltip-trigger">
-            <span className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-border text-[9px] text-ink-faint transition-colors hover:border-accent hover:text-accent">
+          <div className="tooltip-wrapper">
+            <span className="inline-flex h-4 w-4 cursor-help items-center justify-center rounded-full border border-line text-[10px] text-mute transition-colors hover:border-accent hover:text-accent">
               ?
             </span>
-            <span className="tooltip-text">{tooltip}</span>
-          </span>
+            <span className="tooltip-content">{tooltip}</span>
+          </div>
         )}
       </div>
-      <div className="mt-2.5 font-data-xl text-ink">
+      <div className="mt-3 flex items-baseline gap-1 font-mono text-[28px] font-semibold tabular-nums tracking-tight text-ink sm:text-[32px]">
         <CountUp value={num} decimals={decimals} />
-        {suffix && <span className="ml-0.5 text-data-lg text-accent font-medium">{suffix}</span>}
+        {suffix && <span className="text-[14px] font-medium text-accent">{suffix}</span>}
       </div>
-      <div className="mt-1 font-caption text-ink-faint">{sub}</div>
+      <div className="mt-1.5 text-[13px] text-mute">{sub}</div>
     </div>
   );
 }
