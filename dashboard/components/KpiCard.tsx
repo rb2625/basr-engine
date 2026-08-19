@@ -26,16 +26,16 @@ export default function KpiCard({
   const { num, decimals, suffix } = parseValue(value);
   return (
     <div
-      className="card card-interactive p-4"
+      className="card card-glow p-4"
       style={{ animationDelay: `${delay}ms` }}
     >
       <div className="flex items-center gap-1.5">
-        <span className="font-label-sm uppercase tracking-widest text-ink-faint">
+        <span className="font-label-sm uppercase tracking-widest text-ink-3">
           {label}
         </span>
         {tooltip && (
           <span className="tooltip-trigger">
-            <span className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-border text-[9px] text-ink-faint transition-colors hover:border-accent hover:text-accent">
+            <span className="inline-flex h-3.5 w-3.5 cursor-help items-center justify-center rounded-full border border-white/10 text-[9px] text-ink-3 transition-colors hover:border-accent hover:text-accent">
               ?
             </span>
             <span className="tooltip-text">{tooltip}</span>
@@ -46,7 +46,7 @@ export default function KpiCard({
         <CountUp value={num} decimals={decimals} />
         {suffix && <span className="ml-0.5 text-data-lg text-accent font-medium">{suffix}</span>}
       </div>
-      <div className="mt-1 font-caption text-ink-faint">{sub}</div>
+      <div className="mt-1 font-caption text-ink-3">{sub}</div>
     </div>
   );
 }

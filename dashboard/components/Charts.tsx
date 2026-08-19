@@ -14,7 +14,7 @@ import {
 } from "recharts";
 import type { DayPoint } from "@/lib/types";
 
-const GRID = "#F0ECE7";
+const GRID = "rgba(255,255,255,0.03)";
 
 interface TooltipRow {
   dataKey?: string | number;
@@ -35,18 +35,18 @@ function ChartTooltip({
 }) {
   if (!active || !payload?.length) return null;
   return (
-    <div className="rounded-lg border border-border bg-surface px-3 py-2 font-mono text-[10px] shadow-md">
-      <div className="mb-1 text-ink-faint">{label}</div>
+    <div className="rounded-xl border border-white/8 bg-[#141416]/95 px-3 py-2 font-mono text-[10px] shadow-lg backdrop-blur-md">
+      <div className="mb-1 text-ink-3">{label}</div>
       {payload.map((p) => (
         <div key={String(p.dataKey)} className="flex items-center justify-between gap-4 tabular-nums">
-          <span className="flex items-center gap-1.5 text-ink-tertiary">
+          <span className="flex items-center gap-1.5 text-ink-3">
             <span
               className="inline-block h-1.5 w-1.5 rounded-full"
               style={{ backgroundColor: p.color || p.fill }}
             />
             {p.name}
           </span>
-          <span className="text-ink-secondary">
+          <span className="text-ink-2">
             {typeof p.value === "number" ? p.value.toFixed(2) : p.value}
           </span>
         </div>
@@ -58,7 +58,7 @@ function ChartTooltip({
 export function SentimentSeries({ series }: { series: DayPoint[] }) {
   if (!series.length) {
     return (
-      <div className="flex h-64 items-center justify-center font-mono text-[11px] text-ink-faint">
+      <div className="flex h-56 items-center justify-center font-mono text-[11px] text-ink-3">
         No time-series data yet
       </div>
     );
@@ -68,14 +68,14 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
       <ComposedChart data={series} margin={{ top: 4, right: 4, bottom: 0, left: -16 }}>
         <defs>
           <linearGradient id="volFill" x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor="#D97706" stopOpacity={0.12} />
-            <stop offset="100%" stopColor="#D97706" stopOpacity={0.01} />
+            <stop offset="0%" stopColor="#F59E0B" stopOpacity={0.15} />
+            <stop offset="100%" stopColor="#F59E0B" stopOpacity={0.01} />
           </linearGradient>
         </defs>
         <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: "#A8A29E", fontSize: 9.5 }}
+          tick={{ fill: "#525252", fontSize: 9.5 }}
           interval="preserveStartEnd"
           minTickGap={40}
           axisLine={{ stroke: GRID }}
@@ -83,7 +83,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
         />
         <YAxis
           yAxisId="vol"
-          tick={{ fill: "#A8A29E", fontSize: 9.5 }}
+          tick={{ fill: "#525252", fontSize: 9.5 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
@@ -92,7 +92,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           yAxisId="sent"
           orientation="right"
           domain={[-1, 1]}
-          tick={{ fill: "#A8A29E", fontSize: 9.5 }}
+          tick={{ fill: "#525252", fontSize: 9.5 }}
           axisLine={false}
           tickLine={false}
           ticks={[-1, -0.5, 0, 0.5, 1]}
@@ -104,7 +104,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           type="monotone"
           dataKey="volume"
           name="Docs"
-          stroke="#D97706"
+          stroke="#F59E0B"
           strokeWidth={1.5}
           fill="url(#volFill)"
           animationDuration={900}
@@ -114,7 +114,7 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
           type="monotone"
           dataKey="avgSentiment"
           name="Avg sentiment"
-          stroke="#166534"
+          stroke="#4ADE80"
           strokeWidth={1.5}
           dot={false}
           animationDuration={900}
@@ -124,12 +124,12 @@ export function SentimentSeries({ series }: { series: DayPoint[] }) {
   );
 }
 
-const TOPIC_COLORS = ["#991B1B", "#6D28D9", "#D97706", "#1E40AF", "#166534"];
+const TOPIC_COLORS = ["#F87171", "#A855F7", "#F59E0B", "#60A5FA", "#4ADE80"];
 
 export function StressStack({ series, topics }: { series: DayPoint[]; topics: string[] }) {
   if (!series.length)
     return (
-      <div className="flex h-64 items-center justify-center font-mono text-[11px] text-ink-faint">
+      <div className="flex h-56 items-center justify-center font-mono text-[11px] text-ink-3">
         No data yet
       </div>
     );
@@ -139,14 +139,14 @@ export function StressStack({ series, topics }: { series: DayPoint[]; topics: st
         <CartesianGrid strokeDasharray="3 3" stroke={GRID} vertical={false} />
         <XAxis
           dataKey="date"
-          tick={{ fill: "#A8A29E", fontSize: 9.5 }}
+          tick={{ fill: "#525252", fontSize: 9.5 }}
           interval="preserveStartEnd"
           minTickGap={40}
           axisLine={{ stroke: GRID }}
           tickLine={false}
         />
         <YAxis
-          tick={{ fill: "#A8A29E", fontSize: 9.5 }}
+          tick={{ fill: "#525252", fontSize: 9.5 }}
           axisLine={false}
           tickLine={false}
           allowDecimals={false}
@@ -156,7 +156,7 @@ export function StressStack({ series, topics }: { series: DayPoint[]; topics: st
         <Bar
           dataKey="stress"
           name="Stress (all)"
-          fill="#991B1B"
+          fill="#F87171"
           fillOpacity={0.8}
           radius={[3, 3, 0, 0]}
           animationDuration={900}

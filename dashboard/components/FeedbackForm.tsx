@@ -32,7 +32,7 @@ export default function FeedbackForm({ page }: { page?: string }) {
       setSent(true);
       form.reset();
     } catch {
-      setError("Something went wrong. Please try again.");
+      setError("Something went wrong.");
     } finally {
       setSending(false);
     }
@@ -42,7 +42,7 @@ export default function FeedbackForm({ page }: { page?: string }) {
     return (
       <button
         onClick={() => setOpen(true)}
-        className="fixed bottom-5 right-5 z-50 rounded-lg bg-accent px-3.5 py-2 text-[13px] font-semibold text-white shadow-md transition-all hover:bg-accent-hover hover:shadow-lg"
+        className="fixed bottom-24 right-6 z-50 rounded-xl bg-accent/90 px-3.5 py-2 text-[12px] font-semibold text-black shadow-glow transition-all hover:bg-accent hover:shadow-glow-lg"
       >
         Feedback
       </button>
@@ -50,12 +50,12 @@ export default function FeedbackForm({ page }: { page?: string }) {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-50 w-80 rounded-xl border border-border bg-surface p-4 shadow-lg">
+    <div className="fixed bottom-24 right-6 z-50 w-80 rounded-2xl border border-white/8 bg-[#141416]/95 p-4 shadow-2xl backdrop-blur-xl">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="font-display-sm text-ink">Send feedback</h3>
         <button
           onClick={() => { setOpen(false); setSent(false); setError(""); }}
-          className="text-ink-faint hover:text-ink"
+          className="text-ink-3 hover:text-ink"
         >
           &times;
         </button>
@@ -63,10 +63,10 @@ export default function FeedbackForm({ page }: { page?: string }) {
 
       {sent ? (
         <div className="py-4 text-center">
-          <p className="text-body-sm font-medium text-positive">Thanks! Your feedback was sent.</p>
+          <p className="text-body-sm font-medium text-positive">Thanks! Sent.</p>
           <button
             onClick={() => { setOpen(false); setSent(false); }}
-            className="mt-2 text-caption text-ink-faint hover:text-ink"
+            className="mt-2 text-caption text-ink-3 hover:text-ink"
           >
             Close
           </button>
@@ -76,26 +76,26 @@ export default function FeedbackForm({ page }: { page?: string }) {
           <input
             name="name"
             placeholder="Name (optional)"
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-body-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+            className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-body-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
           />
           <input
             name="email"
             type="email"
             placeholder="Email (optional)"
-            className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-body-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+            className="w-full rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-body-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
           />
           <textarea
             name="message"
             required
             rows={3}
             placeholder="What would you like to see?"
-            className="w-full resize-none rounded-lg border border-border bg-surface px-3 py-2 text-body-sm text-ink placeholder:text-ink-faint focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
+            className="w-full resize-none rounded-xl border border-white/6 bg-white/[0.03] px-3 py-2 text-body-sm text-ink placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent/20 transition-colors"
           />
-          {error && <p className="text-[11px] text-negative">{error}</p>}
+          {error && <p className="text-[10px] text-negative">{error}</p>}
           <button
             type="submit"
             disabled={sending}
-            className="w-full rounded-lg bg-accent py-2 text-body-sm font-semibold text-white transition-all hover:bg-accent-hover disabled:opacity-50"
+            className="w-full rounded-xl bg-accent py-2 text-body-sm font-semibold text-black transition-all hover:bg-accent-dim disabled:opacity-50"
           >
             {sending ? "Sending..." : "Send"}
           </button>

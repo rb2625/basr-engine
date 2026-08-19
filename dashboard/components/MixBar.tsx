@@ -1,10 +1,10 @@
 import type { SignalMix } from "@/lib/types";
 
 const COLORS: Record<keyof SignalMix, string> = {
-  stress: "#991B1B",
-  closure: "#6D28D9",
-  opportunity: "#166534",
-  neutral: "#A8A29E",
+  stress: "#F87171",
+  closure: "#A855F7",
+  opportunity: "#4ADE80",
+  neutral: "#737373",
 };
 
 const LABELS: Record<keyof SignalMix, string> = {
@@ -19,7 +19,7 @@ const ORDER: (keyof SignalMix)[] = ["stress", "closure", "opportunity", "neutral
 export default function MixBar({ mix }: { mix: SignalMix }) {
   const total = mix.stress + mix.closure + mix.opportunity + mix.neutral;
   if (!total)
-    return <div className="font-mono text-[11px] text-ink-faint">No classified docs yet</div>;
+    return <div className="font-mono text-[10px] text-ink-3">No classified docs yet</div>;
 
   let acc = 0;
   const segs = ORDER.map((k) => {
@@ -31,7 +31,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
 
   return (
     <div>
-      <div className="flex h-2 w-full overflow-hidden rounded-full bg-surface-alt">
+      <div className="flex h-2 w-full overflow-hidden rounded-full bg-white/[0.04]">
         {segs.map((s, i) => (
           <div
             key={s.k}
@@ -44,7 +44,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
           />
         ))}
       </div>
-      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[10px] text-ink-tertiary">
+      <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1.5 font-mono text-[9px] text-ink-3">
         {ORDER.map((k) => (
           <span key={k} className="inline-flex items-center gap-1.5 tabular-nums">
             <span
@@ -52,7 +52,7 @@ export default function MixBar({ mix }: { mix: SignalMix }) {
               style={{ backgroundColor: COLORS[k] }}
             />
             {LABELS[k]}
-            <span className="text-ink-secondary">{mix[k]}</span>
+            <span className="text-ink-2">{mix[k]}</span>
           </span>
         ))}
       </div>

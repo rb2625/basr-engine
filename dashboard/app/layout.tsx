@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import { Outfit, IBM_Plex_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
-import Sidebar from "@/components/Sidebar";
+import FloatingNav from "@/components/FloatingNav";
 import ClientProviders from "@/components/ClientProviders";
 
 const outfit = Outfit({
@@ -43,14 +43,17 @@ export default function RootLayout({
     >
       <body className="min-h-screen font-body antialiased">
         <ClientProviders>
-          <div className="flex min-h-screen">
-            <Sidebar />
-            <main className="flex-1 overflow-auto">
-              <div className="mx-auto max-w-[1200px] px-6 py-6 lg:px-8 lg:py-8">
-                {children}
-              </div>
-            </main>
-          </div>
+          <FloatingNav />
+          <main className="mx-auto max-w-[1400px] px-6 pt-20 pb-24 lg:px-8">
+            {children}
+          </main>
+          {/* Footer */}
+          <footer className="mx-auto max-w-[1400px] px-6 pb-28 lg:px-8">
+            <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4 text-[10px] text-ink-3">
+              <span className="font-medium text-ink-2">BASR <span className="font-mono text-ink-3">(بصر)</span></span>
+              <span className="font-mono">88.3% accuracy | public sources</span>
+            </div>
+          </footer>
         </ClientProviders>
       </body>
     </html>
