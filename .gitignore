@@ -36,3 +36,12 @@ dashboard/next-env.d.ts
 # OS
 .DS_Store
 Thumbs.db
+
+# Vercel
+.vercel/
+
+# Reports (binary blobs)
+BASR_Report_*.pdf
+
+# Legacy scripts
+legacy/
