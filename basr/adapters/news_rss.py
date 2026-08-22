@@ -31,10 +31,10 @@ class NewsRSSAdapter(SourceAdapter):
         self.feeds = feeds or NEWS_FEEDS
         self.per_feed_limit = per_feed_limit
 
-    async def _fetch_one(self, name: str, url: str) -> list[RawDoc]:
+    async def _fetch_one(self, name: str, url: str, since: datetime | None = None) -> list[RawDoc]:
         try:
             resp = await self.get_with_retry(url)
-            docs = parse_feed(resp.content, self.name, name, self.per_feed_limit)
+            docs = parse_feed(resp.content, self.name, name, self.per_feed_limit, since)
             print(f"    [+] news_rss {name}: {len(docs)} items")
             return docs
         except Exception as exc:
@@ -45,7 +45,7 @@ class NewsRSSAdapter(SourceAdapter):
         docs: list[RawDoc] = []
         try:
             results = await asyncio.gather(
-                *(self._fetch_one(name, url) for name, url in self.feeds),
+                *(self._fetch_one(name, url, since) for name, url in self.feeds),
                 return_exceptions=False,
             )
             for batch in results:

@@ -40,7 +40,7 @@ def clean_html(text: str | None) -> str:
     return text.strip()
 
 
-def _parse_atom(content: bytes, source: str, feed_name: str, limit: int) -> list[RawDoc]:
+def _parse_atom(content: bytes, source: str, feed_name: str, limit: int, since: datetime | None = None) -> list[RawDoc]:
     root = ET.fromstring(content)
     docs: list[RawDoc] = []
     for entry in root.findall(".//atom:entry", _ATOM_NS)[:limit]:
@@ -75,6 +75,9 @@ def _parse_atom(content: bytes, source: str, feed_name: str, limit: int) -> list
             except ValueError:
                 published = None
 
+        if since and published and published < since:
+            continue
+
         docs.append(
             RawDoc(
                 source=source,
@@ -91,7 +94,7 @@ def _parse_atom(content: bytes, source: str, feed_name: str, limit: int) -> list
     return docs
 
 
-def _parse_rss(content: bytes, source: str, feed_name: str, limit: int) -> list[RawDoc]:
+def _parse_rss(content: bytes, source: str, feed_name: str, limit: int, since: datetime | None = None) -> list[RawDoc]:
     root = ET.fromstring(content)
     docs: list[RawDoc] = []
     for item in root.findall(".//item")[:limit]:
@@ -121,6 +124,9 @@ def _parse_rss(content: bytes, source: str, feed_name: str, limit: int) -> list[
             except (TypeError, ValueError):
                 published = None
 
+        if since and published and published < since:
+            continue
+
         docs.append(
             RawDoc(
                 source=source,
@@ -136,12 +142,12 @@ def _parse_rss(content: bytes, source: str, feed_name: str, limit: int) -> list[
     return docs
 
 
-def parse_feed(content: bytes, source: str, feed_name: str, limit: int = 30) -> list[RawDoc]:
+def parse_feed(content: bytes, source: str, feed_name: str, limit: int = 30, since: datetime | None = None) -> list[RawDoc]:
     """Parse feed bytes into RawDocs. Handles Atom (Reddit) and RSS 2.0 (news)."""
     try:
         root = ET.fromstring(content)
     except ET.ParseError:
         return []
     if root.find(".//atom:entry", _ATOM_NS) is not None:
-        return _parse_atom(content, source, feed_name, limit)
-    return _parse_rss(content, source, feed_name, limit)
+        return _parse_atom(content, source, feed_name, limit, since)
+    return _parse_rss(content, source, feed_name, limit, since)
