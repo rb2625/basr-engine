@@ -20,7 +20,14 @@ function timeAgo(ts: string | null): string {
   return days + "d ago";
 }
 
-const SOURCES = ["all", "reddit", "news", "youtube", "app_store", "bluesky"];
+const SOURCES: { value: string; label: string }[] = [
+  { value: "all", label: "All sources" },
+  { value: "news_rss", label: "News" },
+  { value: "reddit_arctic", label: "Reddit" },
+  { value: "youtube_comments", label: "YouTube" },
+  { value: "apple_reviews", label: "App Store" },
+  { value: "bluesky_firehose", label: "Bluesky" },
+];
 const SENTIMENTS = ["all", "positive", "negative", "neutral", "mixed"];
 
 export default function FeedPage() {
@@ -96,8 +103,8 @@ export default function FeedPage() {
             </div>
             <div className="flex flex-wrap gap-1.5">
               {SOURCES.map((s) => (
-                <button key={s} onClick={() => setSourceFilter(s)} className={"filter-chip" + (sourceFilter === s ? " active" : "")}>
-                  {s === "all" ? "All sources" : s.replace("_", " ")}
+                <button key={s.value} onClick={() => setSourceFilter(s.value)} className={"filter-chip" + (sourceFilter === s.value ? " active" : "")}>
+                  {s.label}
                 </button>
               ))}
             </div>
