@@ -111,7 +111,7 @@ export interface OverviewData {
   mix: SignalMix;
   topTopics: { key: string; labelEn: string; docs: number; avgSentiment: number | null }[];
   series: DayPoint[];
-  recentStress: FeedItem[];
+  recentAlerts: { id: number; title: string; severity: string; status: string; createdAt: string | null }[];
 }
 
 export interface MapData {

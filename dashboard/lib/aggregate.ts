@@ -151,7 +151,7 @@ function buildSeries(
 // ---------------------------------------------------------------------------
 
 export async function buildOverview(): Promise<OverviewData> {
-  const { rawDocs, classifications, topics, docTopics, entities, docEntities } =
+  const { rawDocs, classifications, topics, docTopics } =
     await fetchBase();
 
   const mix = emptyMix();
@@ -212,9 +212,20 @@ export async function buildOverview(): Promise<OverviewData> {
     .sort((a, b) => b.docs - a.docs)
     .slice(0, 8);
 
-  // Recent stress headlines for the overview strip.
-  const recent = buildFeedItems(rawDocs, classifications, docTopics, topicById,
-    entities, docEntities, 6, "stress");
+  // Recent alerts from the anomaly detection system.
+  const client = getClient();
+  const { data: alertRows } = await client
+    .from("alerts")
+    .select("id,title,severity,status,created_at")
+    .order("created_at", { ascending: false })
+    .limit(6);
+  const recentAlerts = (alertRows || []).map((a: { id: number; title: string; severity: string; status: string; created_at: string | null }) => ({
+    id: a.id,
+    title: a.title,
+    severity: a.severity,
+    status: a.status,
+    createdAt: a.created_at,
+  }));
 
   return {
     kpis: [
@@ -226,7 +237,7 @@ export async function buildOverview(): Promise<OverviewData> {
     mix,
     topTopics,
     series: buildSeries(rawDocs, classifications, 30, docTopicKeys),
-    recentStress: recent,
+    recentAlerts,
   };
 }
 

@@ -6,7 +6,6 @@ import MixBar from "@/components/MixBar";
 import Reveal from "@/components/Reveal";
 import Section from "@/components/Section";
 import FreshnessBar from "@/components/FreshnessBar";
-import { SignalBadge, SentimentBadge } from "@/components/Badge";
 import { useApi } from "@/components/useApi";
 import type { OverviewData } from "@/lib/types";
 
@@ -160,35 +159,36 @@ export default function OverviewPage() {
       </Reveal>
 
       <Reveal delay={140}>
-        <Section kicker="Early warning" title="Recent stress signals">
-          {data.recentStress.length === 0 ? (
+        <Section kicker="Early warning" title="Recent anomaly alerts">
+          {data.recentAlerts.length === 0 ? (
             <div className="font-mono text-[10px] text-ink-3">
-              No stress signals yet
+              No alerts yet - the ensemble needs 15+ days of history
             </div>
           ) : (
             <div className="divide-y divide-white/5">
-              {data.recentStress.map((f) => (
+              {data.recentAlerts.map((a) => (
                 <div
-                  key={f.id}
+                  key={a.id}
                   className="group flex items-start justify-between gap-3 py-3 transition-colors hover:bg-white/[0.02] -mx-3 px-3 rounded-xl"
                 >
                   <div className="min-w-0">
                     <div className="text-[12px] font-medium text-ink truncate">
-                      {f.title}
-                      {f.locations.length > 0 && (
-                        <span className="ml-1.5 font-mono text-[9px] font-normal text-ink-3">
-                          {f.locations.join(", ")}
-                        </span>
-                      )}
+                      {a.title}
                     </div>
                     <div className="mt-0.5 font-mono text-[9px] text-ink-3">
-                      {f.source} /{" "}
-                      {f.published_at ? f.published_at.slice(0, 10) : "unknown"}
+                      {a.createdAt ? a.createdAt.slice(0, 10) : "unknown"}
                     </div>
                   </div>
                   <div className="flex shrink-0 items-center gap-1.5">
-                    <SignalBadge signal={f.signal_type} />
-                    <SentimentBadge label={f.sentiment_label} />
+                    <span className={"rounded-md border px-2 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wide " +
+                      (a.severity === "critical" ? "bg-red-500/10 text-red-400 border-red-500/20" :
+                       a.severity === "high" ? "bg-orange-500/10 text-orange-400 border-orange-500/20" :
+                       "bg-blue-500/10 text-blue-400 border-blue-500/20")}>
+                      {a.severity}
+                    </span>
+                    <span className="font-mono text-[10px] text-ink-3">
+                      {a.status}
+                    </span>
                   </div>
                 </div>
               ))}
