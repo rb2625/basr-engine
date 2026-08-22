@@ -50,13 +50,31 @@ export default function RootLayout({
       <body className="min-h-screen font-body antialiased">
         <ClientProviders>
           <FloatingNav />
-          <main className="mx-auto max-w-[1400px] px-6 pt-20 pb-24 lg:px-8">
+          <main className="mx-auto max-w-[1400px] px-4 pt-20 pb-24 sm:px-6 lg:px-8">
             {children}
           </main>
-          <footer className="mx-auto max-w-[1400px] px-6 pb-28 lg:px-8">
+          <footer className="mx-auto max-w-[1400px] px-4 pb-28 sm:px-6 lg:px-8">
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4 text-[10px] text-ink-3">
-              <span className="font-medium text-ink-2">BASR <span className="font-mono text-ink-3">(بصر)</span></span>
-              <span className="font-mono">88.3% accuracy | public sources</span>
+              <div className="flex items-center gap-2">
+                <span className="font-medium text-ink-2">BASR</span>
+                <span className="font-mono text-ink-3">(بصر)</span>
+                <span className="hidden sm:inline text-ink-faint">|</span>
+                <span className="hidden sm:inline">5 data sources</span>
+                <span className="hidden sm:inline text-ink-faint">|</span>
+                <span className="hidden sm:inline">Arabic + Arabizi + English</span>
+              </div>
+              <div className="flex items-center gap-3">
+                <a
+                  href="https://github.com/rb2625/basr-engine"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-ink-3 transition-colors hover:text-ink-2"
+                >
+                  GitHub
+                </a>
+                <span className="text-ink-faint">|</span>
+                <span className="font-mono">Apache 2.0</span>
+              </div>
             </div>
           </footer>
         </ClientProviders>

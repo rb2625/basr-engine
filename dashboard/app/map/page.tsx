@@ -3,6 +3,7 @@
 import dynamic from "next/dynamic";
 import Reveal from "@/components/Reveal";
 import Section from "@/components/Section";
+import FreshnessBar from "@/components/FreshnessBar";
 import { useApi } from "@/components/useApi";
 import type { MapData } from "@/lib/types";
 
@@ -19,10 +20,10 @@ const MapView = dynamic(() => import("@/components/MapView"), {
 });
 
 export default function MapPage() {
-  const { data, error, loading } = useApi<MapData>("map");
+  const { data, error, loading, lastUpdated, refresh } = useApi<MapData>("map", "", 120000);
   return (
     <div className="space-y-6">
-      <div className="mb-7">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Geospatial / coverage
         </div>
@@ -35,6 +36,7 @@ export default function MapPage() {
           third-party API.
         </p>
       </div>
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
 
       <Reveal>
         {loading ? (

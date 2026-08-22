@@ -2,14 +2,15 @@
 
 import MixBar from "@/components/MixBar";
 import Reveal from "@/components/Reveal";
+import FreshnessBar from "@/components/FreshnessBar";
 import { useApi } from "@/components/useApi";
 import type { TopicsData } from "@/lib/types";
 
 export default function TopicsPage() {
-  const { data, error, loading } = useApi<TopicsData>("topics");
+  const { data, error, loading, lastUpdated, refresh } = useApi<TopicsData>("topics", "", 120000);
   return (
     <div className="space-y-6">
-      <div className="mb-7">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Taxonomy / coverage
         </div>
@@ -21,6 +22,7 @@ export default function TopicsPage() {
           layer - the backbone of the trend views.
         </p>
       </div>
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2">

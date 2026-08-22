@@ -31,6 +31,7 @@ const config: Config = {
         gold: "#FBBF24",
         // Surfaces
         ink: "#FAFAF9",
+        text1: "#FAFAF9",
         "ink-2": "#A1A1AA",
         "ink-3": "#737373",
         "ink-faint": "#525252",

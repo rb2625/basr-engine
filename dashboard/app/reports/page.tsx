@@ -2,6 +2,7 @@
 
 import Reveal from "@/components/Reveal";
 import Section from "@/components/Section";
+import FreshnessBar from "@/components/FreshnessBar";
 import { useApi } from "@/components/useApi";
 import type { ReportItem, ReportsData } from "@/lib/types";
 
@@ -29,10 +30,10 @@ function sent(v: number | null | undefined): string {
 }
 
 export default function ReportsPage() {
-  const { data, error, loading } = useApi<ReportsData>("reports");
+  const { data, error, loading, lastUpdated, refresh } = useApi<ReportsData>("reports", "", 120000);
   return (
     <div className="space-y-6">
-      <div className="mb-7">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Agents / scheduled reports
         </div>
@@ -45,6 +46,7 @@ export default function ReportsPage() {
           alerts. Every number in a report traces to the database - no vibes.
         </p>
       </div>
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
 
       {loading ? (
         <div className="space-y-3">

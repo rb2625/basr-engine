@@ -2,6 +2,7 @@
 
 import Reveal from "@/components/Reveal";
 import Section from "@/components/Section";
+import FreshnessBar from "@/components/FreshnessBar";
 import { useApi } from "@/components/useApi";
 import type { BriefItem, BriefsData } from "@/lib/types";
 
@@ -30,10 +31,10 @@ function timeAgo(ts: string | null): string {
 }
 
 export default function BriefsPage() {
-  const { data, error, loading } = useApi<BriefsData>("briefs");
+  const { data, error, loading, lastUpdated, refresh } = useApi<BriefsData>("briefs", "", 120000);
   return (
     <div className="space-y-6">
-      <div className="mb-7">
+      <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
         <div className="font-mono text-[10px] uppercase tracking-[0.24em] text-accent">
           Agents / decision support
         </div>
@@ -47,6 +48,7 @@ export default function BriefsPage() {
           responses for the owning organization.
         </p>
       </div>
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
 
       {loading ? (
         <div className="space-y-3">
