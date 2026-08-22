@@ -56,7 +56,7 @@ NEWS_FEEDS: list[tuple[str, str]] = [
 # Default fetch limits per source run.
 DEFAULT_FETCH_LIMIT: int = 100          # per adapter call
 DEFAULT_PAGE_SIZE: int = 100            # pullpush page size (API max)
-DEFAULT_SINCE_HOURS: int = 48           # lookback when no cursor is supplied
+DEFAULT_SINCE_HOURS: int = 72           # lookback when no cursor is supplied
 
 # ---------------------------------------------------------------------------
 # Pipeline knobs
