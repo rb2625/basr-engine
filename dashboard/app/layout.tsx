@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Outfit, IBM_Plex_Mono } from "next/font/google";
 import localFont from "next/font/local";
 import "./globals.css";
@@ -25,6 +25,12 @@ const notoKufi = localFont({
   display: "swap",
 });
 
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  maximumScale: 5,
+};
+
 export const metadata: Metadata = {
   title: "BASR | UAE Sentiment Intelligence",
   description:
@@ -47,7 +53,6 @@ export default function RootLayout({
           <main className="mx-auto max-w-[1400px] px-6 pt-20 pb-24 lg:px-8">
             {children}
           </main>
-          {/* Footer */}
           <footer className="mx-auto max-w-[1400px] px-6 pb-28 lg:px-8">
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-white/5 pt-4 text-[10px] text-ink-3">
               <span className="font-medium text-ink-2">BASR <span className="font-mono text-ink-3">(بصر)</span></span>

@@ -19,10 +19,9 @@ export default function FloatingNav() {
 
   return (
     <>
-      {/* Top bar */}
       <header className="fixed top-0 left-0 right-0 z-50 glass border-b border-white/[0.04]">
         <div className="mx-auto flex max-w-[1400px] items-center justify-between px-6 py-3">
-          <Link href="/" className="flex items-center gap-3 group">
+          <Link href="/" className="flex items-center gap-3 group" aria-label="BASR home">
             <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-indigo/10 text-indigo text-sm font-bold shadow-glow transition-all group-hover:shadow-glow-lg">
               B
             </div>
@@ -36,15 +35,14 @@ export default function FloatingNav() {
               5 sources
             </span>
             <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald/20 bg-emerald/5 px-2.5 py-1 text-[10px] font-medium text-emerald">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald animate-pulse-dot" />
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald animate-pulse-dot" aria-hidden="true" />
               Live
             </span>
           </div>
         </div>
       </header>
 
-      {/* Floating bottom nav */}
-      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 nav-pill rounded-2xl px-2 py-1.5 flex items-center gap-0.5">
+      <nav className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 nav-pill rounded-2xl px-2 py-1.5 flex items-center gap-0.5" aria-label="Main navigation">
         {LINKS.map((l) => {
           const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
           return (
@@ -53,9 +51,11 @@ export default function FloatingNav() {
               href={l.href}
               className={`nav-item ${active ? "active" : ""}`}
               title={l.label}
+              aria-label={l.label}
+              aria-current={active ? "page" : undefined}
               style={active ? { color: l.color } : undefined}
             >
-              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                 <path d={l.icon} />
               </svg>
               <span className="hidden sm:block">{l.label}</span>
@@ -63,6 +63,7 @@ export default function FloatingNav() {
                 <span
                   className="absolute -bottom-1 left-1/2 -translate-x-1/2 h-0.5 w-4 rounded-full"
                   style={{ backgroundColor: l.color, boxShadow: `0 0 8px ${l.color}80` }}
+                  aria-hidden="true"
                 />
               )}
             </Link>

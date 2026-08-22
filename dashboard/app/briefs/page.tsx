@@ -164,7 +164,7 @@ export default function BriefsPage() {
                     )}
 
                     {b.evidence.length > 0 && (
-                      <div className="mt-3 rounded-lg border border-line bg-panel2/50 p-3">
+                      <div className="mt-3 rounded-lg border border-line bg-panel-2/50 p-3">
                         <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-mute">
                           Evidence
                         </div>

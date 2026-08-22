@@ -41,12 +41,12 @@ export default function FeedbackPage() {
             ))}
           </div>
         ) : error ? (
-          <div className="card border-neg/30 bg-neg-light p-6 text-sm text-neg">
+          <div className="card border-neg/30 bg-neg/10 p-6 text-sm text-neg">
             <div className="font-semibold">Could not load feedback</div>
             <div className="mt-1 font-mono text-xs opacity-70">{error}</div>
             <div className="mt-3 text-xs text-mute">
               Run the feedback schema SQL in Supabase first:
-              <code className="ml-1 rounded bg-white px-1.5 py-0.5 font-mono text-[11px]">
+              <code className="ml-1 rounded bg-ink-faint px-1.5 py-0.5 font-mono text-[11px]">
                 scripts/feedback_schema.sql
               </code>
             </div>
@@ -73,7 +73,7 @@ export default function FeedbackPage() {
                       {item.message}
                     </div>
                     <div className="mt-2 font-mono text-[10px] text-mute">
-                      {item.page && <span className="mr-2 rounded bg-panel2 px-1.5 py-0.5">{item.page}</span>}
+                      {item.page && <span className="mr-2 rounded bg-panel-2 px-1.5 py-0.5">{item.page}</span>}
                       {item.created_at ? new Date(item.created_at).toLocaleString() : ""}
                     </div>
                   </div>

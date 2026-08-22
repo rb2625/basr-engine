@@ -84,7 +84,7 @@ export default function FeedPage() {
                             {f.topics.map((t) => (
                               <span
                                 key={t}
-                                className="rounded-md border border-line bg-panel2 px-1.5 py-0.5 font-mono text-[10px] text-mute"
+                                className="rounded-md border border-line bg-panel-2 px-1.5 py-0.5 font-mono text-[10px] text-mute"
                               >
                                 {t}
                               </span>

@@ -128,7 +128,7 @@ export default function ReportsPage() {
                   {(r.stats.top_topics?.length || r.stats.top_emirates?.length) && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
                       {r.stats.top_topics && r.stats.top_topics.length > 0 && (
-                        <div className="rounded-lg border border-line bg-panel2/50 p-3">
+                        <div className="rounded-lg border border-line bg-panel-2/50 p-3">
                           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-mute">
                             Top topics
                           </div>
@@ -145,7 +145,7 @@ export default function ReportsPage() {
                         </div>
                       )}
                       {r.stats.top_emirates && r.stats.top_emirates.length > 0 && (
-                        <div className="rounded-lg border border-line bg-panel2/50 p-3">
+                        <div className="rounded-lg border border-line bg-panel-2/50 p-3">
                           <div className="font-mono text-[10px] uppercase tracking-[0.2em] text-mute">
                             Top emirates
                           </div>

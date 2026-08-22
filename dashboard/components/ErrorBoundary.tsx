@@ -27,7 +27,7 @@ export default class ErrorBoundary extends Component<Props, State> {
       if (this.props.fallback) return this.props.fallback;
 
       return (
-        <div className="card border-neg/20 bg-neg-light p-6 text-center">
+        <div className="card border-neg/20 bg-neg/10 p-6 text-center" role="alert">
           <div className="text-sm font-semibold text-neg">Something went wrong</div>
           <div className="mt-1 font-mono text-xs text-neg/70">
             {this.state.error?.message || "Unknown error"}

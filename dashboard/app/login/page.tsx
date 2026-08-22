@@ -35,13 +35,13 @@ export default function LoginPage() {
     <div className="flex min-h-[60vh] items-center justify-center">
       <div className="w-full max-w-sm">
         <div className="mb-8 text-center">
-          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-dim text-xl font-bold text-white shadow-glow">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-gradient-to-br from-accent to-accent-dim text-xl font-bold text-white shadow-glow" aria-hidden="true">
             B
           </div>
           <h1 className="text-display-sm text-ink">
             {isSignUp ? "Create account" : "Sign in"}
           </h1>
-          <p className="mt-2 text-sm text-mute">
+          <p className="mt-2 text-sm text-ink-3">
             {isSignUp
               ? "Create an account to access org features"
               : "Sign in to access your workspace"}
@@ -50,35 +50,39 @@ export default function LoginPage() {
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-1.5 block text-[13px] font-medium text-ink">
+            <label htmlFor="login-email" className="mb-1.5 block text-[13px] font-medium text-ink">
               Email
             </label>
             <input
+              id="login-email"
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink placeholder:text-mute focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink-2 placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors"
               placeholder="you@example.com"
+              autoComplete="email"
             />
           </div>
 
           <div>
-            <label className="mb-1.5 block text-[13px] font-medium text-ink">
+            <label htmlFor="login-password" className="mb-1.5 block text-[13px] font-medium text-ink">
               Password
             </label>
             <input
+              id="login-password"
               type="password"
               required
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              className="w-full rounded-xl border border-line bg-white px-4 py-2.5 text-sm text-ink placeholder:text-mute focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors"
+              className="w-full rounded-xl border border-line bg-surface px-4 py-2.5 text-sm text-ink-2 placeholder:text-ink-3 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/20 transition-colors"
               placeholder="Your password"
+              autoComplete={isSignUp ? "new-password" : "current-password"}
             />
           </div>
 
           {error && (
-            <div className="rounded-xl border border-neg/20 bg-neg-light px-4 py-3 text-sm text-neg">
+            <div className="rounded-xl border border-neg/20 bg-neg/10 px-4 py-3 text-sm text-neg" role="alert">
               {error}
             </div>
           )}
@@ -95,7 +99,7 @@ export default function LoginPage() {
         <div className="mt-6 text-center">
           <button
             onClick={() => { setIsSignUp(!isSignUp); setError(""); }}
-            className="text-[13px] text-mute hover:text-accent transition-colors"
+            className="text-[13px] text-ink-3 hover:text-accent transition-colors"
           >
             {isSignUp
               ? "Already have an account? Sign in"
@@ -104,7 +108,7 @@ export default function LoginPage() {
         </div>
 
         <div className="mt-8 border-t border-line pt-6 text-center">
-          <a href="/" className="text-[13px] text-mute hover:text-accent transition-colors">
+          <a href="/" className="text-[13px] text-ink-3 hover:text-accent transition-colors">
             Continue without account
           </a>
         </div>
