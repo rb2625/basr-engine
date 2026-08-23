@@ -10,7 +10,7 @@ import { useApi } from "@/components/useApi";
 import type { OverviewData } from "@/lib/types";
 
 export default function OverviewPage() {
-  const { data, error, loading, lastUpdated, refresh } =
+  const { data, error, loading, refreshing, lastUpdated, refresh } =
     useApi<OverviewData>("overview", "", 120000);
 
   if (loading) {
@@ -74,7 +74,7 @@ export default function OverviewPage() {
             Public sentiment across housing, jobs, prices, and more.
           </p>
         </div>
-        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
       </div>
 
       <Reveal>

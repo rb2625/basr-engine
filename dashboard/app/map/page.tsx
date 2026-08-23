@@ -20,7 +20,7 @@ const MapView = dynamic(() => import("@/components/MapView"), {
 });
 
 export default function MapPage() {
-  const { data, error, loading, lastUpdated, refresh } = useApi<MapData>("map", "", 120000);
+  const { data, error, loading, refreshing, lastUpdated, refresh } = useApi<MapData>("map", "", 120000);
   return (
     <div className="space-y-6">
       <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -36,7 +36,7 @@ export default function MapPage() {
           third-party API.
         </p>
       </div>
-        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
 
       <Reveal>
         {loading ? (

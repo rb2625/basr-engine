@@ -6,6 +6,7 @@ interface ApiState<T> {
   data: T | null;
   error: string | null;
   loading: boolean;
+  refreshing: boolean;
   lastUpdated: Date | null;
   refresh: () => void;
 }
@@ -15,6 +16,7 @@ export function useApi<T>(view: string, extra = "", refreshInterval?: number): A
     data: null,
     error: null,
     loading: true,
+    refreshing: false,
     lastUpdated: null,
     refresh: () => {},
   });
@@ -22,26 +24,27 @@ export function useApi<T>(view: string, extra = "", refreshInterval?: number): A
   const aliveRef = useRef(true);
 
   const fetchData = useCallback(() => {
-    setState((s) => ({ ...s, loading: s.data === null, error: null }));
+    setState((s) => ({ ...s, refreshing: true, error: null }));
     fetch(`/api/data?view=${view}${extra}`, { cache: "no-store" })
       .then((r) => r.json())
       .then((json) => {
         if (!aliveRef.current) return;
         if (json && json.error) {
-          setState((s) => ({ ...s, data: null, error: json.error, loading: false }));
+          setState((s) => ({ ...s, data: null, error: json.error, loading: false, refreshing: false }));
         } else {
           setState((s) => ({
             ...s,
             data: json as T,
             error: null,
             loading: false,
+            refreshing: false,
             lastUpdated: new Date(),
           }));
         }
       })
       .catch((e) => {
         if (aliveRef.current) {
-          setState((s) => ({ ...s, data: null, error: String(e), loading: false }));
+          setState((s) => ({ ...s, data: null, error: String(e), loading: false, refreshing: false }));
         }
       });
   }, [view, extra]);

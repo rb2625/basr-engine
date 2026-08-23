@@ -31,7 +31,7 @@ const SOURCES: { value: string; label: string }[] = [
 const SENTIMENTS = ["all", "positive", "negative", "neutral", "mixed"];
 
 export default function FeedPage() {
-  const { data, error, loading, lastUpdated, refresh } = useApi<FeedData>(
+  const { data, error, loading, refreshing, lastUpdated, refresh } = useApi<FeedData>(
     "feed",
     "&limit=50",
     120000
@@ -92,7 +92,7 @@ export default function FeedPage() {
           <h1 className="mt-1.5 text-2xl font-bold tracking-tight text-ink sm:text-3xl">Classified feed</h1>
           <p className="mt-2 max-w-2xl text-sm leading-relaxed text-ink-3">Latest docs with their sentiment, signal, sector, and topic tags.</p>
         </div>
-        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
       </div>
       <Reveal>
         <div className="card p-4">

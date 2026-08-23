@@ -31,7 +31,7 @@ function timeAgo(ts: string | null): string {
 }
 
 export default function AlertsPage() {
-  const { data, error, loading, lastUpdated, refresh } = useApi<AlertsData>("alerts", "", 120000);
+  const { data, error, loading, refreshing, lastUpdated, refresh } = useApi<AlertsData>("alerts", "", 120000);
   return (
     <div className="space-y-6">
       <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -48,7 +48,7 @@ export default function AlertsPage() {
           day is never an alert.
         </p>
       </div>
-        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
 
       {loading ? (
         <div className="space-y-3">

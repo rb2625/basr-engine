@@ -7,7 +7,7 @@ import { useApi } from "@/components/useApi";
 import type { TopicsData } from "@/lib/types";
 
 export default function TopicsPage() {
-  const { data, error, loading, lastUpdated, refresh } = useApi<TopicsData>("topics", "", 120000);
+  const { data, error, loading, refreshing, lastUpdated, refresh } = useApi<TopicsData>("topics", "", 120000);
   return (
     <div className="space-y-6">
       <div className="mb-7 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
@@ -22,7 +22,7 @@ export default function TopicsPage() {
           layer - the backbone of the trend views.
         </p>
       </div>
-        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} />
+        <FreshnessBar lastUpdated={lastUpdated} onRefresh={refresh} refreshing={refreshing} />
 
       {loading ? (
         <div className="grid gap-4 sm:grid-cols-2">

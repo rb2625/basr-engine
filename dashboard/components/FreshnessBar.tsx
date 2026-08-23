@@ -5,6 +5,7 @@ import { useEffect, useState } from "react";
 interface Props {
   lastUpdated: Date | null;
   onRefresh: () => void;
+  refreshing?: boolean;
 }
 
 function timeSince(date: Date): string {
@@ -16,7 +17,7 @@ function timeSince(date: Date): string {
   return `${hours}h ago`;
 }
 
-export default function FreshnessBar({ lastUpdated, onRefresh }: Props) {
+export default function FreshnessBar({ lastUpdated, onRefresh, refreshing }: Props) {
   const [, setTick] = useState(0);
 
   useEffect(() => {
@@ -40,7 +41,8 @@ export default function FreshnessBar({ lastUpdated, onRefresh }: Props) {
       </div>
       <button
         onClick={onRefresh}
-        className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-ink-3 transition-all hover:border-white/10 hover:bg-white/[0.04] hover:text-ink-2"
+        disabled={refreshing}
+        className="flex h-7 w-7 items-center justify-center rounded-lg border border-white/5 bg-white/[0.02] text-ink-3 transition-all hover:border-white/10 hover:bg-white/[0.04] hover:text-ink-2 disabled:opacity-50"
         aria-label="Refresh data"
         title="Refresh"
       >
@@ -53,6 +55,7 @@ export default function FreshnessBar({ lastUpdated, onRefresh }: Props) {
           strokeWidth="2"
           strokeLinecap="round"
           strokeLinejoin="round"
+          className={refreshing ? "animate-spin" : ""}
         >
           <path d="M21 2v6h-6" />
           <path d="M3 12a9 9 0 0 1 15-6.7L21 8" />
