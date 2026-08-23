@@ -52,31 +52,58 @@ SENTIMENT CLASSIFICATION RULES (in addition to the above):
 - sentiment_label: "positive" | "negative" | "neutral" | "mixed"
 - emotion: one of "anger" | "fear" | "joy" | "sadness" | "disgust" |
   "surprise" | "trust" | "anticipation" | "neutral" - the dominant emotion
-  of the speaker/writer, not the topic's general mood.
+  of the speaker/writer, not the topics general mood.
 - sarcasm: boolean - true only when the text is clearly ironic/sarcastic
   (e.g. "great, another rent increase"). Sarcastic negative statements still
   get a negative sentiment_score.
-- Sentiment tracks the writer's view of ECONOMIC topics (prices, jobs,
-  housing, companies, services, policies) and their experiences with
-  services and products. Everything else is "neutral": weather, movies and
-  entertainment, food, personal plans, personal purchases of consumer
-  products (phone, laptop, TV, games console), general observations,
-  questions, and vague statements without a concrete subject (e.g. "the
-  economy is good" with no sector or measurement). Enjoying a movie is NOT
-  positive sentiment - it is neutral.
-- Factual announcements of economic EVENTS keep the event's sentiment:
-  a price/fee increase, closure, layoff, or service cut is negative;
-  new investments, openings, launches, expansions, tax exemptions, fee cuts,
-  price drops, hiring surges, and record profits are positive - the event
-  direction decides, not the tone of the announcement.
-- Ironic praise of something genuinely bad ("Great, another rent increase.
-  Just what we needed." / "Salik charges are the best thing ever") is
-  NEGATIVE sentiment with sarcasm=true. Never take ironic praise at face
-  value - judge the underlying situation (genuine praise wrapped in
-  sarcastic surprise stays positive).
-- A complaint about a service/business = negative sentiment even when it is
-  not a systemic economic signal (signal_type stays "neutral" unless the
-  economic rules above say otherwise).
+
+POSITIVE SENTIMENT - assign positive (score >= 0.3) when the text describes:
+- New business openings, expansions, or launches (e.g. "IKEA opens new store
+  in Dubai", "Tech startup raises $5M in Abu Dhabi")
+- Hiring surges, new jobs, salary increases (e.g. "Emirates Airlines hiring
+  3000 staff", "Dubai salaries up 12% this quarter")
+- Infrastructure improvements (e.g. "New metro line opens", "Dubai Canal
+  project completed ahead of schedule")
+- Government benefits, fee reductions, tax exemptions (e.g. "Zero income
+  tax for freelancers", "Abu Dhabi cuts business registration fees")
+- Record profits, market growth, positive economic indicators (e.g. "Dubai
+  tourism hits record", "UAE GDP growth exceeds forecasts")
+- Consumer satisfaction, positive reviews of services (e.g. "Etisalat
+  network upgrade speeds up Dubai internet")
+- Positive real estate news (e.g. "Property prices rise 8% in Dubai Marina",
+  "New affordable housing project launched")
+- Positive food/retail (e.g. "Popular restaurant chain expands to 5 new
+  Dubai locations", "UAE retail sales up 15%")
+- General optimism about UAE economy (e.g. "UAE among top 10 safest
+  countries for investment", "Dubai named best city for expats")
+
+NEGATIVE SENTIMENT - assign negative (score <= -0.3) when the text describes:
+- Layoffs, job losses, salary cuts (e.g. "Tech company lays off 200 in Dubai")
+- Business closures, bankruptcies (e.g. "Popular Dubai restaurant closes 3
+  locations", "Abu Dhabi construction firm goes bankrupt")
+- Rent increases, price hikes, inflation (e.g. "Dubai rents up 25% this year",
+  "Salik toll increase announced")
+- Service complaints, quality issues (e.g. "Du internet down for 3rd day",
+  "Dubai Metro delays causing chaos")
+- Regulatory burden, fines, restrictions (e.g. "New fines for Dubai businesses")
+- Economic uncertainty, market decline (e.g. "Dubai property sales drop 20%")
+
+NEUTRAL - assign neutral (score near 0) for:
+- Factual news with balanced/unclear impact (e.g. "Central bank maintains
+  interest rates", "New visa rules announced")
+- Personal opinions without concrete economic data
+- Questions, discussions without clear sentiment
+- Entertainment, sports, weather, personal life
+
+MIXED - assign mixed ONLY when the text contains BOTH clearly positive AND
+clearly negative economic signals of similar strength. Do NOT use mixed as
+a default or fallback.
+
+- Factual announcements of economic EVENTS keep the event direction:
+  openings, launches, expansions = positive; closures, layoffs,
+  price increases = negative. The EVENT decides, not the tone.
+- Ironic praise of something genuinely bad is NEGATIVE with sarcasm=true.
+- A complaint about a service = negative even if not a systemic signal.
 """
 
 SYSTEM_PROMPT = f"""
@@ -200,6 +227,55 @@ def _pick(v: Any, allowed: tuple[str, ...], default: str) -> str:
     return default
 
 
+
+# Sector keyword inference - fallback when LLM returns "General"
+_SECTOR_KEYWORDS = {
+    "F&B": ["restaurant", "cafe", "coffee", "food", "dining", "bakery", "pizza", "burger",
+            "talabat", "deliveroo", "carrefour", "grocery", "supermarket", "cloud kitchen",
+            "catering", "chef", "kitchen", "meal", "lunch", "dinner", "breakfast"],
+    "Real Estate": ["property", "rent", "housing", "apartment", "villa", "landlord", "tenant",
+                    "mortgage", "dld", "dubai land", "off-plan", "developer", "construction",
+                    "building", "real estate", "jvc", "dubai marina", "downtown", "jbr",
+                    "palm", "business bay", "silicon oasis"],
+    "Tech": ["startup", "fintech", "ai", "artificial intelligence", "software", "app",
+             "cyber", "blockchain", "crypto", "saas", "cloud", "data center", "tech",
+             "digital", "etisalat", "du ", "thursday", "thursday", "virgin mobile",
+             "apple", "samsung", "google", "microsoft", "amazon"],
+    "Retail": ["mall", "shopping", "retail", "e-commerce", "fashion", "luxury", "brand",
+               "store", "outlet", "dubai mall", "mall of emirates", "gold souk"],
+    "Logistics": ["shipping", "cargo", "supply chain", "warehouse", "freight", "port",
+                  "jebel ali", "free zone", "dp world", "customs", "logistics"],
+    "Finance": ["bank", "insurance", "investment", "stock", "market", "finance",
+                "emirates nbd", "adcb", "fab", "mashreq", "rakbank", "nbf",
+                "difc", "adgm", "central bank", "interest rate", "loan", "credit"],
+    "Government Services": ["visa", "immigration", "license", "permit", "government",
+                            "rta", "dewa", "municipality", "regulation", "fine",
+                            "uaepass", "emirates id", "smart dubai", "abinet"],
+    "Education": ["school", "university", "college", "training", "edtech", "student",
+                  "education", "course", "certification", "curriculum"],
+    "Healthcare": ["hospital", "clinic", "pharmacy", "medical", "health", "doctor",
+                   "patient", "telemedicine", "wellness", "vaccine", "covid"],
+    "Transport": ["metro", "taxi", "careem", "uber", "salik", "rtt", "bus", "road",
+                  "parking", "airport", "airline", "emirates airline", "etihad",
+                  "flydubai", "transport", "commute", "traffic"],
+}
+
+def _infer_sector_from_text(text: str, current_sector: str) -> str:
+    """Infer sector from text content when LLM returns 'General'."""
+    if current_sector != "General":
+        return current_sector
+    text_lower = text.lower()
+    scores = {}
+    for sector, keywords in _SECTOR_KEYWORDS.items():
+        score = sum(1 for kw in keywords if kw in text_lower)
+        if score > 0:
+            scores[sector] = score
+    if scores:
+        best = max(scores, key=scores.get)
+        if scores[best] >= 2:
+            return best
+    return current_sector
+
 def _validate(data: dict) -> ClassifyResult:
     """Coerce an LLM JSON object into a ClassifyResult, tolerating drift."""
     entities = data.get("extracted_entities")
@@ -210,13 +286,19 @@ def _validate(data: dict) -> ClassifyResult:
     companies = [e for e in entities.get("companies", []) if isinstance(e, str)][:20]
     locations = [e for e in entities.get("locations", []) if isinstance(e, str)][:20]
 
+    # Post-process sector: if LLM returned "General", try to infer from text
+    sector = _pick(data.get("sector"), SECTORS, "General")
+    # Try to infer sector from summary if LLM returned General
+    summary = str(data.get("summary_en") or "")
+    sector = _infer_sector_from_text(summary, sector)
+
     return ClassifyResult(
         sentiment_score=_clamp_float(data.get("sentiment_score"), -1.0, 1.0, 0.0),
         sentiment_label=_pick(data.get("sentiment_label"), SENTIMENT_LABELS, "neutral"),
         emotion=_pick(data.get("emotion"), EMOTIONS, "neutral"),
         sarcasm=bool(data.get("sarcasm", False)),
         signal_type=_pick(data.get("signal_type"), SIGNAL_TYPES, "neutral"),
-        sector=_pick(data.get("sector"), SECTORS, "General"),
+        sector=sector,
         intensity_score=_clamp_int(data.get("intensity_score"), 1, 5, 1),
         # The model sometimes echoes the v1 key "confidence_score" - accept both.
         confidence=_clamp_float(

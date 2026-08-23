@@ -51,6 +51,15 @@ NEWS_FEEDS: list[tuple[str, str]] = [
     ("Gulf News", "https://news.google.com/rss/search?q=site:gulfnews.com&hl=en-AE&gl=AE&ceid=AE:en"),
     ("The National", "https://www.thenationalnews.com/arc/outboundfeeds/rss/?outputType=xml"),
     ("WAM", "https://news.google.com/rss/search?q=site:wam.ae&hl=en-AE&gl=AE&ceid=AE:en"),
+    # UAE-specific direct feeds for better sector coverage
+    ("Zawya Business", "https://news.google.com/rss/search?q=site:zawya.com+UAE+business&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Arabian Business", "https://news.google.com/rss/search?q=site:arabianbusiness.com+Dubai+Abu+Dhabi&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Construction Week", "https://news.google.com/rss/search?q=site:constructionweekonline.com+UAE+Dubai&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Gulf Business", "https://news.google.com/rss/search?q=site:gulf-business.com+UAE&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Google News UAE Healthcare", "https://news.google.com/rss/search?q=UAE+hospital+clinic+healthcare+Dubai&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Google News UAE Transport", "https://news.google.com/rss/search?q=Dubai+metro+taxi+Salik+transport+UAE&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Google News UAE Fintech", "https://news.google.com/rss/search?q=UAE+fintech+startup+crypto+Abu+Dhabi&hl=en-AE&gl=AE&ceid=AE:en"),
+    ("Google News UAE Government", "https://news.google.com/rss/search?q=UAE+visa+government+regulation+Dubai+rule&hl=en-AE&gl=AE&ceid=AE:en"),
 ]
 
 # Default fetch limits per source run.
