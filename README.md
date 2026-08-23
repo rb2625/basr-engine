@@ -25,7 +25,7 @@ BASR fills that gap:
 
 | Metric | Value |
 |--------|-------|
-| Documents collected | 1,379 |
+| Documents collected | 1,388 |
 | Classified | 1,321 (96%) |
 | Geocoded entities | 80 |
 | Anomaly alerts generated | 11 |
