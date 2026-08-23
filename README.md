@@ -2,7 +2,7 @@
 
 **Real-time UAE sentiment intelligence. Arabic-native. Zero cost.**
 
-BASR monitors what people actually say about the UAE across Reddit, news, YouTube, app reviews, and live social feeds -- in Arabic, Arabizi, and English. It classifies sentiment, detects emerging issues before they trend, and delivers decision-ready briefings.
+BASR monitors what people actually say about the UAE across Reddit, news, app reviews, and live social feeds -- in Arabic, Arabizi, and English. It classifies sentiment, detects emerging issues before they trend, and delivers decision-ready briefings.
 
 **<a href="https://dashboard-gamma-roan-31.vercel.app" target="_blank" rel="noopener noreferrer">Live Dashboard</a>** -- public, no login required.
 
@@ -14,12 +14,24 @@ Every day, thousands of people discuss UAE housing, jobs, prices, government ser
 
 BASR fills that gap:
 
-- **Ingests** from 5 sources: Reddit (Arctic archive), 11 news RSS feeds (Khaleej Times, Gulf News, The National, WAM, and more), YouTube comments, Apple App Store reviews, and Bluesky live posts
-- **Normalizes** text across Arabic, Arabizi, and English using <a href="https://github.com/rb2625/arabizi-kit" target="_blank" rel="noopener noreferrer">ArabiziKit</a> (1,155 learned Gulf word readings)
+- **Ingests** from 4 source categories: Reddit (Arctic archive), 19 news RSS feeds (Khaleej Times, Gulf News, The National, WAM, Zawya, Arabian Business, Construction Week, and more), Apple App Store reviews, and Bluesky live posts
+- **Normalizes** text across Arabic, Arabizi, and English using [ArabiziKit](https://github.com/rb2625/arabizi-kit) (1,155 learned Gulf word readings)
 - **Classifies** sentiment (positive/negative/neutral) and signal type (closure, opportunity, stress, government-services) with a 3-tier hybrid model: local n-gram (instant, zero tokens) -> lexicon (zero tokens) -> LLM (Groq free tier)
-- **Enriches** with 14 UAE-specific topics (rent-housing, jobs-labor, prices-inflation, etc.) and 40 geocoded entities (Dubai Marina, RTA, DEWA, etc.)
+- **Enriches** with 14 UAE-specific topics (rent-housing, jobs-labor, prices-inflation, etc.) and 80 geocoded entities (Dubai Marina, RTA, DEWA, etc.)
 - **Detects anomalies** using STL seasonality decomposition + rolling z-score -- separates real emerging issues from weekday traffic patterns
 - **Delivers** alerts over Telegram, daily "UAE Pulse" reports, and weekly sector digests
+
+## Data at a glance
+
+| Metric | Value |
+|--------|-------|
+| Documents collected | 1,379 |
+| Classified | 1,321 (96%) |
+| Geocoded entities | 80 |
+| Anomaly alerts generated | 11 |
+| Time-series data points | 1,116 |
+| News RSS feeds | 19 |
+| Supported languages | Arabic, Arabizi, English |
 
 ## Dashboard
 
@@ -27,11 +39,11 @@ The public dashboard shows live UAE sentiment data:
 
 | View | What you see |
 |------|-------------|
-| **Overview** | KPIs, signal mix, top topics, 30-day volume/sentiment trends |
+| **Overview** | KPIs, signal mix, top topics, volume/sentiment trends |
 | **Map** | Entity sentiment map with geocoded UAE locations |
 | **Trends** | Daily volume + sentiment + stress by topic |
 | **Topics** | 14 topic cards with sentiment breakdown |
-| **Feed** | Latest classified documents with badges |
+| **Feed** | Latest classified documents with search and filters |
 | **Alerts** | Active anomaly alerts with severity |
 | **Briefs** | Decision-ready issue briefs |
 | **Reports** | UAE Pulse daily + weekly sector digests |
@@ -41,10 +53,9 @@ The public dashboard shows live UAE sentiment data:
 ```
 DATA SOURCES                   STORE (Supabase Postgres)
   Reddit Arctic archive    ->    raw_docs (deduped, hashed authors)
-  News RSS (11 feeds)      ->    normalized_docs
-  YouTube comments         ->    classifications / topics / entities
-  Apple App Store reviews  ->    time_series (hourly/daily aggregates)
-  Bluesky live feed        ->    alerts / briefs / orgs / eval_*
+  News RSS (19 feeds)      ->    classifications (sentiment, signal, sector)
+  Apple App Store reviews  ->    topics / entities (80 geocoded)
+  Bluesky live feed        ->    time_series / alerts / briefs / eval_*
         |
         v
 NLP PIPELINE                 INTELLIGENCE
@@ -52,7 +63,7 @@ NLP PIPELINE                 INTELLIGENCE
   language detection           anomaly detection (STL + z-score)
   3-tier classifier           alerting (severity low -> critical)
   topic tagging (14 topics)   agent layer (briefs, severity, reports)
-  entity extraction (40+)     eval harness (every model scored)
+  entity extraction (80+)     eval harness (every model scored)
         |
         v
 DELIVERY
@@ -65,7 +76,7 @@ DELIVERY
 |-------|------|------|
 | Database | Supabase Postgres + PostGIS | Free tier |
 | Cron | GitHub Actions (2x daily) | Free |
-| LLM | Groq free tier (gpt-oss-120b) | Free |
+| LLM | Groq free tier (Llama 3.3 70B) | Free |
 | Language ID | fasttext lid.176 (offline) | Free |
 | Arabizi | ArabiziKit (Gulf dialect) | Free, open source |
 | Dashboard | Next.js 14 + Tailwind + Leaflet + Recharts | Free (Vercel) |
@@ -97,10 +108,9 @@ python -m basr.orchestrator --intel --agents
 | # | Source | Method | Status |
 |---|--------|--------|--------|
 | 1 | Reddit posts + comments | Arctic Shift archive (keyless) | Live |
-| 2 | News RSS (11 feeds) | Khaleej Times, Gulf News, The National, WAM, Zawya, etc. | Live |
-| 3 | YouTube comments | YouTube Data API (free tier) | Live |
-| 4 | Apple App Store reviews | iTunes RSS (keyless) | Live |
-| 5 | Bluesky live feed | Jetstream v2 (free) | Live |
+| 2 | News RSS (19 feeds) | Khaleej Times, Gulf News, The National, WAM, Zawya, Arabian Business, Construction Week, Gulf Business, + Google News sector feeds | Live |
+| 3 | Apple App Store reviews | iTunes RSS (keyless) | Live |
+| 4 | Bluesky live feed | Jetstream v2 (free) | Live |
 
 ## Eval scores
 
@@ -118,6 +128,7 @@ Every model in BASR is scored on labeled eval sets. Scores are logged to the dat
 |------|---------|
 | Run full pipeline | `python -m basr.orchestrator --intel --agents` |
 | Ingest only | `python -m basr.orchestrator` |
+| Classify only | `python -m basr.orchestrator --nlp` |
 | Early warning | `python -m basr.intel` |
 | Build a brief | `python -m basr.agents --brief <id> --publish` |
 | Daily report | `python -m basr.agents --report daily --deliver` |
@@ -139,4 +150,4 @@ Apache 2.0
 
 ## Author
 
-@rb2625
+[@rb2625](https://github.com/rb2625)
