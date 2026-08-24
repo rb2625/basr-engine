@@ -3,6 +3,7 @@
 import Reveal from "@/components/Reveal";
 import Section from "@/components/Section";
 import FreshnessBar from "@/components/FreshnessBar";
+import ExportButton from "@/components/ExportButton";
 import { useApi } from "@/components/useApi";
 import type { ReportItem, ReportsData } from "@/lib/types";
 
@@ -126,6 +127,13 @@ export default function ReportsPage() {
                       ))}
                     </ul>
                   )}
+
+                  <div className="mt-3">
+                    <ExportButton
+                      title={r.title}
+                      content={`<p>${r.narrative || ""}</p><h2>Headlines</h2><ul>${r.headlines.map(h => `<li>${h}</li>`).join("")}</ul><h2>Stats</h2><p>Volume: ${r.stats.current_volume ?? "n/a"} | Sentiment: ${(r.stats.sentiment_avg ?? 0).toFixed(2)} | Open alerts: ${r.stats.open_alerts ?? 0}</p>`}
+                    />
+                  </div>
 
                   {(r.stats.top_topics?.length || r.stats.top_emirates?.length) && (
                     <div className="mt-3 grid gap-3 sm:grid-cols-2">
