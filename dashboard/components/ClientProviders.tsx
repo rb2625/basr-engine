@@ -1,7 +1,12 @@
 "use client";
 
 import { AuthProvider } from "@/lib/auth-context";
+import { OrgProvider } from "@/lib/org-context";
 
 export default function ClientProviders({ children }: { children: React.ReactNode }) {
-  return <AuthProvider>{children}</AuthProvider>;
+  return (
+    <AuthProvider>
+      <OrgProvider>{children}</OrgProvider>
+    </AuthProvider>
+  );
 }
