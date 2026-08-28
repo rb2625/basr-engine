@@ -20,6 +20,9 @@ BASR fills that gap:
 - **Enriches** with 14 UAE-specific topics (rent-housing, jobs-labor, prices-inflation, etc.) and 80 geocoded entities (Dubai Marina, RTA, DEWA, etc.)
 - **Detects anomalies** using STL seasonality decomposition + rolling z-score -- separates real emerging issues from weekday traffic patterns
 - **Delivers** alerts over Telegram, daily "UAE Pulse" reports, and weekly sector digests
+- **Authenticates** with email/password and Google OAuth for institutional users
+- **Organizes** workspaces by organization so teams can share dashboards
+- **Exposes** a B2B REST API with API key authentication for institutional integration
 
 ## Data at a glance
 
@@ -35,18 +38,35 @@ BASR fills that gap:
 
 ## Dashboard
 
-The public dashboard shows live UAE sentiment data:
+The public dashboard shows live UAE sentiment data across 10 pages:
 
 | View | What you see |
 |------|-------------|
-| **Overview** | KPIs, signal mix, top topics, volume/sentiment trends |
+| **Overview** | KPIs, signal mix, top topics, volume/sentiment trends, early warning alerts |
 | **Map** | Entity sentiment map with geocoded UAE locations |
 | **Trends** | Daily volume + sentiment + stress by topic |
 | **Topics** | 14 topic cards with sentiment breakdown |
 | **Feed** | Latest classified documents with search and filters |
 | **Alerts** | Active anomaly alerts with severity |
 | **Briefs** | Decision-ready issue briefs |
-| **Reports** | UAE Pulse daily + weekly sector digests |
+| **Reports** | UAE Pulse daily + weekly sector digests with PDF export |
+| **Feedback** | User feedback submission form |
+| **Login** | Email/password + Google OAuth authentication |
+
+## B2B API
+
+A REST API is available for institutional clients to integrate BASR data into their own systems:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/v1/health` | GET | Health check (no auth required) |
+| `/api/v1/sentiment` | GET | Classifications with sector/date filtering |
+| `/api/v1/topics` | GET | Sector breakdown with sentiment aggregation |
+| `/api/v1/alerts` | GET | Anomaly alerts |
+
+Authentication is via API key in the `X-API-Key` header. API keys are managed through the `BASR_API_KEYS` environment variable.
+
+Full API documentation is available at `/api-docs` on the live dashboard.
 
 ## Architecture
 
@@ -67,7 +87,7 @@ NLP PIPELINE                 INTELLIGENCE
         |
         v
 DELIVERY
-  Next.js dashboard (Vercel) + Telegram alerts + Email digest
+  Next.js dashboard (Vercel) + Telegram alerts + B2B REST API + PDF reports
 ```
 
 ## Tech stack
@@ -80,6 +100,7 @@ DELIVERY
 | Language ID | fasttext lid.176 (offline) | Free |
 | Arabizi | ArabiziKit (Gulf dialect) | Free, open source |
 | Dashboard | Next.js 14 + Tailwind + Leaflet + Recharts | Free (Vercel) |
+| Auth | Supabase Auth (email + Google OAuth) | Free tier |
 | Alerts | Telegram bot + email (SendGrid) | Free tiers |
 | **Total** | | **0 AED** |
 
@@ -142,7 +163,8 @@ Every model in BASR is scored on labeled eval sets. Scores are logged to the dat
 3. **3-tier classification** -- local n-gram (instant, zero tokens) -> lexicon (zero tokens) -> LLM (Groq free). 80%+ of docs classified without any API call.
 4. **Anomaly detection with seasonality** -- STL decomposition separates real emerging issues from Tuesday afternoon traffic spikes.
 5. **Decision-ready output** -- not just charts. Severity-scored briefs with recommended responses, delivered over Telegram.
-6. **Public and measured** -- every model score is logged. The eval harness runs on labeled sets. No black boxes.
+6. **B2B-ready** -- REST API with API key auth, organization workspaces, and PDF export for institutional clients.
+7. **Public and measured** -- every model score is logged. The eval harness runs on labeled sets. No black boxes.
 
 ## License
 
